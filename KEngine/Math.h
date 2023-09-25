@@ -1,6 +1,8 @@
 #pragma once
 #include <cmath>
-#include <vector>
+#include <iostream>
+#include <format>
+#include <exception>
 
 class Vector2 {
 public:
@@ -16,9 +18,9 @@ public:
 };
 
 class Matrix3x3 {
-//variables:
+	//variables:
 public:
-	float a1, a2, a3, b1, b2, b3, c1, c2, c3;
+	float values[3][3] = { {1,0,0},{0,1,0},{0,0,1} };
 
 public:
 	Matrix3x3();
@@ -26,4 +28,10 @@ public:
 
 	Matrix3x3 operator+(Matrix3x3& other);
 	Matrix3x3 operator*(Matrix3x3& other);
+	Matrix3x3 operator*(float& other);
+	Matrix3x3 operator/(float& other);
+
+	float deteminant();
+	Matrix3x3 inverse();
+	std::string toString();
 };
