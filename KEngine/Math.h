@@ -1,37 +1,63 @@
-#pragma once
-#include <cmath>
-#include <iostream>
-#include <format>
-#include <exception>
+#ifndef LINEAR_ALGEBRA_H
+#define LINEAR_ALGEBRA_H
 
+#include <vector>
+#include <cmath>
+#include <string>
+
+// Vector class for 2D vectors
 class Vector2 {
 public:
-	float x;
-	float y;
-public:
-	Vector2();
-	Vector2(float x, float y);
+    float x, y;
 
-	//vector operations
-	Vector2 operator+(Vector2& other);
-	Vector2 operator-(Vector2& other);
+    Vector2();
+    Vector2(float x, float y);
+
+    Vector2 operator+(const Vector2& other) const;
+    Vector2 operator-(const Vector2& other) const;
+    Vector2 operator*(float scalar) const;
+    float dot(const Vector2& other) const;
+    float magnitude() const;
+    Vector2 normalize() const;
 };
 
-class Matrix3x3 {
-	//variables:
+// Vector class for 3D vectors
+class Vector3 {
 public:
-	float values[3][3] = { {1,0,0},{0,1,0},{0,0,1} };
+    float x, y, z;
 
-public:
-	Matrix3x3();
-	Matrix3x3(float a1, float a2, float a3, float b1, float b2, float b3, float c1, float c2, float c3);
+    Vector3();
+    Vector3(float x, float y, float z);
 
-	Matrix3x3 operator+(Matrix3x3& other);
-	Matrix3x3 operator*(Matrix3x3& other);
-	Matrix3x3 operator*(float& other);
-	Matrix3x3 operator/(float& other);
-
-	float deteminant();
-	Matrix3x3 inverse();
-	std::string toString();
+    Vector3 operator+(const Vector3& other) const;
+    Vector3 operator-(const Vector3& other) const;
+    Vector3 operator*(float scalar) const;
+    float dot(const Vector3& other) const;
+    Vector3 cross(const Vector3& other) const;
+    float magnitude() const;
+    Vector3 normalize() const;
 };
+
+// Matrix class for 3x3 matrices
+class Matrix3 {
+public:
+    std::vector<float> data;
+
+    Matrix3();
+
+    Matrix3 operator*(const Matrix3& other) const;
+    Matrix3 inverse();
+    std::string toString() const;
+};
+
+class Matrix4 {
+public:
+    std::vector<float> data;
+
+    Matrix4();
+
+    Matrix4 operator*(const Matrix4& other) const;
+    Matrix4 inverse() const;
+};
+
+#endif // LINEAR_ALGEBRA_H
