@@ -143,6 +143,7 @@
   <ItemGroup>
     <ClCompile Include="App.cpp" />
     <ClCompile Include="Entity.cpp" />
+    <ClCompile Include="Entity2D.cpp" />
     <ClCompile Include="IComponent.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Math.cpp" />
@@ -151,12 +152,21 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="App.h" />
+    <ClInclude Include="Components.h" />
     <ClInclude Include="Entity.h" />
+    <ClInclude Include="Entity2D.h" />
     <ClInclude Include="Math.h" />
     <ClInclude Include="IComponent.h" />
     <ClInclude Include="resource.h" />
+    <ClInclude Include="resource1.h" />
     <ClInclude Include="SpriteComponent.h" />
     <ClInclude Include="Transform.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="KEngine.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="test.bmp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

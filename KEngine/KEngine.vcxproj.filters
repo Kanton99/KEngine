@@ -13,6 +13,12 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="File di intestazione\Components">
+      <UniqueIdentifier>{ae144290-58d1-4b19-bcd8-57429eb7a0f6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources">
+      <UniqueIdentifier>{249e83ce-8761-49ac-9623-dac34980d12b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -36,6 +42,9 @@
     <ClCompile Include="SpriteComponent.cpp">
       <Filter>File di origine</Filter>
     </ClCompile>
+    <ClCompile Include="Entity2D.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="App.h">
@@ -47,9 +56,6 @@
     <ClInclude Include="IComponent.h">
       <Filter>File di intestazione</Filter>
     </ClInclude>
-    <ClInclude Include="Transform.h">
-      <Filter>File di intestazione</Filter>
-    </ClInclude>
     <ClInclude Include="resource.h">
       <Filter>File di intestazione</Filter>
     </ClInclude>
@@ -57,7 +63,29 @@
       <Filter>File di intestazione</Filter>
     </ClInclude>
     <ClInclude Include="SpriteComponent.h">
+      <Filter>File di intestazione\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="Transform.h">
+      <Filter>File di intestazione\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="resource1.h">
       <Filter>File di intestazione</Filter>
     </ClInclude>
+    <ClInclude Include="Entity2D.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="Components.h">
+      <Filter>File di intestazione\Components</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="KEngine.rc">
+      <Filter>File di risorse</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="test.bmp">
+      <Filter>File di risorse</Filter>
+    </Image>
   </ItemGroup>
 </Project>

@@ -4,6 +4,9 @@
 #include <iostream>
 
 #include "Entity.h"
+#include "Entity2D.h"
+
+#include "Components.h"
 class App
 {
 //Variables
@@ -14,7 +17,7 @@ private:
 private:
 	void Input();
 	void Update();
-	void Render();
+	void Render(SDL_Renderer* context);
 public:
 	void start();
 };

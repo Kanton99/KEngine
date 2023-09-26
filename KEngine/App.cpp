@@ -17,9 +17,9 @@ void App::Update()
 	this->root.update();
 }
 
-void App::Render()
+void App::Render(SDL_Renderer *context)
 {
-	
+	this->root.render(context);
 }
 
 void App::start()
@@ -28,9 +28,15 @@ void App::start()
 	SDL_Init(SDL_INIT_VIDEO);
 	SDL_Window* window = SDL_CreateWindow("MyWindow", 0, 20, 800, 600, 0);
 	SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, 0);
+
+	Entity2D *spriteTest = new Entity2D("sprite");
+	this->root.addChild(spriteTest);
+	spriteTest->addComponent(new SpriteComponent("./test.bmp"));
+
+
 	while (true) {
 		Input();
 		Update();
-		Render();
+		Render(renderer);
 	}
 }
