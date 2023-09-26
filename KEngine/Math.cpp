@@ -75,7 +75,11 @@ Vector3 Vector3::normalize() const {
 }
 
 // Matrix3 methods
-Matrix3::Matrix3() : data(9, 0.0f) {}
+Matrix3::Matrix3() : data(9, 0.0f) {
+    for (int i = 0; i < 3; i++) {
+        data[i * 3 + i] = 1.f;
+    }
+}
 
 Matrix3 Matrix3::operator*(const Matrix3& other) const {
     Matrix3 result;
@@ -130,7 +134,11 @@ std::string Matrix3::toString() const {
 }
 
 // Matrix4 methods
-Matrix4::Matrix4() : data(16, 0.0f) {}
+Matrix4::Matrix4() : data(16, 0.0f) {
+    for (int i = 0; i < 4; i++) {
+        data[i * 3 + i] = 1.f;
+    }
+}
 
 Matrix4 Matrix4::operator*(const Matrix4& other) const {
     Matrix4 result;

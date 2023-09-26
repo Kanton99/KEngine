@@ -60,4 +60,5 @@ public:
     Matrix4 inverse() const;
 };
 
+
 #endif // LINEAR_ALGEBRA_H
