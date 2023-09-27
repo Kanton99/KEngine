@@ -6,6 +6,9 @@ void App::Input()
 	while (SDL_PollEvent(&event)) {
 		switch (event.type)
 		{
+		case SDL_QUIT:
+			exit(0);
+			break;
 		default:
 			break;
 		}
@@ -25,7 +28,10 @@ void App::Render(SDL_Renderer *context)
 void App::start()
 {
 	/*std::cout << "test" << std::endl;*/
-	SDL_Init(SDL_INIT_VIDEO);
+	if (SDL_Init(SDL_INIT_VIDEO) < 0) {
+		printf("SDL Could not initialize! SDL_error: %s\n", SDL_GetError());
+		exit(-1);
+	}
 	SDL_Window* window = SDL_CreateWindow("MyWindow", 0, 20, 800, 600, 0);
 	SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, 0);
 

@@ -16,9 +16,6 @@
     <Filter Include="File di intestazione\Components">
       <UniqueIdentifier>{ae144290-58d1-4b19-bcd8-57429eb7a0f6}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Resources">
-      <UniqueIdentifier>{249e83ce-8761-49ac-9623-dac34980d12b}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -53,12 +50,6 @@
     <ClInclude Include="Entity.h">
       <Filter>File di intestazione</Filter>
     </ClInclude>
-    <ClInclude Include="IComponent.h">
-      <Filter>File di intestazione</Filter>
-    </ClInclude>
-    <ClInclude Include="resource.h">
-      <Filter>File di intestazione</Filter>
-    </ClInclude>
     <ClInclude Include="Math.h">
       <Filter>File di intestazione</Filter>
     </ClInclude>
@@ -68,24 +59,14 @@
     <ClInclude Include="Transform.h">
       <Filter>File di intestazione\Components</Filter>
     </ClInclude>
-    <ClInclude Include="resource1.h">
-      <Filter>File di intestazione</Filter>
-    </ClInclude>
     <ClInclude Include="Entity2D.h">
       <Filter>File di intestazione</Filter>
     </ClInclude>
     <ClInclude Include="Components.h">
       <Filter>File di intestazione\Components</Filter>
     </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <ResourceCompile Include="KEngine.rc">
-      <Filter>File di risorse</Filter>
-    </ResourceCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <Image Include="test.bmp">
-      <Filter>File di risorse</Filter>
-    </Image>
+    <ClInclude Include="IComponent.h">
+      <Filter>File di intestazione\Components</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

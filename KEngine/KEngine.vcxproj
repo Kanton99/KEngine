@@ -157,16 +157,8 @@
     <ClInclude Include="Entity2D.h" />
     <ClInclude Include="Math.h" />
     <ClInclude Include="IComponent.h" />
-    <ClInclude Include="resource.h" />
-    <ClInclude Include="resource1.h" />
     <ClInclude Include="SpriteComponent.h" />
     <ClInclude Include="Transform.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <ResourceCompile Include="KEngine.rc" />
-  </ItemGroup>
-  <ItemGroup>
-    <Image Include="test.bmp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

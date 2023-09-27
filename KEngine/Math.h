@@ -1,6 +1,4 @@
-#ifndef LINEAR_ALGEBRA_H
-#define LINEAR_ALGEBRA_H
-
+#pragma once
 #include <vector>
 #include <cmath>
 #include <string>
@@ -60,5 +58,3 @@ public:
     Matrix4 inverse() const;
 };
 
-
-#endif // LINEAR_ALGEBRA_H
