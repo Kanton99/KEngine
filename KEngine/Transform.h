@@ -4,11 +4,22 @@
 #define _USE_MATH_DEFINES
 #include <math.h>
 
-class Transform2D :
+class Transform :
     public IComponent
 {
-private:
-    Matrix3 transform;
+protected:
+    Matrix4 transform;
+
+public:
+    Transform();
+
+    void translate(Vector3 t);
+    void translate(float x, float y, float z);
+};
+
+class Transform2D :
+    public Transform
+{
 
 public:
     Transform2D();

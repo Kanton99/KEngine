@@ -3,15 +3,20 @@
 #include <SDL.h>
 #include <string>
 #include <SDL_image.h>
+#include <memory>
+
+
 class SpriteComponent :
     public IComponent
 {
 public:
-    SDL_Surface *sprite = NULL;
+    std::unique_ptr<SDL_Surface> sprite;
 
 public:
     SpriteComponent();
     SpriteComponent(const char* path);
+    ~SpriteComponent();
+    
 
     void assignSprite(const char* path);
     void render(SDL_Renderer *context);

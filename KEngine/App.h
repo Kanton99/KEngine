@@ -6,12 +6,11 @@
 #include "Entity.h"
 #include "Entity2D.h"
 
-#include "Components.h"
 class App
 {
 //Variables
 private:
-	Entity root;
+	std::unique_ptr<Entity> root;
 
 //Functions
 private:

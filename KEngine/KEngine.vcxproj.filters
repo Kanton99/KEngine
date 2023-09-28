@@ -69,4 +69,7 @@
       <Filter>File di intestazione\Components</Filter>
     </ClInclude>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="ClassDiagram.cd" />
+  </ItemGroup>
 </Project>

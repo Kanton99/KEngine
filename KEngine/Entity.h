@@ -1,31 +1,35 @@
 #pragma once
 #include <vector>
-#include "IComponent.h"
 #include <string>
-#include "Components.h"
+#include "IComponent.h"
+#include <SDL.h>
+#include <memory>
 
-int eCounter = 0;
-
+class IComponent;
 class Entity
 {
 public:
 	std::string id;
 
 protected:
-	std::vector<IComponent*> components;
-	std::vector<Entity*> children;
+	std::vector<std::unique_ptr<IComponent>> components;
+	std::vector<std::unique_ptr<Entity>> children;
+
+	static int eCounter;
 
 public:
 	Entity();
 	Entity(const std::string id);
-	void addComponent(IComponent *component);
-	void removeComponent(IComponent* component);
+	~Entity();
+
+	void addComponent(std::unique_ptr<IComponent> component);
+	void removeComponent(std::unique_ptr<IComponent> component);
 	void updatesComponents();
 
 	void update();
 	void render(SDL_Renderer *context);
 	
-	void addChild(Entity* child);
+	void addChild(std::unique_ptr<Entity> child);
 
 
 };
