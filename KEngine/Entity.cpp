@@ -56,7 +56,7 @@ void Entity::update()
 	}
 }
 
-void Entity::render(SDL_Renderer *context)
+void Entity::render(std::shared_ptr<SDL_Renderer> context)
 {
 	//check render component is there
 	for (auto& component : this->components) {

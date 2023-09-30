@@ -33,13 +33,13 @@
     <ClCompile Include="Transform.cpp">
       <Filter>File di origine</Filter>
     </ClCompile>
-    <ClCompile Include="Math.cpp">
-      <Filter>File di origine</Filter>
-    </ClCompile>
     <ClCompile Include="SpriteComponent.cpp">
       <Filter>File di origine</Filter>
     </ClCompile>
     <ClCompile Include="Entity2D.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="VulkanEngine.cpp">
       <Filter>File di origine</Filter>
     </ClCompile>
   </ItemGroup>
@@ -48,9 +48,6 @@
       <Filter>File di intestazione</Filter>
     </ClInclude>
     <ClInclude Include="Entity.h">
-      <Filter>File di intestazione</Filter>
-    </ClInclude>
-    <ClInclude Include="Math.h">
       <Filter>File di intestazione</Filter>
     </ClInclude>
     <ClInclude Include="SpriteComponent.h">
@@ -67,6 +64,9 @@
     </ClInclude>
     <ClInclude Include="IComponent.h">
       <Filter>File di intestazione\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="VulkanEngine.h">
+      <Filter>File di intestazione</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

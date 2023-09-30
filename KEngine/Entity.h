@@ -27,7 +27,7 @@ public:
 	void updatesComponents();
 
 	void update();
-	void render(SDL_Renderer *context);
+	void render(std::shared_ptr<SDL_Renderer> context);
 	
 	void addChild(std::unique_ptr<Entity> child);
 

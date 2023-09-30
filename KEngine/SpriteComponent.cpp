@@ -31,14 +31,14 @@ void SpriteComponent::assignSprite(const char* path)
 	}
 }
 
-void SpriteComponent::render(SDL_Renderer* context)
+void SpriteComponent::render(std::shared_ptr<SDL_Renderer> context)
 {
 	
-	SDL_Texture* text = SDL_CreateTextureFromSurface(context,sprite.get());
+	SDL_Texture* text = SDL_CreateTextureFromSurface(context.get(), sprite.get());
 	
 	SDL_Rect rect = SDL_Rect();
 	rect.w = sprite->w;
 	rect.h = sprite->h;
-	SDL_RenderCopy(context, text, NULL, &rect);
+	SDL_RenderCopy(context.get(), text, NULL, &rect);
 	SDL_DestroyTexture(text);
 }

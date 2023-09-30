@@ -19,6 +19,6 @@ public:
     
 
     void assignSprite(const char* path);
-    void render(SDL_Renderer *context);
+    void render(std::shared_ptr<SDL_Renderer> context);
 };
 
