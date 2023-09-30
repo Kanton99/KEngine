@@ -1,9 +1,23 @@
 #pragma once
 #include <vulkan/vulkan.h>
+#include <vector>
 class VulkanEngine
 {
 private:
 	VkInstance instance;
+	bool checkValidationSupport();
+	VkDebugUtilsMessengerEXT debugMessenger;
+private:
+	std::vector<const char*> getRequiredExtensions();
+
+	void setupDebugMessenger();
+
+	static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
+		VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
+		VkDebugUtilsMessageTypeFlagsEXT messageType,
+		const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
+		void* pUserData);
+
 
 public:
 	bool _isInitialized{ false };
@@ -20,8 +34,6 @@ public:
 	void draw();
 
 	void run();
-
-	bool checkValidationSupport();
 
 	void createInstance();
 };

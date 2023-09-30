@@ -9,7 +9,7 @@
 #ifdef NDEBUG
 const bool enableValidationLayers = false;
 #else
-const bool enableValidationLAyers = true;
+const bool enableValidationLayers = true;
 #endif
 
 const std::vector<const char*> validationLayers = { "VK_LAYER_KHRONOS_validation" };
@@ -38,8 +38,72 @@ bool VulkanEngine::checkValidationSupport() {
 	return true;
 }
 
+std::vector<const char*> VulkanEngine::getRequiredExtensions()
+{
+
+	unsigned int extCount = 0;
+	SDL_Vulkan_GetInstanceExtensions(this->_window, &extCount, nullptr);
+	const char** extNames = new const char* [extCount];
+	if (!SDL_Vulkan_GetInstanceExtensions(this->_window, &extCount, extNames)) {
+		throw std::runtime_error("Not enough extensions loaded!");
+	}
+
+	std::vector<const char*> extensions(extNames, extNames + extCount);
+
+	if (enableValidationLayers) {
+		extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+	}
+
+	return extensions;
+}
+
+VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pDebugMessenger) {
+	auto func = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(instance, "vkCreateDebugUtilsMessengerEXT");
+	if (func != nullptr) {
+		return func(instance, pCreateInfo, pAllocator, pDebugMessenger);
+	}
+	else {
+		return VK_ERROR_EXTENSION_NOT_PRESENT;
+	}
+}
+
+void VulkanEngine::setupDebugMessenger()
+{
+	if (!enableValidationLayers) return;
+
+	VkDebugUtilsMessengerCreateInfoEXT createInfo{};
+	createInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
+	createInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
+	createInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
+	createInfo.pfnUserCallback = debugCallback;
+	createInfo.pUserData = nullptr;
+
+	auto func = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(this->instance, "vkCreateDebugUtilsMessangerEXT");
+	
+	if (CreateDebugUtilsMessengerEXT(instance, &createInfo, nullptr, &debugMessenger) != VK_SUCCESS) {
+		throw std::runtime_error("failed to set up debug messenger!");
+	}
+}
+
+VKAPI_ATTR VkBool32 VKAPI_CALL VulkanEngine::debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData)
+{
+	if (messageSeverity >= VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT) {
+		std::cerr << "validation layer: " << pCallbackData->pMessage << std::endl;
+		return VK_TRUE;
+	}
+	return VK_FALSE;
+}
+
+void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger, const VkAllocationCallbacks* pAllocator) {
+	auto func = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(instance, "vkDestroyDebugUtilsMessengerEXT");
+	if (func != nullptr) {
+		func(instance, debugMessenger, pAllocator);
+	}
+}
+
+
 void VulkanEngine::createInstance() {
-	if (enableValidationLAyers && !checkValidationSupport()) {
+	if (enableValidationLayers && !checkValidationSupport()) {
 		throw std::runtime_error("validation layers requested, but not available!");
 	}
 
@@ -58,19 +122,11 @@ void VulkanEngine::createInstance() {
 	//TODO 
 	//check for extension support
 
-	unsigned int extCount = 0;
-	SDL_Vulkan_GetInstanceExtensions(this->_window, &extCount, nullptr);
-	const int n = extCount;
-	const char** extNames = new const char*[extCount];
-	if (!SDL_Vulkan_GetInstanceExtensions(this->_window, &extCount, extNames)) {
-		throw std::runtime_error("Not enough extensions loaded!");
-	}
+	auto extensions = getRequiredExtensions();
+	createInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
+	createInfo.ppEnabledExtensionNames = extensions.data();
 
-	createInfo.enabledExtensionCount = extCount;
-	createInfo.ppEnabledExtensionNames = extNames;
-
-
-	if (enableValidationLAyers) {
+	if (enableValidationLayers) {
 		createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
 		createInfo.ppEnabledLayerNames = validationLayers.data();
 	}
@@ -97,11 +153,14 @@ void VulkanEngine::init() {
 
 	createInstance();
 
+	setupDebugMessenger();
 	_isInitialized = true;
 }
 
 void VulkanEngine::cleanup() {
 	if (_isInitialized) {
+		//if (enableValidationLayers) DestroyDebugUtilsMessengerEXT(instance, debugMessenger, nullptr);
+
 		vkDestroyInstance(this->instance, nullptr);
 		SDL_DestroyWindow(_window);
 		SDL_Quit();
