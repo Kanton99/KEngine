@@ -7,6 +7,8 @@ private:
 	VkInstance instance;
 	bool checkValidationSupport();
 	VkDebugUtilsMessengerEXT debugMessenger;
+
+	VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
 private:
 	std::vector<const char*> getRequiredExtensions();
 
@@ -36,5 +38,7 @@ public:
 	void run();
 
 	void createInstance();
+
+	void pickPhysicalDevice();
 };
 

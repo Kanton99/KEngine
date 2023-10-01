@@ -152,14 +152,45 @@ void VulkanEngine::init() {
 	);
 
 	createInstance();
-
 	setupDebugMessenger();
+	pickPhysicalDevice();
+
+
 	_isInitialized = true;
+}
+
+bool isDeviceSuitable(VkPhysicalDevice device) {
+	VkPhysicalDeviceProperties deviceProperties;
+	vkGetPhysicalDeviceProperties(device, &deviceProperties);
+
+	VkPhysicalDeviceFeatures deviceFeatures;
+	vkGetPhysicalDeviceFeatures(device, &deviceFeatures);
+
+	return deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU && deviceFeatures.geometryShader;
+}
+
+void VulkanEngine::pickPhysicalDevice()
+{
+	uint32_t deviceCount = 0;
+	vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
+	if (!deviceCount) throw std::runtime_error("failed to find GPUs with Vulkan Support");
+
+	std::vector<VkPhysicalDevice> devices(deviceCount);
+	vkEnumeratePhysicalDevices(instance, &deviceCount, devices.data());
+
+	for (const auto& device : devices) {
+		if (isDeviceSuitable(device)) {
+			physicalDevice = device;
+			break;
+		}
+	}
+
+	if (physicalDevice == VK_NULL_HANDLE) throw std::runtime_error("failed to find suitable GPU");
 }
 
 void VulkanEngine::cleanup() {
 	if (_isInitialized) {
-		//if (enableValidationLayers) DestroyDebugUtilsMessengerEXT(instance, debugMessenger, nullptr);
+		if (enableValidationLayers) DestroyDebugUtilsMessengerEXT(instance, debugMessenger, nullptr);
 
 		vkDestroyInstance(this->instance, nullptr);
 		SDL_DestroyWindow(_window);
