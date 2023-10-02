@@ -6,6 +6,7 @@
 #include <iostream>
 #include <vector>
 #include <optional>
+#include <set>
 
 #ifdef NDEBUG
 const bool enableValidationLayers = false;
@@ -155,30 +156,30 @@ void VulkanEngine::init() {
 
 	createInstance();
 	setupDebugMessenger();
+	createSurface();
 	pickPhysicalDevice();
 	createLogicalDevice();
 
 	_isInitialized = true;
 }
 
-struct QueueFanilyIndices {
-	std::optional<uint32_t> graphicsFamily;
 
-	bool isComplete() {
-		return graphicsFamily.has_value();
-	}
-};
 
-QueueFanilyIndices findQueueFamilies(VkPhysicalDevice device) {
+QueueFanilyIndices VulkanEngine::findQueueFamilies(VkPhysicalDevice device) {
 	QueueFanilyIndices indices;
 
 	unsigned int queueFamilyCount = 0;
 	vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, nullptr);
 	std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
 	vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilies.data());
+	
+
 	int i = 0;
 	for (const auto& queueFamily : queueFamilies) {
 		if (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) indices.graphicsFamily = i;
+		VkBool32 presentSupport = false;
+		vkGetPhysicalDeviceSurfaceSupportKHR(device, i, surface, &presentSupport);
+		if (presentSupport) indices.presentFamily = i;
 		if (indices.isComplete()) break;
 		i++;
 	}
@@ -186,7 +187,7 @@ QueueFanilyIndices findQueueFamilies(VkPhysicalDevice device) {
 	return indices;
 }
 
-bool isDeviceSuitable(VkPhysicalDevice device) {
+bool VulkanEngine::isDeviceSuitable(VkPhysicalDevice device) {
 	/*VkPhysicalDeviceProperties deviceProperties;
 	vkGetPhysicalDeviceProperties(device, &deviceProperties);
 
@@ -224,19 +225,26 @@ void VulkanEngine::createLogicalDevice()
 	device = VkDevice();
 	QueueFanilyIndices indeces = findQueueFamilies(physicalDevice);
 
-	VkDeviceQueueCreateInfo queueCreateInfo{};
-	queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-	queueCreateInfo.queueFamilyIndex = indeces.graphicsFamily.value();
-	queueCreateInfo.queueCount = 1;
 
 	float queuePriority = 1.f;
-	queueCreateInfo.pQueuePriorities = &queuePriority;
+
+	std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
+	std::set<uint32_t> uniqueQueueFamilies = { indeces.graphicsFamily.value(),indeces.presentFamily.value() };
+
+	for (auto queueFamily : uniqueQueueFamilies) {
+		VkDeviceQueueCreateInfo queueCreateInfo{};
+		queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+		queueCreateInfo.queueFamilyIndex = queueFamily;
+		queueCreateInfo.queueCount = 1;
+		queueCreateInfo.pQueuePriorities = &queuePriority;
+		queueCreateInfos.push_back(queueCreateInfo);
+	}
 
 	VkPhysicalDeviceFeatures deviceFeatures{};
 	VkDeviceCreateInfo createInfo{};
 	createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-	createInfo.pQueueCreateInfos = &queueCreateInfo;
-	createInfo.queueCreateInfoCount = 1;
+	createInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
+	createInfo.pQueueCreateInfos = queueCreateInfos.data();
 
 	createInfo.pEnabledFeatures = &deviceFeatures;
 
@@ -253,13 +261,14 @@ void VulkanEngine::createLogicalDevice()
 	if (vkCreateDevice(physicalDevice, &createInfo, nullptr, &device) != VK_SUCCESS) throw std::runtime_error("failed to create logical device!");
 
 	vkGetDeviceQueue(device, indeces.graphicsFamily.value(), 0, &graphicsQueue);
+	vkGetDeviceQueue(device, indeces.presentFamily.value(), 0, &presentQueue);
 }
 
 void VulkanEngine::cleanup() {
 	if (_isInitialized) {
 		vkDestroyDevice(device, nullptr);
 		if (enableValidationLayers) DestroyDebugUtilsMessengerEXT(instance, debugMessenger, nullptr);
-
+		vkDestroySurfaceKHR(instance, surface, nullptr);
 		vkDestroyInstance(this->instance, nullptr);
 		SDL_DestroyWindow(_window);
 		SDL_Quit();
@@ -282,4 +291,8 @@ void VulkanEngine::run() {
 
 		draw();
 	}
+}
+
+void VulkanEngine::createSurface() {
+	if (SDL_Vulkan_CreateSurface(_window, instance, &surface) == SDL_FALSE) throw std::runtime_error("Couldn't create Vulkan Surface");
 }

@@ -1,6 +1,16 @@
 #pragma once
 #include <vulkan/vulkan.h>
 #include <vector>
+#include <optional>
+struct QueueFanilyIndices {
+	std::optional<uint32_t> graphicsFamily;
+	std::optional<unsigned int> presentFamily;
+
+	bool isComplete() {
+		return graphicsFamily.has_value() && presentFamily.has_value();
+	}
+};
+
 class VulkanEngine
 {
 private:
@@ -12,6 +22,9 @@ private:
 	VkDevice device;
 
 	VkQueue graphicsQueue;
+	VkQueue presentQueue;
+
+	VkSurfaceKHR surface;
 private:
 
 	std::vector<const char*> getRequiredExtensions();
@@ -24,6 +37,17 @@ private:
 		const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
 		void* pUserData);
 
+	void createSurface();
+
+	void createInstance();
+
+	void pickPhysicalDevice();
+
+	void createLogicalDevice();
+
+	QueueFanilyIndices findQueueFamilies(VkPhysicalDevice device);
+
+	bool isDeviceSuitable(VkPhysicalDevice device);
 
 public:
 	bool _isInitialized{ false };
@@ -41,10 +65,5 @@ public:
 
 	void run();
 
-	void createInstance();
-
-	void pickPhysicalDevice();
-
-	void createLogicalDevice();
 };
 
