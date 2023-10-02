@@ -11,6 +11,12 @@ struct QueueFanilyIndices {
 	}
 };
 
+struct SwapChainSupportDetails {
+	VkSurfaceCapabilitiesKHR capabilities;
+	std::vector<VkSurfaceFormatKHR> formats;
+	std::vector<VkPresentModeKHR> presentModes;
+};
+
 class VulkanEngine
 {
 private:
@@ -21,10 +27,28 @@ private:
 	VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
 	VkDevice device;
 
+#pragma region Queues
 	VkQueue graphicsQueue;
 	VkQueue presentQueue;
+#pragma endregion
 
 	VkSurfaceKHR surface;
+
+	const std::vector<const char*> deviceExtensions = {
+		VK_KHR_SWAPCHAIN_EXTENSION_NAME
+	};
+
+#pragma region Swap Chain
+	VkSwapchainKHR swapChain;
+
+	std::vector<VkImage> swapChainImages;
+
+	VkFormat swapChainImageFormat;
+	VkExtent2D swapChainExtent;
+
+	std::vector<VkImageView> swapChainImageViews;
+#pragma endregion
+
 private:
 
 	std::vector<const char*> getRequiredExtensions();
@@ -49,6 +73,16 @@ private:
 
 	bool isDeviceSuitable(VkPhysicalDevice device);
 
+	bool checkDeviceExtensionSupport(VkPhysicalDevice device);
+
+	SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device);
+
+	VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);
+
+	VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes);
+	VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR capabilities);
+	void createSwapChain();
+	void createImageViews();
 public:
 	bool _isInitialized{ false };
 	int _frameNumber{ 0 };
@@ -66,4 +100,3 @@ public:
 	void run();
 
 };
-
