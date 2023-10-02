@@ -5,6 +5,7 @@
 
 #include <iostream>
 #include <vector>
+#include <optional>
 
 #ifdef NDEBUG
 const bool enableValidationLayers = false;
@@ -14,6 +15,7 @@ const bool enableValidationLayers = true;
 
 const std::vector<const char*> validationLayers = { "VK_LAYER_KHRONOS_validation" };
 
+#pragma region debug
 bool VulkanEngine::checkValidationSupport() {
 	unsigned int layerCount;
 	vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
@@ -100,7 +102,7 @@ void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT
 		func(instance, debugMessenger, pAllocator);
 	}
 }
-
+#pragma endregion
 
 void VulkanEngine::createInstance() {
 	if (enableValidationLayers && !checkValidationSupport()) {
@@ -154,19 +156,48 @@ void VulkanEngine::init() {
 	createInstance();
 	setupDebugMessenger();
 	pickPhysicalDevice();
-
+	createLogicalDevice();
 
 	_isInitialized = true;
 }
 
+struct QueueFanilyIndices {
+	std::optional<uint32_t> graphicsFamily;
+
+	bool isComplete() {
+		return graphicsFamily.has_value();
+	}
+};
+
+QueueFanilyIndices findQueueFamilies(VkPhysicalDevice device) {
+	QueueFanilyIndices indices;
+
+	unsigned int queueFamilyCount = 0;
+	vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, nullptr);
+	std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
+	vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilies.data());
+	int i = 0;
+	for (const auto& queueFamily : queueFamilies) {
+		if (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) indices.graphicsFamily = i;
+		if (indices.isComplete()) break;
+		i++;
+	}
+
+	return indices;
+}
+
 bool isDeviceSuitable(VkPhysicalDevice device) {
-	VkPhysicalDeviceProperties deviceProperties;
+	/*VkPhysicalDeviceProperties deviceProperties;
 	vkGetPhysicalDeviceProperties(device, &deviceProperties);
 
 	VkPhysicalDeviceFeatures deviceFeatures;
 	vkGetPhysicalDeviceFeatures(device, &deviceFeatures);
 
-	return deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU && deviceFeatures.geometryShader;
+	return deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU && deviceFeatures.geometryShader;*/
+
+	QueueFanilyIndices indeces = findQueueFamilies(device);
+
+	return indeces.isComplete();
 }
 
 void VulkanEngine::pickPhysicalDevice()
@@ -188,8 +219,45 @@ void VulkanEngine::pickPhysicalDevice()
 	if (physicalDevice == VK_NULL_HANDLE) throw std::runtime_error("failed to find suitable GPU");
 }
 
+void VulkanEngine::createLogicalDevice()
+{
+	device = VkDevice();
+	QueueFanilyIndices indeces = findQueueFamilies(physicalDevice);
+
+	VkDeviceQueueCreateInfo queueCreateInfo{};
+	queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+	queueCreateInfo.queueFamilyIndex = indeces.graphicsFamily.value();
+	queueCreateInfo.queueCount = 1;
+
+	float queuePriority = 1.f;
+	queueCreateInfo.pQueuePriorities = &queuePriority;
+
+	VkPhysicalDeviceFeatures deviceFeatures{};
+	VkDeviceCreateInfo createInfo{};
+	createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+	createInfo.pQueueCreateInfos = &queueCreateInfo;
+	createInfo.queueCreateInfoCount = 1;
+
+	createInfo.pEnabledFeatures = &deviceFeatures;
+
+	createInfo.enabledExtensionCount = 0;
+
+	if (enableValidationLayers) {
+		createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
+		createInfo.ppEnabledLayerNames = validationLayers.data();
+	}
+	else {
+		createInfo.enabledLayerCount = 0;
+	}
+
+	if (vkCreateDevice(physicalDevice, &createInfo, nullptr, &device) != VK_SUCCESS) throw std::runtime_error("failed to create logical device!");
+
+	vkGetDeviceQueue(device, indeces.graphicsFamily.value(), 0, &graphicsQueue);
+}
+
 void VulkanEngine::cleanup() {
 	if (_isInitialized) {
+		vkDestroyDevice(device, nullptr);
 		if (enableValidationLayers) DestroyDebugUtilsMessengerEXT(instance, debugMessenger, nullptr);
 
 		vkDestroyInstance(this->instance, nullptr);

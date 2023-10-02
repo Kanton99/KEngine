@@ -9,7 +9,11 @@ private:
 	VkDebugUtilsMessengerEXT debugMessenger;
 
 	VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
+	VkDevice device;
+
+	VkQueue graphicsQueue;
 private:
+
 	std::vector<const char*> getRequiredExtensions();
 
 	void setupDebugMessenger();
@@ -40,5 +44,7 @@ public:
 	void createInstance();
 
 	void pickPhysicalDevice();
+
+	void createLogicalDevice();
 };
 
