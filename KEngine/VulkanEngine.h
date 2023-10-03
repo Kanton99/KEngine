@@ -49,6 +49,10 @@ private:
 	std::vector<VkImageView> swapChainImageViews;
 #pragma endregion
 
+	VkRenderPass renderPass;
+	VkPipelineLayout pipelineLayout;
+	VkPipeline graphicsPipeline;
+
 private:
 
 	std::vector<const char*> getRequiredExtensions();
@@ -83,6 +87,9 @@ private:
 	VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR capabilities);
 	void createSwapChain();
 	void createImageViews();
+	VkShaderModule createShaderModule(const std::vector<char>& code);
+	void createGraphicsPipeline();
+	void createRenderPass();
 public:
 	bool _isInitialized{ false };
 	int _frameNumber{ 0 };

@@ -16,6 +16,9 @@
     <Filter Include="File di intestazione\Components">
       <UniqueIdentifier>{ae144290-58d1-4b19-bcd8-57429eb7a0f6}</UniqueIdentifier>
     </Filter>
+    <Filter Include="File di risorse\Shaders">
+      <UniqueIdentifier>{2831e99f-2b54-421f-bbd7-a9c928369489}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -68,8 +71,20 @@
     <ClInclude Include="VulkanEngine.h">
       <Filter>File di intestazione</Filter>
     </ClInclude>
+    <ClInclude Include="resource.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="ClassDiagram.cd" />
+    <None Include="compile.bat">
+      <Filter>File di origine</Filter>
+    </None>
+    <None Include="Resources\Shaders\Default\BaseFrag.frag">
+      <Filter>File di risorse\Shaders</Filter>
+    </None>
+    <None Include="Resources\Shaders\Default\BaseVertex.vert">
+      <Filter>File di risorse\Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

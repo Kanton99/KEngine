@@ -158,12 +158,16 @@
     <ClInclude Include="Entity.h" />
     <ClInclude Include="Entity2D.h" />
     <ClInclude Include="IComponent.h" />
+    <ClInclude Include="resource.h" />
     <ClInclude Include="SpriteComponent.h" />
     <ClInclude Include="Transform.h" />
     <ClInclude Include="VulkanEngine.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="ClassDiagram.cd" />
+    <None Include="compile.bat" />
+    <None Include="Resources\Shaders\Default\BaseFrag.frag" />
+    <None Include="Resources\Shaders\Default\BaseVertex.vert" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
