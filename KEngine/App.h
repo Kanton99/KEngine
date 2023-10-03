@@ -21,5 +21,6 @@ private:
 	void Render(std::shared_ptr<SDL_Renderer> context);
 public:
 	void start();
+	void init();
 };
 

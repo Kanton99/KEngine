@@ -2,7 +2,7 @@
 #include <vulkan/vulkan.h>
 #include <vector>
 #include <optional>
-struct QueueFanilyIndices {
+struct QueueFamilyIndices {
 	std::optional<uint32_t> graphicsFamily;
 	std::optional<unsigned int> presentFamily;
 
@@ -19,13 +19,14 @@ struct SwapChainSupportDetails {
 
 class VulkanEngine
 {
+public:
+	VkDevice device;
 private:
 	VkInstance instance;
 	bool checkValidationSupport();
 	VkDebugUtilsMessengerEXT debugMessenger;
 
 	VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
-	VkDevice device;
 
 #pragma region Queues
 	VkQueue graphicsQueue;
@@ -53,6 +54,15 @@ private:
 	VkPipelineLayout pipelineLayout;
 	VkPipeline graphicsPipeline;
 
+	std::vector<VkFramebuffer> swapChainFrameBuffers;
+
+	VkCommandPool commandPool;
+	VkCommandBuffer commandBuffer;
+
+	VkSemaphore imageAvailableSemaphore;
+	VkSemaphore renderFinishedSemaphore;
+	VkFence inFlightFence;
+
 private:
 
 	std::vector<const char*> getRequiredExtensions();
@@ -73,7 +83,7 @@ private:
 
 	void createLogicalDevice();
 
-	QueueFanilyIndices findQueueFamilies(VkPhysicalDevice device);
+	QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device);
 
 	bool isDeviceSuitable(VkPhysicalDevice device);
 
@@ -90,6 +100,11 @@ private:
 	VkShaderModule createShaderModule(const std::vector<char>& code);
 	void createGraphicsPipeline();
 	void createRenderPass();
+	void createFrameBuffers();
+	void createCommandPool();
+	void createCommandBuffer();
+	void recordCommandBuffer(VkCommandBuffer commandBuffer, unsigned int imageIndex);
+	void createSyncObjects();
 public:
 	bool _isInitialized{ false };
 	int _frameNumber{ 0 };
@@ -102,8 +117,5 @@ public:
 
 	void cleanup();
 
-	void draw();
-
-	void run();
-
+	void drawFrame();
 };
