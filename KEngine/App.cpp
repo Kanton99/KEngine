@@ -19,6 +19,17 @@ void App::Input()
 			engine->cleanup();
 			exit(0);
 			break;
+		case SDL_WINDOWEVENT:
+			switch (event.window.event)
+			{
+			case SDL_WINDOWEVENT_MINIMIZED:
+			case SDL_WINDOWEVENT_RESIZED:
+				engine->framebufferResized = true;
+				break;
+			default:
+				break;
+			}
+			break;
 		default:
 			break;
 		}

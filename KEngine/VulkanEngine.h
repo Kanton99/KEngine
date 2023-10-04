@@ -21,6 +21,7 @@ class VulkanEngine
 {
 public:
 	VkDevice device;
+	bool framebufferResized = false;
 private:
 	VkInstance instance;
 	bool checkValidationSupport();
@@ -57,12 +58,12 @@ private:
 	std::vector<VkFramebuffer> swapChainFrameBuffers;
 
 	VkCommandPool commandPool;
-	VkCommandBuffer commandBuffer;
+	std::vector<VkCommandBuffer> commandBuffers;
 
-	VkSemaphore imageAvailableSemaphore;
-	VkSemaphore renderFinishedSemaphore;
-	VkFence inFlightFence;
-
+	std::vector<VkSemaphore> imageAvailableSemaphores;
+	std::vector<VkSemaphore> renderFinishedSemaphores;
+	std::vector<VkFence> inFlightFences;
+	unsigned int currentFrame = 0;
 private:
 
 	std::vector<const char*> getRequiredExtensions();
@@ -102,9 +103,10 @@ private:
 	void createRenderPass();
 	void createFrameBuffers();
 	void createCommandPool();
-	void createCommandBuffer();
+	void createCommandBuffers();
 	void recordCommandBuffer(VkCommandBuffer commandBuffer, unsigned int imageIndex);
 	void createSyncObjects();
+	void cleanupSwapChain();
 public:
 	bool _isInitialized{ false };
 	int _frameNumber{ 0 };
@@ -118,4 +120,7 @@ public:
 	void cleanup();
 
 	void drawFrame();
+
+	void recreateSwapChain();
+
 };
