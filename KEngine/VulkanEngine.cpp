@@ -20,7 +20,6 @@ const bool enableValidationLayers = true;
 
 const std::vector<const char*> validationLayers = { "VK_LAYER_KHRONOS_validation" };
 
-
 static std::vector<char> readFile(const std::string& filename) {
 	std::ifstream file(filename, std::ios::ate | std::ios::binary);
 	if (!file.is_open()) throw std::runtime_error("failed to open file");
@@ -58,25 +57,6 @@ bool VulkanEngine::checkValidationSupport() {
 	}
 
 	return true;
-}
-
-std::vector<const char*> VulkanEngine::getRequiredExtensions()
-{
-
-	unsigned int extCount = 0;
-	SDL_Vulkan_GetInstanceExtensions(this->_window, &extCount, nullptr);
-	const char** extNames = new const char* [extCount];
-	if (SDL_Vulkan_GetInstanceExtensions(this->_window, &extCount, extNames)==SDL_FALSE) {
-		throw std::runtime_error("Not enough extensions loaded!");
-	}
-
-	std::vector<const char*> extensions(extNames, extNames + extCount);
-
-	if (enableValidationLayers) {
-		extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
-	}
-
-	return extensions;
 }
 
 VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pDebugMessenger) {
@@ -124,42 +104,6 @@ void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT
 }
 #pragma endregion
 
-void VulkanEngine::createInstance() {
-	if (enableValidationLayers && !checkValidationSupport()) {
-		throw std::runtime_error("validation layers requested, but not available!");
-	}
-
-	VkApplicationInfo appInfo{};
-	appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-	appInfo.pApplicationName = "test app";
-	appInfo.applicationVersion = VK_MAKE_API_VERSION(1, 1, 0, 0);
-	appInfo.pEngineName = "kEngine";
-	appInfo.engineVersion = VK_MAKE_API_VERSION(1, 0, 0, 1);
-	appInfo.apiVersion = VK_API_VERSION_1_0;
-
-	VkInstanceCreateInfo createInfo{};
-	createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-	createInfo.pApplicationInfo = &appInfo;
-
-	//TODO 
-	//check for extension support
-
-	auto extensions = getRequiredExtensions();
-	createInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
-	createInfo.ppEnabledExtensionNames = extensions.data();
-
-	if (enableValidationLayers) {
-		createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
-		createInfo.ppEnabledLayerNames = validationLayers.data();
-	}
-	else {
-		createInfo.enabledLayerCount = 0;
-	}
-
-	if(vkCreateInstance(&createInfo, nullptr, &instance)!=VK_SUCCESS) throw std::runtime_error("failed to create instance!");
-}
-
-
 void VulkanEngine::init() {
 	SDL_Init(SDL_INIT_VIDEO);
 
@@ -192,6 +136,94 @@ void VulkanEngine::init() {
 	_isInitialized = true;
 }
 
+void VulkanEngine::cleanup() {
+	if (_isInitialized) {
+		cleanupSwapChain();
+
+		vkDestroyPipeline(device, graphicsPipeline, nullptr);
+		vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
+
+		vkDestroyRenderPass(device, renderPass, nullptr);
+
+		for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+			vkDestroySemaphore(device, renderFinishedSemaphores[i], nullptr);
+			vkDestroySemaphore(device, imageAvailableSemaphores[i], nullptr);
+			vkDestroyFence(device, inFlightFences[i], nullptr);
+		}
+
+		vkDestroyCommandPool(device, commandPool, nullptr);
+
+		vkDestroyDevice(device, nullptr);
+
+		if (enableValidationLayers) {
+			DestroyDebugUtilsMessengerEXT(instance, debugMessenger, nullptr);
+		}
+
+		vkDestroySurfaceKHR(instance, surface, nullptr);
+		vkDestroyInstance(instance, nullptr);
+		SDL_DestroyWindow(_window);
+		SDL_Quit();
+	}
+
+}
+
+#pragma region Instance Creation
+std::vector<const char*> VulkanEngine::getRequiredExtensions()
+{
+
+	unsigned int extCount = 0;
+	SDL_Vulkan_GetInstanceExtensions(this->_window, &extCount, nullptr);
+	const char** extNames = new const char* [extCount];
+	if (SDL_Vulkan_GetInstanceExtensions(this->_window, &extCount, extNames) == SDL_FALSE) {
+		throw std::runtime_error("Not enough extensions loaded!");
+	}
+
+	std::vector<const char*> extensions(extNames, extNames + extCount);
+
+	if (enableValidationLayers) {
+		extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+	}
+
+	return extensions;
+}
+
+void VulkanEngine::createInstance() {
+	if (enableValidationLayers && !checkValidationSupport()) {
+		throw std::runtime_error("validation layers requested, but not available!");
+	}
+
+	VkApplicationInfo appInfo{};
+	appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
+	appInfo.pApplicationName = "test app";
+	appInfo.applicationVersion = VK_MAKE_API_VERSION(1, 1, 0, 0);
+	appInfo.pEngineName = "kEngine";
+	appInfo.engineVersion = VK_MAKE_API_VERSION(1, 0, 0, 1);
+	appInfo.apiVersion = VK_API_VERSION_1_0;
+
+	VkInstanceCreateInfo createInfo{};
+	createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+	createInfo.pApplicationInfo = &appInfo;
+
+	//TODO 
+	//check for extension support
+
+	auto extensions = getRequiredExtensions();
+	createInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
+	createInfo.ppEnabledExtensionNames = extensions.data();
+
+	if (enableValidationLayers) {
+		createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
+		createInfo.ppEnabledLayerNames = validationLayers.data();
+	}
+	else {
+		createInfo.enabledLayerCount = 0;
+	}
+
+	if (vkCreateInstance(&createInfo, nullptr, &instance) != VK_SUCCESS) throw std::runtime_error("failed to create instance!");
+}
+#pragma endregion
+
+#pragma region Create Device
 QueueFamilyIndices VulkanEngine::findQueueFamilies(VkPhysicalDevice device) {
 	QueueFamilyIndices indices;
 
@@ -212,6 +244,31 @@ QueueFamilyIndices VulkanEngine::findQueueFamilies(VkPhysicalDevice device) {
 	}
 
 	return indices;
+}
+
+SwapChainSupportDetails VulkanEngine::querySwapChainSupport(VkPhysicalDevice device)
+{
+	SwapChainSupportDetails details;
+
+	vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, surface, &details.capabilities);
+
+	unsigned int formatCount;
+	vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &formatCount, nullptr);
+
+	if (formatCount != 0) {
+		details.formats.resize(formatCount);
+		vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &formatCount, details.formats.data());
+	}
+
+	unsigned int presentModeCount;
+	vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface, &presentModeCount, nullptr);
+
+	if (presentModeCount != 0) {
+		details.presentModes.resize(presentModeCount);
+		vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface, &presentModeCount, details.presentModes.data());
+	}
+
+	return details;
 }
 
 bool VulkanEngine::isDeviceSuitable(VkPhysicalDevice device) {
@@ -246,6 +303,22 @@ void VulkanEngine::pickPhysicalDevice()
 	}
 
 	if (physicalDevice == VK_NULL_HANDLE) throw std::runtime_error("failed to find suitable GPU");
+}
+
+bool VulkanEngine::checkDeviceExtensionSupport(VkPhysicalDevice device)
+{
+	unsigned int extensionCount;
+	vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, nullptr);
+
+	std::vector<VkExtensionProperties> availableExtensions(extensionCount);
+	vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, availableExtensions.data());
+
+	std::set<std::string> requiredExtensions(deviceExtensions.begin(), deviceExtensions.end());
+	for (const auto& extension : availableExtensions) {
+		requiredExtensions.erase(extension.extensionName);
+	}
+
+	return requiredExtensions.empty();
 }
 
 void VulkanEngine::createLogicalDevice()
@@ -290,83 +363,9 @@ void VulkanEngine::createLogicalDevice()
 	vkGetDeviceQueue(device, indeces.graphicsFamily.value(), 0, &graphicsQueue);
 	vkGetDeviceQueue(device, indeces.presentFamily.value(), 0, &presentQueue);
 }
+#pragma endregion
 
-void VulkanEngine::cleanup() {
-	if (_isInitialized) {
-		cleanupSwapChain();
-
-		vkDestroyPipeline(device, graphicsPipeline, nullptr);
-		vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
-
-		vkDestroyRenderPass(device, renderPass, nullptr);
-
-		for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-			vkDestroySemaphore(device, renderFinishedSemaphores[i], nullptr);
-			vkDestroySemaphore(device, imageAvailableSemaphores[i], nullptr);
-			vkDestroyFence(device, inFlightFences[i], nullptr);
-		}
-
-		vkDestroyCommandPool(device, commandPool, nullptr);
-
-		vkDestroyDevice(device, nullptr);
-
-		if (enableValidationLayers) {
-			DestroyDebugUtilsMessengerEXT(instance, debugMessenger, nullptr);
-		}
-
-		vkDestroySurfaceKHR(instance, surface, nullptr);
-		vkDestroyInstance(instance, nullptr);
-		SDL_DestroyWindow(_window);
-		SDL_Quit();
-	}
-
-}
-
-void VulkanEngine::createSurface() {
-	if (SDL_Vulkan_CreateSurface(_window, instance, &surface) == SDL_FALSE) throw std::runtime_error("Couldn't create Vulkan Surface");
-}
-
-bool VulkanEngine::checkDeviceExtensionSupport(VkPhysicalDevice device)
-{
-	unsigned int extensionCount;
-	vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, nullptr);
-
-	std::vector<VkExtensionProperties> availableExtensions(extensionCount);
-	vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, availableExtensions.data());
-
-	std::set<std::string> requiredExtensions(deviceExtensions.begin(), deviceExtensions.end());
-	for (const auto& extension : availableExtensions) {
-		requiredExtensions.erase(extension.extensionName);
-	}
-
-	return requiredExtensions.empty();
-}
-
-SwapChainSupportDetails VulkanEngine::querySwapChainSupport(VkPhysicalDevice device)
-{
-	SwapChainSupportDetails details;
-
-	vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, surface, &details.capabilities);
-
-	unsigned int formatCount;
-	vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &formatCount, nullptr);
-
-	if (formatCount != 0) {
-		details.formats.resize(formatCount);
-		vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &formatCount, details.formats.data());
-	}
-
-	unsigned int presentModeCount;
-	vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface, &presentModeCount, nullptr);
-
-	if (presentModeCount != 0) {
-		details.presentModes.resize(presentModeCount);
-		vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface, &presentModeCount, details.presentModes.data());
-	}
-
-	return details;
-}
-
+#pragma region Create and Recreate Swap Chain
 VkSurfaceFormatKHR VulkanEngine::chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats)
 {
 	for (const auto& availableFormat : availableFormats) {
@@ -402,6 +401,34 @@ VkExtent2D VulkanEngine::chooseSwapExtent(const VkSurfaceCapabilitiesKHR capabil
 
 		return actualExtent;
 	}
+}
+
+void VulkanEngine::cleanupSwapChain() {
+	for (size_t i = 0; i < swapChainFrameBuffers.size(); i++) {
+		vkDestroyFramebuffer(device, swapChainFrameBuffers[i], nullptr);
+	}
+
+	for (size_t i = 0; i < swapChainImageViews.size(); i++) {
+		vkDestroyImageView(device, swapChainImageViews[i], nullptr);
+	}
+
+	vkDestroySwapchainKHR(device, swapChain, nullptr);
+}
+
+void VulkanEngine::recreateSwapChain() {
+	auto min = SDL_GetWindowFlags(_window);
+	while (min & SDL_WINDOW_MINIMIZED) {
+		min = SDL_GetWindowFlags(_window);
+		SDL_WaitEvent(new SDL_Event());
+	}
+
+	vkDeviceWaitIdle(device);
+
+	cleanupSwapChain();
+
+	createSwapChain();
+	createImageViews();
+	createFrameBuffers();
 }
 
 void VulkanEngine::createSwapChain() {
@@ -456,6 +483,12 @@ void VulkanEngine::createSwapChain() {
 
 	swapChainImageFormat = surfaceFormat.format;
 	swapChainExtent = extent;
+}
+#pragma endregion
+
+#pragma region Init Structures
+void VulkanEngine::createSurface() {
+	if (SDL_Vulkan_CreateSurface(_window, instance, &surface) == SDL_FALSE) throw std::runtime_error("Couldn't create Vulkan Surface");
 }
 
 void VulkanEngine::createImageViews() {
@@ -730,6 +763,28 @@ void VulkanEngine::createCommandBuffers() {
 	if (vkAllocateCommandBuffers(device, &allocInfo, commandBuffers.data()) != VK_SUCCESS) throw std::runtime_error("failed to allocate command buffers!");
 }
 
+void VulkanEngine::createSyncObjects() {
+	imageAvailableSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
+	renderFinishedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
+	inFlightFences.resize(MAX_FRAMES_IN_FLIGHT);
+
+	VkSemaphoreCreateInfo semaphoreInfo{};
+	semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+
+	VkFenceCreateInfo fenceInfo{};
+	fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+	fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+
+	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+		if (vkCreateSemaphore(device, &semaphoreInfo, nullptr, &imageAvailableSemaphores[i]) != VK_SUCCESS ||
+			vkCreateSemaphore(device, &semaphoreInfo, nullptr, &renderFinishedSemaphores[i]) != VK_SUCCESS ||
+			vkCreateFence(device, &fenceInfo, nullptr, &inFlightFences[i]) != VK_SUCCESS) {
+			throw std::runtime_error("failed to create semaphores!");
+		}
+	}
+}
+#pragma endregion
+
 void VulkanEngine::recordCommandBuffer(VkCommandBuffer commandBuffer, unsigned int imageIndex) {
 	VkCommandBufferBeginInfo beginInfo{};
 	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -773,27 +828,6 @@ void VulkanEngine::recordCommandBuffer(VkCommandBuffer commandBuffer, unsigned i
 	vkCmdEndRenderPass(commandBuffer);
 
 	if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) throw std::runtime_error("failed to reconrd command buffer");
-}
-
-void VulkanEngine::createSyncObjects() {
-	imageAvailableSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
-	renderFinishedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
-	inFlightFences.resize(MAX_FRAMES_IN_FLIGHT);
-
-	VkSemaphoreCreateInfo semaphoreInfo{};
-	semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-
-	VkFenceCreateInfo fenceInfo{};
-	fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-	fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
-
-	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-		if (vkCreateSemaphore(device, &semaphoreInfo, nullptr, &imageAvailableSemaphores[i]) != VK_SUCCESS ||
-			vkCreateSemaphore(device, &semaphoreInfo, nullptr, &renderFinishedSemaphores[i]) != VK_SUCCESS ||
-			vkCreateFence(device, &fenceInfo, nullptr, &inFlightFences[i]) != VK_SUCCESS) {
-			throw std::runtime_error("failed to create semaphores!");
-		}
-	}
 }
 
 void VulkanEngine::drawFrame() {
@@ -856,32 +890,4 @@ void VulkanEngine::drawFrame() {
 	}
 
 	currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
-}
-
-void VulkanEngine::cleanupSwapChain() {
-	for (size_t i = 0; i < swapChainFrameBuffers.size(); i++) {
-		vkDestroyFramebuffer(device, swapChainFrameBuffers[i], nullptr);
-	}
-
-	for (size_t i = 0; i < swapChainImageViews.size(); i++) {
-		vkDestroyImageView(device, swapChainImageViews[i], nullptr);
-	}
-
-	vkDestroySwapchainKHR(device, swapChain, nullptr);
-}
-
-void VulkanEngine::recreateSwapChain() {
-	auto min = SDL_GetWindowFlags(_window);
-	while (min & SDL_WINDOW_MINIMIZED) {
-		min = SDL_GetWindowFlags(_window);
-		SDL_WaitEvent(new SDL_Event());
-	}
-
-	vkDeviceWaitIdle(device);
-
-	cleanupSwapChain();
-
-	createSwapChain();
-	createImageViews();
-	createFrameBuffers();
 }
