@@ -161,6 +161,7 @@
     <ClInclude Include="resource.h" />
     <ClInclude Include="SpriteComponent.h" />
     <ClInclude Include="Transform.h" />
+    <ClInclude Include="Vertex.h" />
     <ClInclude Include="VulkanEngine.h" />
   </ItemGroup>
   <ItemGroup>

@@ -2,6 +2,8 @@
 #include <vulkan/vulkan.h>
 #include <vector>
 #include <optional>
+
+#include "Vertex.h"
 struct QueueFamilyIndices {
 	std::optional<uint32_t> graphicsFamily;
 	std::optional<unsigned int> presentFamily;
@@ -64,6 +66,9 @@ private:
 	std::vector<VkSemaphore> renderFinishedSemaphores;
 	std::vector<VkFence> inFlightFences;
 	unsigned int currentFrame = 0;
+
+	VkBuffer vertexBuffer;
+	VkDeviceMemory vertexBufferMemory;
 private:
 
 	std::vector<const char*> getRequiredExtensions();
@@ -106,6 +111,8 @@ private:
 	void createCommandBuffers();
 	void recordCommandBuffer(VkCommandBuffer commandBuffer, unsigned int imageIndex);
 	void createSyncObjects();
+	unsigned int findMemoryType(unsigned int typeFilter, VkMemoryPropertyFlags properties);
+	void createVertexBuffer();
 	void cleanupSwapChain();
 public:
 	bool _isInitialized{ false };
