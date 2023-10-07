@@ -112,7 +112,13 @@ private:
 	void recordCommandBuffer(VkCommandBuffer commandBuffer, unsigned int imageIndex);
 	void createSyncObjects();
 	unsigned int findMemoryType(unsigned int typeFilter, VkMemoryPropertyFlags properties);
+
+	void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
+
 	void createVertexBuffer();
+
+	void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
+
 	void cleanupSwapChain();
 public:
 	bool _isInitialized{ false };
