@@ -19,6 +19,12 @@ struct SwapChainSupportDetails {
 	std::vector<VkPresentModeKHR> presentModes;
 };
 
+struct UniformBufferObject {
+	glm::mat4 model;
+	glm::mat4 view;
+	glm::mat4 proj;
+};
+
 class VulkanEngine
 {
 public:
@@ -54,6 +60,7 @@ private:
 #pragma endregion
 
 	VkRenderPass renderPass;
+	VkDescriptorSetLayout descriptorSetLayout;
 	VkPipelineLayout pipelineLayout;
 	VkPipeline graphicsPipeline;
 
@@ -67,8 +74,15 @@ private:
 	std::vector<VkFence> inFlightFences;
 	unsigned int currentFrame = 0;
 
+
 	VkBuffer vertexBuffer;
 	VkDeviceMemory vertexBufferMemory;
+	VkBuffer indexBuffer;
+	VkDeviceMemory indexBufferMemory;
+
+	std::vector<VkBuffer> uniformBuffers;
+	std::vector<VkDeviceMemory> uniformBuffersMemory;
+	std::vector<void*> uniformBuffersMapped;
 private:
 
 	std::vector<const char*> getRequiredExtensions();
@@ -117,7 +131,13 @@ private:
 
 	void createVertexBuffer();
 
+	void createIndexBuffer();
+
 	void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
+
+	void createDesciptorSetLayout();
+
+	void createUniformBuffers();
 
 	void cleanupSwapChain();
 public:
@@ -133,6 +153,8 @@ public:
 	void cleanup();
 
 	void drawFrame();
+
+	void updateUniformBuffer(unsigned int currentImage);
 
 	void recreateSwapChain();
 
