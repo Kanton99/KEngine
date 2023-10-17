@@ -83,6 +83,9 @@ private:
 	std::vector<VkBuffer> uniformBuffers;
 	std::vector<VkDeviceMemory> uniformBuffersMemory;
 	std::vector<void*> uniformBuffersMapped;
+
+	VkDescriptorPool descriptorPool;
+	std::vector<VkDescriptorSet> descriptorSets;
 private:
 
 	std::vector<const char*> getRequiredExtensions();
@@ -138,6 +141,10 @@ private:
 	void createDesciptorSetLayout();
 
 	void createUniformBuffers();
+
+	void createDescriptorPool();
+
+	void createDescriptorSets();
 
 	void cleanupSwapChain();
 public:
