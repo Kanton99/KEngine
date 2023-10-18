@@ -86,6 +86,9 @@ private:
 
 	VkDescriptorPool descriptorPool;
 	std::vector<VkDescriptorSet> descriptorSets;
+
+	VkImage textureImage;
+	VkDeviceMemory textureImageMemory;
 private:
 
 	std::vector<const char*> getRequiredExtensions();

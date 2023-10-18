@@ -68,7 +68,7 @@ void App::init() {
 	IMG_Init(IMG_INIT_JPG & IMG_INIT_PNG);
 	this->root = std::unique_ptr<Entity2D>(new Entity2D("test2DSprite"));
 	std::unique_ptr<Entity2D> spriteTest = std::make_unique<Entity2D>("sprite");
-	spriteTest->addComponent(std::move(std::make_unique<SpriteComponent>("./trasferimento.jpg")));
+	//spriteTest->addComponent(std::move(std::make_unique<SpriteComponent>("./trasferimento.jpg")));
 	this->root->addChild(std::move(spriteTest));
 
 }
