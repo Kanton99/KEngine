@@ -146,6 +146,8 @@ private:
 
 	void createDescriptorSets();
 
+	void createTextureImage();
+
 	void cleanupSwapChain();
 public:
 	bool _isInitialized{ false };

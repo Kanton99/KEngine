@@ -2,6 +2,7 @@
 
 #include <SDL.h>
 #include <SDL_vulkan.h>
+#include <SDL_image.h>
 #define GLM_FORCE_RADIANS
 #include <glm/gtc/matrix_transform.hpp>
 
@@ -134,6 +135,7 @@ void VulkanEngine::init() {
 	createGraphicsPipeline();
 	createFrameBuffers();
 	createCommandPool();
+	createTextureImage();
 	createVertexBuffer();
 	createIndexBuffer();
 	createUniformBuffers();
@@ -1003,6 +1005,12 @@ void VulkanEngine::createDescriptorSets() {
 
 		vkUpdateDescriptorSets(device, 1, &descriptorWrite, 0, nullptr);
 	}
+}
+
+void VulkanEngine::createTextureImage() {
+	int texWidth, texHeight, texChannels;
+	auto pixels = IMG_Load("Resources/Textures/trasferimento.jpg")->pixels;
+
 }
 #pragma endregion
 
