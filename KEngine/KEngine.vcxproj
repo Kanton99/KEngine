@@ -71,8 +71,8 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>C:\VulkanSDK\1.3.261.1\Include;C:\VulkanSDK\1.3.261.1\Include\vk_video;E:\Progetti C++\KEngine\KEngine\SDL2-2.28.3\include;$(IncludePath)</IncludePath>
-    <LibraryPath>E:\Progetti C++\KEngine\KEngine\SDL2-2.28.3\lib\x64;$(LibraryPath)</LibraryPath>
+    <IncludePath>C:\VulkanSDK\1.3.261.1\Include;C:\VulkanSDK\1.3.261.1\Include\vk_video;E:\Progetti C++\KEngine\KEngine\SDL2-2.28.3\include;C:\VulkanSDK\1.3.261.1\Include\SDL2;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\VulkanSDK\1.3.261.1\Lib;E:\Progetti C++\KEngine\KEngine\SDL2-2.28.3\lib\x64;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <IncludePath>C:\VulkanSDK\1.3.261.1\Include;C:\VulkanSDK\1.3.261.1\Include\vk_video;E:\Progetti C++\KEngine\KEngine\SDL2-2.28.3\include;$(IncludePath)</IncludePath>
@@ -112,13 +112,14 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>C:\VulkanSDK\1.3.261.1\Include\glm\gtc;SDL2-2.83.3/include;C:\VulkanSDK\1.3.261.1\Include\glm;C:\VulkanSDK\1.3.261.1\Include\vulkan;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\VulkanSDK\1.3.261.1\Include\SDL2;C:\VulkanSDK\1.3.261.1\Include\glm\gtc;SDL2-2.83.3/include;C:\VulkanSDK\1.3.261.1\Include\glm;C:\VulkanSDK\1.3.261.1\Include\vulkan;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
+      <DisableLanguageExtensions> </DisableLanguageExtensions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>SDL2.lib;SDL2main.lib;SDL2_image.lib;vulkan-1.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>SDL2.lib;SDL2main.lib;vulkan-1.lib;SDL2_image.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>C:\VulkanSDK\1.3.261.1\Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
