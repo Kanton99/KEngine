@@ -89,6 +89,8 @@ private:
 
 	VkImage textureImage;
 	VkDeviceMemory textureImageMemory;
+	VkImageView textureImageView;
+	VkSampler textureSampler;
 private:
 
 	std::vector<const char*> getRequiredExtensions();
@@ -150,6 +152,22 @@ private:
 	void createDescriptorSets();
 
 	void createTextureImage();
+
+	void createImage(unsigned int width, unsigned int height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory);
+
+	VkCommandBuffer beginSingleTimeCommands();
+
+	void endSingleTimeCommands(VkCommandBuffer commandBuffer);
+
+	void transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout);
+
+	void copyBufferToImage(VkBuffer buffer, VkImage image, unsigned int width, unsigned int height);
+
+	void createTextureImageView();
+
+	VkImageView createImageView(VkImage image, VkFormat format);
+
+	void createTextureSampler();
 
 	void cleanupSwapChain();
 public:
