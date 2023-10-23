@@ -996,9 +996,11 @@ void VulkanEngine::createDescriptorSets() {
 	}
 }
 
+//generalize to load any images after initial setup
 void VulkanEngine::createTextureImage() {
 	int texWidth, texHeight, texChannels;
 	auto pixels = IMG_Load("./Resources/Textures/trasferimento.jpg");
+	pixels = SDL_ConvertSurfaceFormat(pixels, SDL_PIXELFORMAT_RGBA32, SDL_SWSURFACE);
 	texWidth = pixels->w;
 	texHeight = pixels->h;
 	VkDeviceSize imageSize = texWidth * texHeight * 4;
@@ -1009,8 +1011,10 @@ void VulkanEngine::createTextureImage() {
 	createBuffer(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
 	void* data;
 	vkMapMemory(device, stagingBufferMemory, 0, imageSize, 0, &data);
+	SDL_LockSurface(pixels);
 	memcpy(data, pixels->pixels, static_cast<size_t>(imageSize));
 	vkUnmapMemory(device, stagingBufferMemory);
+	SDL_UnlockSurface(pixels);
 	SDL_FreeSurface(pixels);
 
 	createImage(texWidth, texHeight, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, textureImage, textureImageMemory);
