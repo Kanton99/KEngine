@@ -91,6 +91,10 @@ private:
 	VkDeviceMemory textureImageMemory;
 	VkImageView textureImageView;
 	VkSampler textureSampler;
+
+	VkImage depthImage;
+	VkDeviceMemory depthImageMemory;
+	VkImageView depthImageView;
 private:
 
 	std::vector<const char*> getRequiredExtensions();
@@ -165,9 +169,15 @@ private:
 
 	void createTextureImageView();
 
-	VkImageView createImageView(VkImage image, VkFormat format);
+	VkImageView createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags);
 
 	void createTextureSampler();
+
+	void createDepthResources();
+
+	VkFormat findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features);
+
+	VkFormat findDepthFormat();
 
 	void cleanupSwapChain();
 public:
