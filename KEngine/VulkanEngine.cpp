@@ -439,6 +439,9 @@ VkExtent2D VulkanEngine::chooseSwapExtent(const VkSurfaceCapabilitiesKHR capabil
 }
 
 void VulkanEngine::cleanupSwapChain() {
+	vkDestroyImageView(device, depthImageView, nullptr);
+	vkDestroyImage(device, depthImage, nullptr);
+	vkFreeMemory(device, depthImageMemory, nullptr);
 	for (size_t i = 0; i < swapChainFrameBuffers.size(); i++) {
 		vkDestroyFramebuffer(device, swapChainFrameBuffers[i], nullptr);
 	}
@@ -463,6 +466,7 @@ void VulkanEngine::recreateSwapChain() {
 
 	createSwapChain();
 	createImageViews();
+	createDepthResources();
 	createFrameBuffers();
 }
 
