@@ -147,6 +147,7 @@ private:
 	void createFrameBuffers();
 	void createCommandPool();
 	void createCommandBuffers();
+	void loadModel();
 	void recordCommandBuffer(VkCommandBuffer commandBuffer, unsigned int imageIndex);
 	void createSyncObjects();
 	unsigned int findMemoryType(unsigned int typeFilter, VkMemoryPropertyFlags properties);

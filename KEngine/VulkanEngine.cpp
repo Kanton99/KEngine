@@ -14,6 +14,10 @@
 #include <algorithm>
 #include <fstream>
 #include <chrono>
+#include <unordered_map>
+
+#define TINYOBJLOADER_IMPLEMENTATION
+#include <tiny_obj_loader.h>
 
 #ifdef NDEBUG
 const bool enableValidationLayers = false;
@@ -140,6 +144,7 @@ void VulkanEngine::init() {
 	createTextureImage();
 	createTextureImageView();
 	createTextureSampler();
+	loadModel();
 	createVertexBuffer();
 	createIndexBuffer();
 	createUniformBuffers();
@@ -1297,6 +1302,39 @@ VkFormat VulkanEngine::findDepthFormat() {
 bool hasStencilComponent(VkFormat format) {
 	return format == VK_FORMAT_D32_SFLOAT_S8_UINT || format == VK_FORMAT_D24_UNORM_S8_UINT;
 }
+
+void VulkanEngine::loadModel() {
+	tinyobj::attrib_t attrib;
+	std::vector<tinyobj::shape_t> shapes;
+	std::vector<tinyobj::material_t> materials;
+	std::string warn, err;
+
+	if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, MODEL_PATH.c_str())) throw std::runtime_error(warn + err);
+	std::unordered_map<Vertex, unsigned int> uniqueVertices{};
+	for (const auto& shape : shapes) {
+		for (const auto& index : shape.mesh.indices) {
+			Vertex vertex{};
+			vertex.pos = {
+				attrib.vertices[(3 * index.vertex_index) + 0],
+				attrib.vertices[(3 * index.vertex_index) + 1],
+				attrib.vertices[(3 * index.vertex_index) + 2]
+			};
+
+			vertex.texCoord = {
+				attrib.texcoords[2 * index.texcoord_index + 0],
+				attrib.texcoords[2 * index.texcoord_index + 1]
+			};
+			vertex.color = { 1.f,1.f,1.f };
+
+			if (uniqueVertices.count(vertex) == 0) {
+				uniqueVertices[vertex] = static_cast<unsigned int>(vertices.size());
+				vertices.push_back(vertex);
+			}
+
+			indices.push_back(uniqueVertices[vertex]);
+		}
+	}
+}
 #pragma endregion
 
 void VulkanEngine::recordCommandBuffer(VkCommandBuffer commandBuffer, unsigned int imageIndex) {
@@ -1344,7 +1382,7 @@ void VulkanEngine::recordCommandBuffer(VkCommandBuffer commandBuffer, unsigned i
 	VkBuffer vertexBuffers[] = { vertexBuffer };
 	VkDeviceSize offesets[] = { 0 };
 	vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offesets);
-	vkCmdBindIndexBuffer(commandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT16);
+	vkCmdBindIndexBuffer(commandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT32);
 	
 	//vkCmdDraw(commandBuffer, static_cast<unsigned int>(vertices.size()), 1, 0, 0);
 	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr);
@@ -1428,7 +1466,7 @@ void VulkanEngine::updateUniformBuffer(unsigned int currentImage) {
 	UniformBufferObject ubo{};
 	ubo.model = glm::rotate(glm::mat4(1.f), time * glm::radians(90.f), glm::vec3(0.f, 0.f, 1.f));
 
-	ubo.view = glm::lookAt(glm::vec3(2.f, 2.f, 2.f), glm::vec3(0.f, 0.f, 0.f), glm::vec3(0.f, 0.f, 1.f));
+	ubo.view = glm::lookAt(glm::vec3(0.3f, 0.3f, 0.3f), glm::vec3(0.f, 0.f, 0.f), glm::vec3(0.f, 0.f, 1.f));
 
 	ubo.proj = glm::perspective(glm::radians(45.f), swapChainExtent.width / (float)swapChainExtent.height, 0.1f, 10.f);
 
