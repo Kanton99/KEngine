@@ -304,7 +304,7 @@ SwapChainSupportDetails VulkanEngine::querySwapChainSupport(VkPhysicalDevice dev
 }
 
 bool VulkanEngine::isDeviceSuitable(VkPhysicalDevice device) {
-	QueueFamilyIndices indeces = findQueueFamilies(device);
+	QueueFamilyIndices indices = findQueueFamilies(device);
 
 	bool extensionSupported = checkDeviceExtensionSupport(device);
 
@@ -317,7 +317,7 @@ bool VulkanEngine::isDeviceSuitable(VkPhysicalDevice device) {
 	VkPhysicalDeviceFeatures supportedFeatures;
 	vkGetPhysicalDeviceFeatures(device, &supportedFeatures);
 
-	return indeces.isComplete() && extensionSupported && swapChainAdequate && supportedFeatures.samplerAnisotropy;
+	return indices.isComplete() && extensionSupported && swapChainAdequate && supportedFeatures.samplerAnisotropy;
 }
 
 void VulkanEngine::pickPhysicalDevice()
@@ -358,13 +358,13 @@ bool VulkanEngine::checkDeviceExtensionSupport(VkPhysicalDevice device)
 void VulkanEngine::createLogicalDevice()
 {
 	device = VkDevice();
-	QueueFamilyIndices indeces = findQueueFamilies(physicalDevice);
+	QueueFamilyIndices indices = findQueueFamilies(physicalDevice);
 
 
 	float queuePriority = 1.f;
 
 	std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
-	std::set<unsigned int> uniqueQueueFamilies = { indeces.graphicsFamily.value(),indeces.presentFamily.value() };
+	std::set<unsigned int> uniqueQueueFamilies = { indices.graphicsFamily.value(),indices.presentFamily.value() };
 
 	for (auto queueFamily : uniqueQueueFamilies) {
 		VkDeviceQueueCreateInfo queueCreateInfo{};
@@ -395,8 +395,8 @@ void VulkanEngine::createLogicalDevice()
 
 	if (vkCreateDevice(physicalDevice, &createInfo, nullptr, &device) != VK_SUCCESS) throw std::runtime_error("failed to create logical device!");
 
-	vkGetDeviceQueue(device, indeces.graphicsFamily.value(), 0, &graphicsQueue);
-	vkGetDeviceQueue(device, indeces.presentFamily.value(), 0, &presentQueue);
+	vkGetDeviceQueue(device, indices.graphicsFamily.value(), 0, &graphicsQueue);
+	vkGetDeviceQueue(device, indices.presentFamily.value(), 0, &presentQueue);
 }
 #pragma endregion
 
@@ -898,7 +898,7 @@ void VulkanEngine::createVertexBuffer() {
 }
 
 void VulkanEngine::createIndexBuffer() {
-	VkDeviceSize bufferSize = sizeof(indeces[0]) * indeces.size();
+	VkDeviceSize bufferSize = sizeof(indices[0]) * indices.size();
 
 	VkBuffer stagingBuffer;
 	VkDeviceMemory stagingBufferMemory;
@@ -906,7 +906,7 @@ void VulkanEngine::createIndexBuffer() {
 
 	void* data;
 	vkMapMemory(device, stagingBufferMemory, 0, bufferSize, 0, &data);
-	memcpy(data, indeces.data(), (size_t)bufferSize);
+	memcpy(data, indices.data(), (size_t)bufferSize);
 	vkUnmapMemory(device, stagingBufferMemory);
 
 	createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, indexBuffer, indexBufferMemory);
@@ -1033,8 +1033,10 @@ void VulkanEngine::createDescriptorSets() {
 
 //generalize to load any images after initial setup
 void VulkanEngine::createTextureImage() {
-	int texWidth, texHeight, texChannels;
-	auto pixels = IMG_Load("./Resources/Textures/trasferimento.jpg");
+	int texWidth, texHeight;
+	auto pixels = IMG_Load(TEXTURE_PATH.c_str());
+	if (!pixels) throw std::runtime_error("Failed loading the texture");
+	pixels = SDL_ConvertSurfaceFormat(pixels, SDL_PIXELFORMAT_RGBA32, 0);
 	texWidth = pixels->w;
 	texHeight = pixels->h;
 	VkDeviceSize imageSize = texWidth * texHeight * 4;
@@ -1045,10 +1047,10 @@ void VulkanEngine::createTextureImage() {
 	createBuffer(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
 	void* data;
 	vkMapMemory(device, stagingBufferMemory, 0, imageSize, 0, &data);
-	SDL_LockSurface(pixels);
+	//SDL_LockSurface(pixels);
 	memcpy(data, pixels->pixels, static_cast<size_t>(imageSize));
 	vkUnmapMemory(device, stagingBufferMemory);
-	SDL_UnlockSurface(pixels);
+	//SDL_UnlockSurface(pixels);
 	SDL_FreeSurface(pixels);
 
 	createImage(texWidth, texHeight, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, textureImage, textureImageMemory);
@@ -1347,7 +1349,7 @@ void VulkanEngine::recordCommandBuffer(VkCommandBuffer commandBuffer, unsigned i
 	//vkCmdDraw(commandBuffer, static_cast<unsigned int>(vertices.size()), 1, 0, 0);
 	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr);
 
-	vkCmdDrawIndexed(commandBuffer, static_cast<uint16_t>(indeces.size()), 1, 0, 0, 0);
+	vkCmdDrawIndexed(commandBuffer, static_cast<uint16_t>(indices.size()), 1, 0, 0, 0);
 	vkCmdEndRenderPass(commandBuffer);
 
 	if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) throw std::runtime_error("failed to reconrd command buffer");

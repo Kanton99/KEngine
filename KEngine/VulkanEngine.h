@@ -10,7 +10,7 @@ const unsigned int WIDTH = 800;
 const unsigned int HEIGHT = 600;
 
 const std::string MODEL_PATH = "Resources/Models/gunaxe.obj";
-const std::string TEXTURE_PATH = "Resources/Models/lambert4_Base_color.png";
+const std::string TEXTURE_PATH = "Resources/Textures/lambert4_Base_color.png";
 
 struct QueueFamilyIndices {
 	std::optional<uint32_t> graphicsFamily;
@@ -83,6 +83,8 @@ private:
 	unsigned int currentFrame = 0;
 
 
+	std::vector<Vertex> vertices;
+	std::vector<unsigned int> indices;
 	VkBuffer vertexBuffer;
 	VkDeviceMemory vertexBufferMemory;
 	VkBuffer indexBuffer;
@@ -94,15 +96,17 @@ private:
 
 	VkDescriptorPool descriptorPool;
 	std::vector<VkDescriptorSet> descriptorSets;
-
+private: //textures
 	VkImage textureImage;
 	VkDeviceMemory textureImageMemory;
 	VkImageView textureImageView;
 	VkSampler textureSampler;
 
+private: //depth buffer
 	VkImage depthImage;
 	VkDeviceMemory depthImageMemory;
 	VkImageView depthImageView;
+
 private:
 
 	std::vector<const char*> getRequiredExtensions();
