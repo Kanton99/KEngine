@@ -2,8 +2,16 @@
 #include <vulkan/vulkan.h>
 #include <vector>
 #include <optional>
+#include <string>
 
 #include "Vertex.h"
+
+const unsigned int WIDTH = 800;
+const unsigned int HEIGHT = 600;
+
+const std::string MODEL_PATH = "Resources/Models/gunaxe.obj";
+const std::string TEXTURE_PATH = "Resources/Models/lambert4_Base_color.png";
+
 struct QueueFamilyIndices {
 	std::optional<uint32_t> graphicsFamily;
 	std::optional<unsigned int> presentFamily;

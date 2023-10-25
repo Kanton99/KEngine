@@ -998,7 +998,7 @@ void VulkanEngine::createDescriptorSets() {
 
 void VulkanEngine::createTextureImage() {
 	int texWidth, texHeight, texChannels;
-	auto pixels = IMG_Load("./Resources/Textures/trasferimento.jpg");
+	auto pixels = IMG_Load(TEXTURE_PATH.c_str());
 	texWidth = pixels->w;
 	texHeight = pixels->h;
 	VkDeviceSize imageSize = texWidth * texHeight * 4;
