@@ -127,7 +127,7 @@ void VulkanEngine::init() {
 		window_flags
 	);
 
-
+	//TODO add personal shaders for single objects
 	createInstance();
 	setupDebugMessenger();
 	createSurface();
@@ -141,10 +141,10 @@ void VulkanEngine::init() {
 	createCommandPool();
 	createDepthResources();
 	createFrameBuffers();
-	createTextureImage();
+	createTextureImage();//externalize
 	createTextureImageView();
 	createTextureSampler();
-	loadModel();
+	loadModel();//externalize
 	createVertexBuffer();
 	createIndexBuffer();
 	createUniformBuffers();
