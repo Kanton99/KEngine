@@ -89,5 +89,8 @@
     <None Include="Resources\Shaders\Default\BaseVertex.vert">
       <Filter>File di risorse\Shaders</Filter>
     </None>
+    <None Include="..\.gitignore">
+      <Filter>File di risorse</Filter>
+    </None>
   </ItemGroup>
 </Project>

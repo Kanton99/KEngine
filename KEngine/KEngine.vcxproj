@@ -114,7 +114,8 @@
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>C:\VulkanSDK\1.3.261.1\Include\SDL2;C:\VulkanSDK\1.3.261.1\Include\glm\gtc;SDL2-2.83.3/include;C:\VulkanSDK\1.3.261.1\Include\glm;C:\VulkanSDK\1.3.261.1\Include\vulkan;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <DisableLanguageExtensions> </DisableLanguageExtensions>
+      <DisableLanguageExtensions>
+      </DisableLanguageExtensions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -166,6 +167,7 @@
     <ClInclude Include="VulkanEngine.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\.gitignore" />
     <None Include="ClassDiagram.cd" />
     <None Include="compile.bat" />
     <None Include="Resources\Shaders\Default\BaseFrag.frag" />
