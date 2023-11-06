@@ -6,7 +6,7 @@
 //#include <vulkan.h>
 #include <SDL_vulkan.h>
 
-#define FRAMERATE 24
+#define FRAMERATE 30
 
 void App::Input()
 {
@@ -15,8 +15,7 @@ void App::Input()
 		switch (event.type)
 		{
 		case SDL_QUIT:
-			vkDeviceWaitIdle(engine->device);
-			engine->cleanup();
+			destroy();
 			exit(0);
 			break;
 		case SDL_WINDOWEVENT:
@@ -50,6 +49,8 @@ void App::Render(std::shared_ptr<SDL_Renderer> context)
 
 void App::start()
 {
+	engine->loadModel("Resources/Models/gunaxe.obj");
+	engine->createTextureImage("Resources/Textures/lambert4_Base_color.png");
 	float frameLength = 1.f / FRAMERATE;
 	while (true) {
 		Input();
@@ -61,14 +62,11 @@ void App::start()
 }
 
 void App::init() {
-	engine = std::make_unique<VulkanEngine>();
-	engine->init();
+	//MemoryManager.startUp() //TODO Make Memorymanager
+	//ResourceManager.startUp()) //TODO Make resource manager
+	engine = VulkanEngine::startUp();
+}
 
-
-	IMG_Init(IMG_INIT_JPG & IMG_INIT_PNG);
-	this->root = std::unique_ptr<Entity2D>(new Entity2D("test2DSprite"));
-	std::unique_ptr<Entity2D> spriteTest = std::make_unique<Entity2D>("sprite");
-	//spriteTest->addComponent(std::move(std::make_unique<SpriteComponent>("./trasferimento.jpg")));
-	this->root->addChild(std::move(spriteTest));
-
+void App::destroy() {
+	engine->cleanup();
 }

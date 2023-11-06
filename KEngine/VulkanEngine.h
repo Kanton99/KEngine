@@ -38,6 +38,7 @@ class VulkanEngine
 public:
 	VkDevice device;
 	bool framebufferResized = false;
+	static VulkanEngine *engine;
 private:
 	VkInstance instance;
 	bool checkValidationSupport();
@@ -147,9 +148,11 @@ private:
 	void createFrameBuffers();
 	void createCommandPool();
 	void createCommandBuffers();
-	void loadModel();
+
 	void recordCommandBuffer(VkCommandBuffer commandBuffer, unsigned int imageIndex);
+
 	void createSyncObjects();
+
 	unsigned int findMemoryType(unsigned int typeFilter, VkMemoryPropertyFlags properties);
 
 	void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
@@ -167,8 +170,6 @@ private:
 	void createDescriptorPool();
 
 	void createDescriptorSets();
-
-	void createTextureImage();
 
 	void createImage(unsigned int width, unsigned int height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory);
 
@@ -203,6 +204,8 @@ public:
 
 	void init();
 
+	static VulkanEngine* startUp();
+
 	void cleanup();
 
 	void drawFrame();
@@ -211,4 +214,7 @@ public:
 
 	void recreateSwapChain();
 
+
+	void loadModel(std::string model_path);
+	void createTextureImage(std::string texture_path);
 };

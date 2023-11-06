@@ -12,7 +12,8 @@ class App
 //Variables
 private:
 	std::unique_ptr<Entity> root;
-	std::unique_ptr<VulkanEngine> engine;
+	//std::unique_ptr<VulkanEngine> engine;
+	VulkanEngine* engine;
 
 //Functions
 private:
@@ -22,5 +23,6 @@ private:
 public:
 	void start();
 	void init();
+	void destroy();
 };
 
