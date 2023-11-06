@@ -197,7 +197,7 @@ public:
 	bool _isInitialized{ false };
 	int _frameNumber{ 0 };
 
-	VkExtent2D _windowExtent{ 1700,900 };
+	VkExtent2D _windowExtent{ 800,450 };
 
 	struct SDL_Window* _window{ nullptr };
 
