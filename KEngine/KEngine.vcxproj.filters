@@ -13,11 +13,17 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="File di intestazione\Components">
-      <UniqueIdentifier>{ae144290-58d1-4b19-bcd8-57429eb7a0f6}</UniqueIdentifier>
-    </Filter>
     <Filter Include="File di risorse\Shaders">
       <UniqueIdentifier>{2831e99f-2b54-421f-bbd7-a9c928369489}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="File di intestazione\ECS">
+      <UniqueIdentifier>{2fdbbcc1-1abf-44f2-b7fa-97f302cd7fd4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="File di intestazione\ECS\Components">
+      <UniqueIdentifier>{ae144290-58d1-4b19-bcd8-57429eb7a0f6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="File di intestazione\ECS\Managers">
+      <UniqueIdentifier>{2631dee3-edeb-43a0-af29-c3f9cba370f6}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -50,23 +56,17 @@
     <ClInclude Include="App.h">
       <Filter>File di intestazione</Filter>
     </ClInclude>
-    <ClInclude Include="Entity.h">
-      <Filter>File di intestazione</Filter>
-    </ClInclude>
     <ClInclude Include="SpriteComponent.h">
-      <Filter>File di intestazione\Components</Filter>
+      <Filter>File di intestazione\ECS\Components</Filter>
     </ClInclude>
     <ClInclude Include="Transform.h">
-      <Filter>File di intestazione\Components</Filter>
-    </ClInclude>
-    <ClInclude Include="Entity2D.h">
-      <Filter>File di intestazione</Filter>
+      <Filter>File di intestazione\ECS\Components</Filter>
     </ClInclude>
     <ClInclude Include="Components.h">
-      <Filter>File di intestazione\Components</Filter>
+      <Filter>File di intestazione\ECS\Components</Filter>
     </ClInclude>
     <ClInclude Include="IComponent.h">
-      <Filter>File di intestazione\Components</Filter>
+      <Filter>File di intestazione\ECS\Components</Filter>
     </ClInclude>
     <ClInclude Include="VulkanEngine.h">
       <Filter>File di intestazione</Filter>
@@ -76,6 +76,12 @@
     </ClInclude>
     <ClInclude Include="Vertex.h">
       <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="Entity.h">
+      <Filter>File di intestazione\ECS</Filter>
+    </ClInclude>
+    <ClInclude Include="Entity2D.h">
+      <Filter>File di intestazione\ECS</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
