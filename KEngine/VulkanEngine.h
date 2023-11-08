@@ -143,7 +143,7 @@ private:
 	void createSwapChain();
 	void createImageViews();
 	VkShaderModule createShaderModule(const std::vector<char>& code);
-	void createGraphicsPipeline();
+	void createDefaultGraphicsPipeline();
 	void createRenderPass();
 	void createFrameBuffers();
 	void createCommandPool();
@@ -194,6 +194,8 @@ private:
 	VkFormat findDepthFormat();
 
 	void cleanupSwapChain();
+
+	void createCustomPipeline(const std::string vertShader = "", const std::string fragShader = "");
 public:
 	bool _isInitialized{ false };
 	int _frameNumber{ 0 };
