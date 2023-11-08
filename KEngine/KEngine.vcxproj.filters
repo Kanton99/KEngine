@@ -25,6 +25,12 @@
     <Filter Include="File di intestazione\ECS\Managers">
       <UniqueIdentifier>{2631dee3-edeb-43a0-af29-c3f9cba370f6}</UniqueIdentifier>
     </Filter>
+    <Filter Include="File di intestazione\Shapes">
+      <UniqueIdentifier>{6272ab9e-64da-412f-8e33-42a4ea52579f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="File di intestazione\Shapes\Basic Shapes">
+      <UniqueIdentifier>{4b604353-61a2-4670-be6a-c27c643da59d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
