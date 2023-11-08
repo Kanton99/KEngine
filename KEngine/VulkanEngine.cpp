@@ -138,7 +138,6 @@ void VulkanEngine::init() {
 	createLogicalDevice();
 	createSwapChain();
 #pragma endregion
-
 	createImageViews();
 	createRenderPass();
 	createDesciptorSetLayout();
@@ -191,7 +190,9 @@ void VulkanEngine::cleanup() {
 
 		vkDestroyBuffer(device, indexBuffer, nullptr);
 		vkFreeMemory(device, indexBufferMemory, nullptr);
-		vkDestroyPipeline(device, graphicsPipeline, nullptr);
+		for (auto const& item : graphicsPipelines) {
+			vkDestroyPipeline(device, item.second, nullptr);
+		}
 		vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
 
 		vkDestroyRenderPass(device, renderPass, nullptr);
@@ -1178,8 +1179,8 @@ void VulkanEngine::recordCommandBuffer(VkCommandBuffer commandBuffer, unsigned i
 
 
 	vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-
-	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline);
+	//TODO loop for all objects
+	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipelines["default"]);
 
 	VkViewport viewport{};
 	viewport.x = 0.0f;
@@ -1195,7 +1196,7 @@ void VulkanEngine::recordCommandBuffer(VkCommandBuffer commandBuffer, unsigned i
 	scissor.extent = swapChainExtent;
 	vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
-	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline);
+	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipelines["default"]);
 	VkBuffer vertexBuffers[] = { vertexBuffer };
 	VkDeviceSize offesets[] = { 0 };
 	vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offesets);
@@ -1295,13 +1296,13 @@ void VulkanEngine::createIndexBuffer() {
 
 #pragma region Pipelines
 void VulkanEngine::createDefaultGraphicsPipeline() {
-	createCustomPipeline();
+	createPipeline("Resources/Shaders/Build/vert.spv", "Resources/Shaders/Build/frag.spv", "default");
 }
 
-void VulkanEngine::createCustomPipeline(const std::string vertShader, const std::string fragShader) {
-	std::cout << vertShader << std::endl;
+void VulkanEngine::createPipeline(const std::string vertShader, const std::string fragShader, const std::string shaderID) {
+	if (shaderID == "default" && defaultPipelineBuilt) throw std::runtime_error("Can't make new default pipeline");
 	//shader loading
-	auto vertShaderCode = (vertShader!="") ? readFile(vertShader.c_str()) : readFile("Resources/Shaders/Build/vert.spv");
+	auto vertShaderCode = readFile(vertShader.c_str());
 	auto fragShaderCode = readFile(fragShader.c_str());
 
 	auto vertShaderModule = createShaderModule(vertShaderCode);
@@ -1458,9 +1459,11 @@ void VulkanEngine::createCustomPipeline(const std::string vertShader, const std:
 	pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
 	pipelineInfo.basePipelineIndex = -1;
 
+	VkPipeline tmpPipeline;
 	//TODO Change to return pipeline
-	if (vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline) != VK_SUCCESS) throw std::runtime_error("failed to create pipeline");
-
+	if (vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &tmpPipeline) != VK_SUCCESS) throw std::runtime_error("failed to create pipeline");
+	graphicsPipelines[shaderID] = tmpPipeline;
+	if (!defaultPipelineBuilt && shaderID == "default") defaultPipelineBuilt = true;
 	vkDestroyShaderModule(device, fragShaderModule, nullptr);
 	vkDestroyShaderModule(device, vertShaderModule, nullptr);
 }

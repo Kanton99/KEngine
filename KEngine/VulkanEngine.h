@@ -3,6 +3,7 @@
 #include <vector>
 #include <optional>
 #include <string>
+#include <map>
 
 #include "Vertex.h"
 
@@ -71,7 +72,8 @@ private:
 	VkRenderPass renderPass;
 	VkDescriptorSetLayout descriptorSetLayout;
 	VkPipelineLayout pipelineLayout;
-	VkPipeline graphicsPipeline;
+	bool defaultPipelineBuilt = false;
+	std::map<std::string,VkPipeline> graphicsPipelines;
 
 	std::vector<VkFramebuffer> swapChainFrameBuffers;
 
@@ -195,7 +197,7 @@ private:
 
 	void cleanupSwapChain();
 
-	void createCustomPipeline(const std::string vertShader = "", const std::string fragShader = "");
+	void createPipeline(const std::string vertShader = "", const std::string fragShader = "", const std::string shaderID = "default");
 public:
 	bool _isInitialized{ false };
 	int _frameNumber{ 0 };
