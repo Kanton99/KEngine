@@ -150,6 +150,7 @@
     <ClCompile Include="Entity2D.cpp" />
     <ClCompile Include="IComponent.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="Model.cpp" />
     <ClCompile Include="SpriteComponent.cpp" />
     <ClCompile Include="Transform.cpp" />
     <ClCompile Include="VulkanEngine.cpp" />
@@ -160,6 +161,7 @@
     <ClInclude Include="Entity.h" />
     <ClInclude Include="Entity2D.h" />
     <ClInclude Include="IComponent.h" />
+    <ClInclude Include="Model.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="SpriteComponent.h" />
     <ClInclude Include="Transform.h" />

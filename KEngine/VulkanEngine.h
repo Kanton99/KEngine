@@ -6,6 +6,7 @@
 #include <map>
 
 #include "Vertex.h"
+#include "Model.h"
 
 const unsigned int WIDTH = 800;
 const unsigned int HEIGHT = 600;
@@ -40,6 +41,7 @@ public:
 	VkDevice device;
 	bool framebufferResized = false;
 	static VulkanEngine *engine;
+	std::vector<Model*> models;
 private:
 	VkInstance instance;
 	bool checkValidationSupport();
@@ -71,9 +73,9 @@ private:
 
 	VkRenderPass renderPass;
 	VkDescriptorSetLayout descriptorSetLayout;
-	VkPipelineLayout pipelineLayout;
+	std::unordered_map<std::string,VkPipelineLayout> pipelineLayouts;
 	bool defaultPipelineBuilt = false;
-	std::map<std::string,VkPipeline> graphicsPipelines;
+	std::unordered_map<std::string,VkPipeline> graphicsPipelines;
 
 	std::vector<VkFramebuffer> swapChainFrameBuffers;
 
@@ -84,7 +86,6 @@ private:
 	std::vector<VkSemaphore> renderFinishedSemaphores;
 	std::vector<VkFence> inFlightFences;
 	unsigned int currentFrame = 0;
-
 
 	std::vector<Vertex> vertices;
 	std::vector<unsigned int> indices;
@@ -151,7 +152,7 @@ private:
 	void createCommandPool();
 	void createCommandBuffers();
 
-	void recordCommandBuffer(VkCommandBuffer commandBuffer, unsigned int imageIndex);
+	void recordCommandBuffer(VkCommandBuffer commandBuffer, unsigned int imageIndex, const std::string pipeline, const size_t indexSize);
 
 	void createSyncObjects();
 
@@ -214,7 +215,7 @@ public:
 
 	void drawFrame();
 
-	void updateUniformBuffer(unsigned int currentImage);
+	void updateUniformBuffer(unsigned int currentImage, int obj);
 
 	void recreateSwapChain();
 

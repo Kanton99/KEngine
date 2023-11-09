@@ -193,7 +193,8 @@ void VulkanEngine::cleanup() {
 		for (auto const& item : graphicsPipelines) {
 			vkDestroyPipeline(device, item.second, nullptr);
 		}
-		vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
+		for(auto const& items:pipelineLayouts)
+			vkDestroyPipelineLayout(device, items.second, nullptr);
 
 		vkDestroyRenderPass(device, renderPass, nullptr);
 
@@ -761,10 +762,9 @@ VkFormat VulkanEngine::findSupportedFormat(const std::vector<VkFormat>& candidat
 			return format;
 		}
 
-		throw std::runtime_error("failed to find supported format!");
 	}
 
-
+	throw std::runtime_error("failed to find supported format!");
 }
 VkFormat VulkanEngine::findDepthFormat() {
 	return findSupportedFormat(
@@ -1155,7 +1155,7 @@ void VulkanEngine::endSingleTimeCommands(VkCommandBuffer commandBuffer) {
 	vkFreeCommandBuffers(device, commandPool, 1, &commandBuffer);
 }
 
-void VulkanEngine::recordCommandBuffer(VkCommandBuffer commandBuffer, unsigned int imageIndex) {
+void VulkanEngine::recordCommandBuffer(VkCommandBuffer commandBuffer, unsigned int imageIndex, const std::string pipeline, const size_t indexSize) {
 	VkCommandBufferBeginInfo beginInfo{};
 	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 	beginInfo.flags = 0; // Optional
@@ -1180,7 +1180,7 @@ void VulkanEngine::recordCommandBuffer(VkCommandBuffer commandBuffer, unsigned i
 
 	vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 	//TODO loop for all objects
-	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipelines["default"]);
+	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipelines[pipeline]);
 
 	VkViewport viewport{};
 	viewport.x = 0.0f;
@@ -1196,18 +1196,18 @@ void VulkanEngine::recordCommandBuffer(VkCommandBuffer commandBuffer, unsigned i
 	scissor.extent = swapChainExtent;
 	vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
-	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipelines["default"]);
+	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipelines[pipeline]);
 	VkBuffer vertexBuffers[] = { vertexBuffer };
 	VkDeviceSize offesets[] = { 0 };
 	vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offesets);
 	vkCmdBindIndexBuffer(commandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT32);
 
 	//vkCmdDraw(commandBuffer, static_cast<unsigned int>(vertices.size()), 1, 0, 0);
-	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr);
+	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayouts[pipeline], 0, 1, &descriptorSets[currentFrame], 0, nullptr);
 
-	vkCmdDrawIndexed(commandBuffer, static_cast<uint16_t>(indices.size()), 1, 0, 0, 0);
+	vkCmdDrawIndexed(commandBuffer, static_cast<uint16_t>(indexSize), 1, 0, 0, 0);
 	vkCmdEndRenderPass(commandBuffer);
-
+	//test
 	if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) throw std::runtime_error("failed to reconrd command buffer");
 }
 
@@ -1224,6 +1224,7 @@ void VulkanEngine::loadModel(std::string model_path) {
 
 	if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, model_path.c_str())) throw std::runtime_error(warn + err);
 	std::unordered_map<Vertex, unsigned int> uniqueVertices{};
+	auto model = new Model();
 	for (const auto& shape : shapes) {
 		for (const auto& index : shape.mesh.indices) {
 			Vertex vertex{};
@@ -1240,13 +1241,16 @@ void VulkanEngine::loadModel(std::string model_path) {
 			vertex.color = { 1.f,1.f,1.f };
 
 			if (uniqueVertices.count(vertex) == 0) {
-				uniqueVertices[vertex] = static_cast<unsigned int>(vertices.size());
-				vertices.push_back(vertex);
+				uniqueVertices[vertex] = static_cast<unsigned int>(model->vertices.size());
+				model->vertices.push_back(vertex);
 			}
 
-			indices.push_back(uniqueVertices[vertex]);
+			model->indices.push_back(uniqueVertices[vertex]);
 		}
 	}
+	model->pipeline = "default";
+	model->indices_size = model->indices.size();
+	models.push_back(model);
 
 	createVertexBuffer();
 	createIndexBuffer();
@@ -1254,7 +1258,7 @@ void VulkanEngine::loadModel(std::string model_path) {
 
 void VulkanEngine::createVertexBuffer() {
 
-	VkDeviceSize bufferSize = sizeof(vertices[0]) * vertices.size();
+	VkDeviceSize bufferSize = sizeof(models[0]->vertices[0]) * models[0]->vertices.size();
 
 	VkBuffer stagingBuffer;
 	VkDeviceMemory stagingBufferMemory;
@@ -1262,19 +1266,20 @@ void VulkanEngine::createVertexBuffer() {
 
 	void* data;
 	vkMapMemory(device, stagingBufferMemory, 0, bufferSize, 0, &data);
-	memcpy(data, vertices.data(), (size_t)bufferSize);
+	memcpy(data, models[0]->vertices.data(), (size_t)bufferSize);
 	vkUnmapMemory(device, stagingBufferMemory);
 
 	createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, vertexBuffer, vertexBufferMemory);
 
 	copyBuffer(stagingBuffer, vertexBuffer, bufferSize);
-
+	models[0]->vertices.clear();
+	models[0]->vertices.shrink_to_fit();
 	vkDestroyBuffer(device, stagingBuffer, nullptr);
 	vkFreeMemory(device, stagingBufferMemory, nullptr);
 }
 
 void VulkanEngine::createIndexBuffer() {
-	VkDeviceSize bufferSize = sizeof(indices[0]) * indices.size();
+	VkDeviceSize bufferSize = sizeof(models[0]->indices[0]) * models[0]->indices.size();
 
 	VkBuffer stagingBuffer;
 	VkDeviceMemory stagingBufferMemory;
@@ -1282,13 +1287,14 @@ void VulkanEngine::createIndexBuffer() {
 
 	void* data;
 	vkMapMemory(device, stagingBufferMemory, 0, bufferSize, 0, &data);
-	memcpy(data, indices.data(), (size_t)bufferSize);
+	memcpy(data, models[0]->indices.data(), (size_t)bufferSize);
 	vkUnmapMemory(device, stagingBufferMemory);
 
 	createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, indexBuffer, indexBufferMemory);
 
 	copyBuffer(stagingBuffer, indexBuffer, bufferSize);
-
+	models[0]->indices.clear();
+	models[0]->indices.shrink_to_fit();
 	vkDestroyBuffer(device, stagingBuffer, nullptr);
 	vkFreeMemory(device, stagingBufferMemory, nullptr);
 }
@@ -1421,12 +1427,14 @@ void VulkanEngine::createPipeline(const std::string vertShader, const std::strin
 
 	VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
 	pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-	pipelineLayoutInfo.setLayoutCount = 1; // Optional
-	pipelineLayoutInfo.pSetLayouts = &descriptorSetLayout; // Optional
+	pipelineLayoutInfo.setLayoutCount = 1; 
+	pipelineLayoutInfo.pSetLayouts = &descriptorSetLayout; 
 	pipelineLayoutInfo.pushConstantRangeCount = 0; // Optional
 	pipelineLayoutInfo.pPushConstantRanges = nullptr; // Optional
 
-	if (vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS) throw std::runtime_error("failed to create pipeline layout!");
+	VkPipelineLayout tmplayout;
+	if (vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr, &tmplayout) != VK_SUCCESS) throw std::runtime_error("failed to create pipeline layout!");
+	pipelineLayouts[shaderID] = tmplayout;
 
 	VkPipelineDepthStencilStateCreateInfo depthStencil{};
 	depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
@@ -1453,7 +1461,7 @@ void VulkanEngine::createPipeline(const std::string vertShader, const std::strin
 	pipelineInfo.pDepthStencilState = &depthStencil;
 	pipelineInfo.pColorBlendState = &colorBlending;
 	pipelineInfo.pDynamicState = &dynamicState;
-	pipelineInfo.layout = pipelineLayout;
+	pipelineInfo.layout = pipelineLayouts[shaderID];
 	pipelineInfo.renderPass = renderPass;
 	pipelineInfo.subpass = 0;
 	pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
@@ -1484,63 +1492,66 @@ void VulkanEngine::drawFrame() {
 	}
 
 	vkResetFences(device, 1, &inFlightFences[currentFrame]);
-	vkResetCommandBuffer(commandBuffers[currentFrame], 0);
-	recordCommandBuffer(commandBuffers[currentFrame], imageIndex);
 
-	updateUniformBuffer(currentFrame);
+	for (int i = 0; i < models.size();i++) {
+		
+		vkResetCommandBuffer(commandBuffers[currentFrame], 0);
+		recordCommandBuffer(commandBuffers[currentFrame], imageIndex, models[i]->pipeline,models[i]->indices_size);
 
-	VkSubmitInfo submitInfo{};
-	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+		updateUniformBuffer(currentFrame, i);
 
-	VkSemaphore waitSemaphores[] = { imageAvailableSemaphores[currentFrame]};
-	VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
-	submitInfo.waitSemaphoreCount = 1;
-	submitInfo.pWaitSemaphores = waitSemaphores;
-	submitInfo.pWaitDstStageMask = waitStages;
-	submitInfo.commandBufferCount = 1;
-	submitInfo.pCommandBuffers = &commandBuffers[currentFrame];
+		VkSubmitInfo submitInfo{};
+		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
-	VkSemaphore signalSemaphores[] = { renderFinishedSemaphores[currentFrame]};
-	submitInfo.signalSemaphoreCount = 1;
-	submitInfo.pSignalSemaphores = signalSemaphores;
+		VkSemaphore waitSemaphores[] = { imageAvailableSemaphores[currentFrame] };
+		VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
+		submitInfo.waitSemaphoreCount = 1;
+		submitInfo.pWaitSemaphores = waitSemaphores;
+		submitInfo.pWaitDstStageMask = waitStages;
+		submitInfo.commandBufferCount = 1;
+		submitInfo.pCommandBuffers = &commandBuffers[currentFrame];
 
-	if (vkQueueSubmit(graphicsQueue, 1, &submitInfo, inFlightFences[currentFrame]) != VK_SUCCESS) throw std::runtime_error("failed to submit draw command buffer!");
+		VkSemaphore signalSemaphores[] = { renderFinishedSemaphores[currentFrame] };
+		submitInfo.signalSemaphoreCount = 1;
+		submitInfo.pSignalSemaphores = signalSemaphores;
+
+		if (vkQueueSubmit(graphicsQueue, 1, &submitInfo, inFlightFences[currentFrame]) != VK_SUCCESS) throw std::runtime_error("failed to submit draw command buffer!");
 
 
-	VkPresentInfoKHR presentInfo{};
-	presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+		VkPresentInfoKHR presentInfo{};
+		presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
 
-	presentInfo.waitSemaphoreCount = 1;
-	presentInfo.pWaitSemaphores = signalSemaphores;
+		presentInfo.waitSemaphoreCount = 1;
+		presentInfo.pWaitSemaphores = signalSemaphores;
 
-	VkSwapchainKHR swapChains[] = { swapChain };
-	presentInfo.swapchainCount = 1;
-	presentInfo.pSwapchains = swapChains;
-	presentInfo.pImageIndices = &imageIndex;
-	presentInfo.pResults = nullptr; // Optional
+		VkSwapchainKHR swapChains[] = { swapChain };
+		presentInfo.swapchainCount = 1;
+		presentInfo.pSwapchains = swapChains;
+		presentInfo.pImageIndices = &imageIndex;
+		presentInfo.pResults = nullptr; // Optional
 
-	result = vkQueuePresentKHR(presentQueue, &presentInfo);
+		result = vkQueuePresentKHR(presentQueue, &presentInfo);
 
-	if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || framebufferResized) {
-		framebufferResized = false;
-		recreateSwapChain();
-		return;
+		if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || framebufferResized) {
+			framebufferResized = false;
+			recreateSwapChain();
+			return;
+		}
+		else if (result != VK_SUCCESS) {
+			throw std::runtime_error("failed to acquire swap chain image");
+		}
 	}
-	else if (result != VK_SUCCESS) {
-		throw std::runtime_error("failed to acquire swap chain image");
-	}
-
 	currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
 }
 
-void VulkanEngine::updateUniformBuffer(unsigned int currentImage) {
+void VulkanEngine::updateUniformBuffer(unsigned int currentImage, int obj) {
 	static auto startTime = std::chrono::high_resolution_clock::now();
 
 	auto currentTime = std::chrono::high_resolution_clock::now();
 	float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
 
 	UniformBufferObject ubo{};
-	ubo.model = glm::rotate(glm::mat4(1.f), time * glm::radians(90.f), glm::vec3(0.f, 0.f, 1.f));
+	ubo.model = glm::rotate(models[obj]->transform, time * glm::radians(90.f), glm::vec3(0.f, 0.f, 1.f));
 
 	ubo.view = glm::lookAt(glm::vec3(0.3f, 0.3f, 0.3f), glm::vec3(0.f, 0.f, 0.f), glm::vec3(0.f, 0.f, 1.f));
 
