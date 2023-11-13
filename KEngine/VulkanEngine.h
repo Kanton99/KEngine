@@ -88,11 +88,13 @@ private:
 	unsigned int currentFrame = 0;
 
 	std::vector<Vertex> vertices;
+	int mCount;
 	std::vector<unsigned int> indices;
-	VkBuffer vertexBuffer;
-	VkDeviceMemory vertexBufferMemory;
-	VkBuffer indexBuffer;
-	VkDeviceMemory indexBufferMemory;
+	std::vector<VkBuffer> vertexBuffers;
+	std::vector<VkDeviceMemory> vertexBufferMemories;
+
+	std::vector<VkBuffer> indexBuffers;
+	std::vector<VkDeviceMemory> indexBufferMemories;
 
 	std::vector<VkBuffer> uniformBuffers;
 	std::vector<VkDeviceMemory> uniformBuffersMemory;
@@ -152,13 +154,13 @@ private:
 	void createCommandPool();
 	void createCommandBuffers();
 
-	void recordCommandBuffer(VkCommandBuffer commandBuffer, unsigned int imageIndex, const std::string pipeline, const size_t indexSize);
+	void recordCommandBuffer(VkCommandBuffer commandBuffer, unsigned int imageIndex, const std::string pipeline, const size_t indexSize, unsigned int model);
 
 	void createSyncObjects();
 
 	unsigned int findMemoryType(unsigned int typeFilter, VkMemoryPropertyFlags properties);
 
-	void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
+	void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory, int offset = 0);
 
 	void createVertexBuffer();
 
