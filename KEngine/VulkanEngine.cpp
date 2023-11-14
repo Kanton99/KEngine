@@ -1158,7 +1158,7 @@ void VulkanEngine::endSingleTimeCommands(VkCommandBuffer commandBuffer) {
 	vkFreeCommandBuffers(device, commandPool, 1, &commandBuffer);
 }
 
-void VulkanEngine::recordCommandBuffer(VkCommandBuffer commandBuffer, unsigned int imageIndex, const std::string pipeline, const size_t indexSize,unsigned int model) {
+void VulkanEngine::recordCommandBuffer(VkCommandBuffer commandBuffer, unsigned int imageIndex) {
 	VkCommandBufferBeginInfo beginInfo{};
 	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 	beginInfo.flags = 0; // Optional
@@ -1183,32 +1183,33 @@ void VulkanEngine::recordCommandBuffer(VkCommandBuffer commandBuffer, unsigned i
 
 	vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 	//TODO loop for all objects
-	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipelines[pipeline]);
+	for (size_t model = 0; model < mCount; model++) {
+		vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipelines[models[model]->pipeline]);
 
-	VkViewport viewport{};
-	viewport.x = 0.0f;
-	viewport.y = 0.0f;
-	viewport.width = static_cast<float>(swapChainExtent.width);
-	viewport.height = static_cast<float>(swapChainExtent.height);
-	viewport.minDepth = 0.0f;
-	viewport.maxDepth = 1.0f;
-	vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
+		VkViewport viewport{};
+		viewport.x = 0.0f;
+		viewport.y = 0.0f;
+		viewport.width = static_cast<float>(swapChainExtent.width);
+		viewport.height = static_cast<float>(swapChainExtent.height);
+		viewport.minDepth = 0.0f;
+		viewport.maxDepth = 1.0f;
+		vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
 
-	VkRect2D scissor{};
-	scissor.offset = { 0, 0 };
-	scissor.extent = swapChainExtent;
-	vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
+		VkRect2D scissor{};
+		scissor.offset = { 0, 0 };
+		scissor.extent = swapChainExtent;
+		vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
-	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipelines[pipeline]);
-	VkBuffer ivertexBuffers[] = { vertexBuffers[model]};
-	VkDeviceSize offesets[] = { 0 };
-	vkCmdBindVertexBuffers(commandBuffer, 0, 1, ivertexBuffers, offesets);
-	vkCmdBindIndexBuffer(commandBuffer, indexBuffers[model], 0, VK_INDEX_TYPE_UINT32);
+		//vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipelines[pipeline]);
+		VkBuffer ivertexBuffers[] = { vertexBuffers[model] };
+		VkDeviceSize offesets[] = { 0 };
+		vkCmdBindVertexBuffers(commandBuffer, 0, 1, ivertexBuffers, offesets);
+		vkCmdBindIndexBuffer(commandBuffer, indexBuffers[model], 0, VK_INDEX_TYPE_UINT32);
 
-	//vkCmdDraw(commandBuffer, static_cast<unsigned int>(vertices.size()), 1, 0, 0);
-	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayouts[pipeline], 0, 1, &descriptorSets[currentFrame], 0, nullptr);
+		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayouts[models[model]->pipeline], 0, 1, &descriptorSets[currentFrame], 0, nullptr);
 
-	vkCmdDrawIndexed(commandBuffer, static_cast<uint16_t>(indexSize), 1, 0, 0, 0);
+		vkCmdDrawIndexed(commandBuffer, static_cast<uint16_t>(models[model]->indices_size), 1, 0, 0, 0);
+	}
 	vkCmdEndRenderPass(commandBuffer);
 	//test
 	if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) throw std::runtime_error("failed to record command buffer");
@@ -1499,12 +1500,10 @@ void VulkanEngine::drawFrame() {
 	}
 
 	vkResetFences(device, 1, &inFlightFences[currentFrame]);
-	for (int i = 0; i < mCount;i++) {
 		
 		vkResetCommandBuffer(commandBuffers[currentFrame], 0);
-		recordCommandBuffer(commandBuffers[currentFrame], imageIndex, models[i]->pipeline,models[i]->indices_size,i);
-
-		updateUniformBuffer(currentFrame, i);
+		recordCommandBuffer(commandBuffers[currentFrame], imageIndex);
+		for(int i = 0;i<mCount;i++) updateUniformBuffer(currentFrame,i);
 
 		VkSubmitInfo submitInfo{};
 		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -1546,7 +1545,6 @@ void VulkanEngine::drawFrame() {
 		else if (result != VK_SUCCESS) {
 			throw std::runtime_error("failed to acquire swap chain image");
 		}
-	}
 	currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
 }
 

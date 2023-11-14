@@ -154,7 +154,7 @@ private:
 	void createCommandPool();
 	void createCommandBuffers();
 
-	void recordCommandBuffer(VkCommandBuffer commandBuffer, unsigned int imageIndex, const std::string pipeline, const size_t indexSize, unsigned int model);
+	void recordCommandBuffer(VkCommandBuffer commandBuffer, unsigned int imageIndex);
 
 	void createSyncObjects();
 
