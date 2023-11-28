@@ -713,7 +713,7 @@ void VulkanEngine::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkM
 	bufferInfo.usage = usage;
 	bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-	if (vkCreateBuffer(device, &bufferInfo, nullptr, &buffer) != VK_SUCCESS) throw std::runtime_error("Failed to create vertex buffer");
+	if (vkCreateBuffer(device, &bufferInfo, nullptr, &buffer) != VK_SUCCESS) throw std::runtime_error("Failed to create buffer");
 
 	VkMemoryRequirements memRequirements;
 	vkGetBufferMemoryRequirements(device, buffer, &memRequirements);
@@ -724,7 +724,7 @@ void VulkanEngine::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkM
 	allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
 	if (vkAllocateMemory(device, &allocInfo, nullptr, &bufferMemory) != VK_SUCCESS) {
-		throw std::runtime_error("failed to allocate vertex buffer memory!");
+		throw std::runtime_error("failed to allocate buffer memory!");
 	}
 
 	vkBindBufferMemory(device, buffer, bufferMemory, 0);
@@ -1215,7 +1215,7 @@ void VulkanEngine::recordCommandBuffer(VkCommandBuffer commandBuffer, unsigned i
 
 //TODO integrate with resource manager
 //TODO Change to expand buffer when adding new models
-#pragma region Model loading
+ #pragma region Model loading
 void VulkanEngine::loadModel(std::string model_path) {
 	tinyobj::attrib_t attrib;
 	std::vector<tinyobj::shape_t> shapes;
@@ -1258,7 +1258,7 @@ void VulkanEngine::loadModel(std::string model_path) {
 
 void VulkanEngine::createVertexBuffer() {
 
-	VkDeviceSize bufferSize = sizeof(models[0]->vertices[0]) * models[0]->vertices.size();
+	VkDeviceSize bufferSize = sizeof(models[models.size()-1]->vertices[0]) * models[models.size()-1]->vertices.size();
 
 	VkBuffer stagingBuffer;
 	VkDeviceMemory stagingBufferMemory;
@@ -1266,20 +1266,20 @@ void VulkanEngine::createVertexBuffer() {
 
 	void* data;
 	vkMapMemory(device, stagingBufferMemory, 0, bufferSize, 0, &data);
-	memcpy(data, models[0]->vertices.data(), (size_t)bufferSize);
+	memcpy(data, models[models.size()-1]->vertices.data(), (size_t)bufferSize);
 	vkUnmapMemory(device, stagingBufferMemory);
 
 	createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, vertexBuffer, vertexBufferMemory);
 
 	copyBuffer(stagingBuffer, vertexBuffer, bufferSize);
-	models[0]->vertices.clear();
-	models[0]->vertices.shrink_to_fit();
+	models[models.size() - 1]->vertices.clear();
+	models[models.size() - 1]->vertices.shrink_to_fit();
 	vkDestroyBuffer(device, stagingBuffer, nullptr);
 	vkFreeMemory(device, stagingBufferMemory, nullptr);
 }
 
 void VulkanEngine::createIndexBuffer() {
-	VkDeviceSize bufferSize = sizeof(models[0]->indices[0]) * models[0]->indices.size();
+	VkDeviceSize bufferSize = sizeof(models[models.size() - 1]->indices[0]) * models[models.size() - 1]->indices.size();
 
 	VkBuffer stagingBuffer;
 	VkDeviceMemory stagingBufferMemory;
@@ -1287,14 +1287,14 @@ void VulkanEngine::createIndexBuffer() {
 
 	void* data;
 	vkMapMemory(device, stagingBufferMemory, 0, bufferSize, 0, &data);
-	memcpy(data, models[0]->indices.data(), (size_t)bufferSize);
+	memcpy(data, models[models.size() - 1]->indices.data(), (size_t)bufferSize);
 	vkUnmapMemory(device, stagingBufferMemory);
 
 	createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, indexBuffer, indexBufferMemory);
 
 	copyBuffer(stagingBuffer, indexBuffer, bufferSize);
-	models[0]->indices.clear();
-	models[0]->indices.shrink_to_fit();
+	models[models.size() - 1]->indices.clear();
+	models[models.size() - 1]->indices.shrink_to_fit();
 	vkDestroyBuffer(device, stagingBuffer, nullptr);
 	vkFreeMemory(device, stagingBufferMemory, nullptr);
 }
@@ -1493,13 +1493,13 @@ void VulkanEngine::drawFrame() {
 
 	vkResetFences(device, 1, &inFlightFences[currentFrame]);
 
-	for (int i = 0; i < models.size();i++) {
-		
+	for (int i = 0; i < 1/*models.size()*/; i++) {
+
 		vkResetCommandBuffer(commandBuffers[currentFrame], 0);
-		recordCommandBuffer(commandBuffers[currentFrame], imageIndex, models[i]->pipeline,models[i]->indices_size);
+		recordCommandBuffer(commandBuffers[currentFrame], imageIndex, models[i]->pipeline, models[i]->indices_size);
 
 		updateUniformBuffer(currentFrame, i);
-
+	}
 		VkSubmitInfo submitInfo{};
 		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
@@ -1540,7 +1540,7 @@ void VulkanEngine::drawFrame() {
 		else if (result != VK_SUCCESS) {
 			throw std::runtime_error("failed to acquire swap chain image");
 		}
-	}
+	//}
 	currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
 }
 
