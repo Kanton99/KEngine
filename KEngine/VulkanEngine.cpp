@@ -119,7 +119,7 @@ void VulkanEngine::init() {
 	SDL_Init(SDL_INIT_VIDEO);
 
 	SDL_WindowFlags window_flags = (SDL_WindowFlags)(SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE);
-
+	mCount = 0;
 	_window = SDL_CreateWindow(
 		"kEngine",
 		SDL_WINDOWPOS_CENTERED,
@@ -185,11 +185,14 @@ void VulkanEngine::cleanup() {
 		}
 		vkDestroyDescriptorPool(device, descriptorPool, nullptr);
 		vkDestroyDescriptorSetLayout(device, descriptorSetLayout, nullptr);
-		vkDestroyBuffer(device, vertexBuffer, nullptr);
-		vkFreeMemory(device, vertexBufferMemory, nullptr);
-
-		vkDestroyBuffer(device, indexBuffer, nullptr);
-		vkFreeMemory(device, indexBufferMemory, nullptr);
+		for (size_t i = 0; i < vertexBuffers.size();i++) {
+			vkDestroyBuffer(device, vertexBuffers[i], nullptr);
+			vkFreeMemory(device, vertexBufferMemories[i], nullptr);
+		}
+		for (size_t i = 0; i < indexBuffers.size(); i++) {
+			vkDestroyBuffer(device, indexBuffers[i], nullptr);
+			vkFreeMemory(device, indexBufferMemories[i], nullptr);
+		}
 		for (auto const& item : graphicsPipelines) {
 			vkDestroyPipeline(device, item.second, nullptr);
 		}
@@ -706,7 +709,7 @@ unsigned int VulkanEngine::findMemoryType(unsigned int typeFilter, VkMemoryPrope
 	throw std::runtime_error("failed to find suitable memory type!");
 }
 
-void VulkanEngine::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory) {
+void VulkanEngine::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory, int offset) {
 	VkBufferCreateInfo bufferInfo{};
 	bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
 	bufferInfo.size = size;
@@ -727,7 +730,7 @@ void VulkanEngine::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkM
 		throw std::runtime_error("failed to allocate buffer memory!");
 	}
 
-	vkBindBufferMemory(device, buffer, bufferMemory, 0);
+	vkBindBufferMemory(device, buffer, bufferMemory, offset);
 
 }
 
@@ -1155,7 +1158,7 @@ void VulkanEngine::endSingleTimeCommands(VkCommandBuffer commandBuffer) {
 	vkFreeCommandBuffers(device, commandPool, 1, &commandBuffer);
 }
 
-void VulkanEngine::recordCommandBuffer(VkCommandBuffer commandBuffer, unsigned int imageIndex, const std::string pipeline, const size_t indexSize) {
+void VulkanEngine::recordCommandBuffer(VkCommandBuffer commandBuffer, unsigned int imageIndex) {
 	VkCommandBufferBeginInfo beginInfo{};
 	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 	beginInfo.flags = 0; // Optional
@@ -1180,35 +1183,36 @@ void VulkanEngine::recordCommandBuffer(VkCommandBuffer commandBuffer, unsigned i
 
 	vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 	//TODO loop for all objects
-	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipelines[pipeline]);
+	for (size_t model = 0; model < mCount; model++) {
+		vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipelines[models[model]->pipeline]);
 
-	VkViewport viewport{};
-	viewport.x = 0.0f;
-	viewport.y = 0.0f;
-	viewport.width = static_cast<float>(swapChainExtent.width);
-	viewport.height = static_cast<float>(swapChainExtent.height);
-	viewport.minDepth = 0.0f;
-	viewport.maxDepth = 1.0f;
-	vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
+		VkViewport viewport{};
+		viewport.x = 0.0f;
+		viewport.y = 0.0f;
+		viewport.width = static_cast<float>(swapChainExtent.width);
+		viewport.height = static_cast<float>(swapChainExtent.height);
+		viewport.minDepth = 0.0f;
+		viewport.maxDepth = 1.0f;
+		vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
 
-	VkRect2D scissor{};
-	scissor.offset = { 0, 0 };
-	scissor.extent = swapChainExtent;
-	vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
+		VkRect2D scissor{};
+		scissor.offset = { 0, 0 };
+		scissor.extent = swapChainExtent;
+		vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
-	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipelines[pipeline]);
-	VkBuffer vertexBuffers[] = { vertexBuffer };
-	VkDeviceSize offesets[] = { 0 };
-	vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offesets);
-	vkCmdBindIndexBuffer(commandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT32);
+		//vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipelines[pipeline]);
+		VkBuffer ivertexBuffers[] = { vertexBuffers[model] };
+		VkDeviceSize offesets[] = { 0 };
+		vkCmdBindVertexBuffers(commandBuffer, 0, 1, ivertexBuffers, offesets);
+		vkCmdBindIndexBuffer(commandBuffer, indexBuffers[model], 0, VK_INDEX_TYPE_UINT32);
 
-	//vkCmdDraw(commandBuffer, static_cast<unsigned int>(vertices.size()), 1, 0, 0);
-	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayouts[pipeline], 0, 1, &descriptorSets[currentFrame], 0, nullptr);
+		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayouts[models[model]->pipeline], 0, 1, &descriptorSets[currentFrame], 0, nullptr);
 
-	vkCmdDrawIndexed(commandBuffer, static_cast<uint16_t>(indexSize), 1, 0, 0, 0);
+		vkCmdDrawIndexed(commandBuffer, static_cast<uint16_t>(models[model]->indices_size), 1, 0, 0, 0);
+	}
 	vkCmdEndRenderPass(commandBuffer);
 	//test
-	if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) throw std::runtime_error("failed to reconrd command buffer");
+	if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) throw std::runtime_error("failed to record command buffer");
 }
 
 #pragma endregion
@@ -1254,11 +1258,12 @@ void VulkanEngine::loadModel(std::string model_path) {
 
 	createVertexBuffer();
 	createIndexBuffer();
+	mCount++;
 }
 
 void VulkanEngine::createVertexBuffer() {
 
-	VkDeviceSize bufferSize = sizeof(models[models.size()-1]->vertices[0]) * models[models.size()-1]->vertices.size();
+	VkDeviceSize bufferSize = sizeof(models[mCount]->vertices[0]) * models[mCount]->vertices.size();
 
 	VkBuffer stagingBuffer;
 	VkDeviceMemory stagingBufferMemory;
@@ -1266,20 +1271,21 @@ void VulkanEngine::createVertexBuffer() {
 
 	void* data;
 	vkMapMemory(device, stagingBufferMemory, 0, bufferSize, 0, &data);
-	memcpy(data, models[models.size()-1]->vertices.data(), (size_t)bufferSize);
+	memcpy(data, models[mCount]->vertices.data(), (size_t)bufferSize);
 	vkUnmapMemory(device, stagingBufferMemory);
+	vertexBuffers.resize(mCount + 1);
+	vertexBufferMemories.resize(mCount + 1);
+	createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, vertexBuffers[mCount], vertexBufferMemories[mCount]);
 
-	createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, vertexBuffer, vertexBufferMemory);
-
-	copyBuffer(stagingBuffer, vertexBuffer, bufferSize);
-	models[models.size() - 1]->vertices.clear();
-	models[models.size() - 1]->vertices.shrink_to_fit();
+	copyBuffer(stagingBuffer, vertexBuffers[mCount], bufferSize);
+	models[mCount]->vertices.clear();
+	models[mCount]->vertices.shrink_to_fit();
 	vkDestroyBuffer(device, stagingBuffer, nullptr);
 	vkFreeMemory(device, stagingBufferMemory, nullptr);
 }
 
 void VulkanEngine::createIndexBuffer() {
-	VkDeviceSize bufferSize = sizeof(models[models.size() - 1]->indices[0]) * models[models.size() - 1]->indices.size();
+	VkDeviceSize bufferSize = sizeof(models[mCount]->indices[0]) * models[mCount]->indices.size();
 
 	VkBuffer stagingBuffer;
 	VkDeviceMemory stagingBufferMemory;
@@ -1287,14 +1293,16 @@ void VulkanEngine::createIndexBuffer() {
 
 	void* data;
 	vkMapMemory(device, stagingBufferMemory, 0, bufferSize, 0, &data);
-	memcpy(data, models[models.size() - 1]->indices.data(), (size_t)bufferSize);
+	memcpy(data, models[mCount]->indices.data(), (size_t)bufferSize);
 	vkUnmapMemory(device, stagingBufferMemory);
 
-	createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, indexBuffer, indexBufferMemory);
+	indexBuffers.resize(mCount + 1);
+	indexBufferMemories.resize(mCount + 1);
+	createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, indexBuffers[mCount], indexBufferMemories[mCount]);
 
-	copyBuffer(stagingBuffer, indexBuffer, bufferSize);
-	models[models.size() - 1]->indices.clear();
-	models[models.size() - 1]->indices.shrink_to_fit();
+	copyBuffer(stagingBuffer, indexBuffers[mCount], bufferSize);
+	models[mCount]->indices.clear();
+	models[mCount]->indices.shrink_to_fit();
 	vkDestroyBuffer(device, stagingBuffer, nullptr);
 	vkFreeMemory(device, stagingBufferMemory, nullptr);
 }
@@ -1492,14 +1500,11 @@ void VulkanEngine::drawFrame() {
 	}
 
 	vkResetFences(device, 1, &inFlightFences[currentFrame]);
-
-	for (int i = 0; i < 1/*models.size()*/; i++) {
-
+		
 		vkResetCommandBuffer(commandBuffers[currentFrame], 0);
-		recordCommandBuffer(commandBuffers[currentFrame], imageIndex, models[i]->pipeline, models[i]->indices_size);
+		recordCommandBuffer(commandBuffers[currentFrame], imageIndex);
+		for(int i = 0;i<mCount;i++) updateUniformBuffer(currentFrame,i);
 
-		updateUniformBuffer(currentFrame, i);
-	}
 		VkSubmitInfo submitInfo{};
 		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
@@ -1540,7 +1545,6 @@ void VulkanEngine::drawFrame() {
 		else if (result != VK_SUCCESS) {
 			throw std::runtime_error("failed to acquire swap chain image");
 		}
-	//}
 	currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
 }
 
