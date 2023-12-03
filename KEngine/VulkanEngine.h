@@ -103,10 +103,10 @@ private:
 	VkDescriptorPool descriptorPool;
 	std::vector<VkDescriptorSet> descriptorSets;
 private: //textures
-	VkImage textureImage;
-	VkDeviceMemory textureImageMemory;
-	VkImageView textureImageView;
-	VkSampler textureSampler;
+	std::vector<VkImage> textureImages;
+	std::vector<VkDeviceMemory> textureImageMemories;
+	std::vector<VkImageView> textureImageViews;
+	std::vector<VkSampler> textureSamplers;
 
 private: //depth buffer
 	VkImage depthImage;
