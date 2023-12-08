@@ -1202,8 +1202,8 @@ void VulkanEngine::recordCommandBuffer(VkCommandBuffer commandBuffer, unsigned i
 	scissor.extent = swapChainExtent;
 	vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 	for (size_t model = 0; model < mCount; model++) {
+		updateUniformBuffer(currentFrame, model);
 		vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipelines[models[model]->pipeline]);
-		//vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipelines[pipeline]);
 		VkBuffer ivertexBuffers[] = { vertexBuffers[model] };
 		VkDeviceSize offesets[] = { 0 };
 		vkCmdBindVertexBuffers(commandBuffer, 0, 1, ivertexBuffers, offesets);
@@ -1506,7 +1506,7 @@ void VulkanEngine::drawFrame() {
 		
 	vkResetCommandBuffer(commandBuffers[currentFrame], 0);
 	recordCommandBuffer(commandBuffers[currentFrame], imageIndex);
-	for(int i = 0;i<mCount;i++) updateUniformBuffer(currentFrame,i);
+	//for(int i = 0;i<mCount;i++) updateUniformBuffer(currentFrame,i);
 
 	VkSubmitInfo submitInfo{};
 	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;

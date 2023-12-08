@@ -54,7 +54,7 @@ void App::start()
 
 	engine->loadModel("Resources/Models/gunaxe.obj");
 	engine->createTextureImage("Resources/Textures/lambert4_Base_color.png");
-	engine->models[1]->transform = glm::translate(engine->models[1]->transform, glm::vec3(1, 0, 0));
+	engine->models[1]->transform = glm::translate(engine->models[1]->transform, glm::vec3(0.1f, 0.f, 0.f));
 	float frameLength = 1.f / FRAMERATE;
 	while (true) {
 		Input();
