@@ -31,6 +31,12 @@
     <Filter Include="File di intestazione\Shapes\Basic Shapes">
       <UniqueIdentifier>{4b604353-61a2-4670-be6a-c27c643da59d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="File di intestazione\ECS\misc">
+      <UniqueIdentifier>{e31f84fa-4557-4a78-bce3-fb22830154c5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="File di intestazione\ECS\Systems">
+      <UniqueIdentifier>{bc71aba4-28ae-4b8e-8498-bec79c6c59f5}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -58,6 +64,9 @@
       <Filter>File di origine</Filter>
     </ClCompile>
     <ClCompile Include="Model.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="EntityManager.cpp">
       <Filter>File di origine</Filter>
     </ClCompile>
   </ItemGroup>
@@ -94,6 +103,24 @@
     </ClInclude>
     <ClInclude Include="Model.h">
       <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="EntityManager.h">
+      <Filter>File di intestazione\ECS\Managers</Filter>
+    </ClInclude>
+    <ClInclude Include="ComponentArray.h">
+      <Filter>File di intestazione\ECS\misc</Filter>
+    </ClInclude>
+    <ClInclude Include="ComponentManager.h">
+      <Filter>File di intestazione\ECS\Managers</Filter>
+    </ClInclude>
+    <ClInclude Include="System.h">
+      <Filter>File di intestazione\ECS\Systems</Filter>
+    </ClInclude>
+    <ClInclude Include="SystemManager.h">
+      <Filter>File di intestazione\ECS\Managers</Filter>
+    </ClInclude>
+    <ClInclude Include="Coordinator.h">
+      <Filter>File di intestazione\ECS\Managers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
