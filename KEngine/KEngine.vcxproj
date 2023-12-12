@@ -152,6 +152,7 @@
     <ClCompile Include="IComponent.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Model.cpp" />
+    <ClCompile Include="RenderSystem.cpp" />
     <ClCompile Include="SpriteComponent.cpp" />
     <ClCompile Include="Transform.cpp" />
     <ClCompile Include="VulkanEngine.cpp" />
@@ -160,18 +161,17 @@
     <ClInclude Include="App.h" />
     <ClInclude Include="ComponentArray.h" />
     <ClInclude Include="ComponentManager.h" />
-    <ClInclude Include="Components.h" />
     <ClInclude Include="Coordinator.h" />
     <ClInclude Include="Entity.h" />
-    <ClInclude Include="Entity2D.h" />
     <ClInclude Include="EntityManager.h" />
-    <ClInclude Include="IComponent.h" />
     <ClInclude Include="Model.h" />
+    <ClInclude Include="RenderComponent.h" />
+    <ClInclude Include="RenderSystem.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="SpriteComponent.h" />
     <ClInclude Include="System.h" />
     <ClInclude Include="SystemManager.h" />
-    <ClInclude Include="Transform.h" />
+    <ClInclude Include="TransformComponent.h" />
     <ClInclude Include="Vertex.h" />
     <ClInclude Include="VulkanEngine.h" />
   </ItemGroup>

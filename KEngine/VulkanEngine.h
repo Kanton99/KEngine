@@ -211,11 +211,13 @@ public:
 
 	void init();
 
-	static VulkanEngine* startUp();
+	static VulkanEngine* get();
 
 	void cleanup();
 
 	void drawFrame();
+
+	void drawModel(VkBuffer* vertexBuffer, VkBuffer* indexBuffer, glm::mat4* transform);
 
 	void updateUniformBuffer(unsigned int currentImage, int obj);
 

@@ -3,16 +3,11 @@
 #include <bitset>
 #include <queue>
 #include <array>
-#include <glm/glm.hpp>
-
 using Entity = uint32_t;
 
 const Entity MAX_ENTITIES = 5000;
 
 #pragma region Components //TODO move to own file
-struct Transform {
-	glm::mat4 position;
-};
 
 using ComponentType = std::uint8_t;
 const ComponentType MAX_COMPONENTS = 32;

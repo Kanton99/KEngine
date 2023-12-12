@@ -160,7 +160,7 @@ void VulkanEngine::init() {
 	_isInitialized = true;
 }
 
-VulkanEngine* VulkanEngine::startUp()
+VulkanEngine* VulkanEngine::get()
 {
 	if (engine == 0) engine = new VulkanEngine();
 	engine->init();
@@ -1549,6 +1549,10 @@ void VulkanEngine::drawFrame() {
 		throw std::runtime_error("failed to acquire swap chain image");
 	}
 	currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
+}
+
+void VulkanEngine::drawModel(VkBuffer* vertexBuffer, VkBuffer* indexBuffer, glm::mat4* transform) {
+
 }
 
 void VulkanEngine::updateUniformBuffer(unsigned int currentImage, int obj) {

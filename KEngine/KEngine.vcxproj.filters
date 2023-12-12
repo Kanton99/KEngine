@@ -69,21 +69,15 @@
     <ClCompile Include="EntityManager.cpp">
       <Filter>File di origine</Filter>
     </ClCompile>
+    <ClCompile Include="RenderSystem.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="App.h">
       <Filter>File di intestazione</Filter>
     </ClInclude>
     <ClInclude Include="SpriteComponent.h">
-      <Filter>File di intestazione\ECS\Components</Filter>
-    </ClInclude>
-    <ClInclude Include="Transform.h">
-      <Filter>File di intestazione\ECS\Components</Filter>
-    </ClInclude>
-    <ClInclude Include="Components.h">
-      <Filter>File di intestazione\ECS\Components</Filter>
-    </ClInclude>
-    <ClInclude Include="IComponent.h">
       <Filter>File di intestazione\ECS\Components</Filter>
     </ClInclude>
     <ClInclude Include="VulkanEngine.h">
@@ -96,9 +90,6 @@
       <Filter>File di intestazione</Filter>
     </ClInclude>
     <ClInclude Include="Entity.h">
-      <Filter>File di intestazione\ECS</Filter>
-    </ClInclude>
-    <ClInclude Include="Entity2D.h">
       <Filter>File di intestazione\ECS</Filter>
     </ClInclude>
     <ClInclude Include="Model.h">
@@ -121,6 +112,15 @@
     </ClInclude>
     <ClInclude Include="Coordinator.h">
       <Filter>File di intestazione\ECS\Managers</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderSystem.h">
+      <Filter>File di intestazione\ECS\Systems</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderComponent.h">
+      <Filter>File di intestazione\ECS\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="TransformComponent.h">
+      <Filter>File di intestazione\ECS\Components</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

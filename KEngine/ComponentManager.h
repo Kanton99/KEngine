@@ -1,6 +1,8 @@
 #pragma once
 #include "EntityManager.h"
 #include "ComponentArray.h"
+#include "RenderComponent.h"
+#include "TransformComponent.h"
 #include <memory>
 
 class ComponentManager
