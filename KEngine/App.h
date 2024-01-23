@@ -4,8 +4,10 @@
 #include <iostream>
 
 #include "Entity.h"
-#include "Entity2D.h"
 #include "VulkanEngine.h"
+
+
+Coordinator gCoordinator;
 
 class App
 {

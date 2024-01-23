@@ -3,6 +3,6 @@
 class RenderComponent
 {
 public:
-	VkBuffer vertices;
-	VkBuffer indices;
+	VkBuffer *vertices;
+	VkBuffer *indices;
 };

@@ -1223,7 +1223,7 @@ void VulkanEngine::recordCommandBuffer(VkCommandBuffer commandBuffer, unsigned i
 //TODO integrate with resource manager
 //TODO Change to expand buffer when adding new models
  #pragma region Model loading
-void VulkanEngine::loadModel(std::string model_path) {
+std::pair<VkBuffer*,VkBuffer*> VulkanEngine::loadModel(std::string model_path) {
 	tinyobj::attrib_t attrib;
 	std::vector<tinyobj::shape_t> shapes;
 	std::vector<tinyobj::material_t> materials;
@@ -1259,12 +1259,14 @@ void VulkanEngine::loadModel(std::string model_path) {
 	model->indices_size = model->indices.size();
 	models.push_back(model);
 
-	createVertexBuffer();
-	createIndexBuffer();
+	auto vBuffer = createVertexBuffer();
+	auto iBuffer = createIndexBuffer();
 	mCount++;
+
+	return std::pair<VkBuffer*, VkBuffer*>(vBuffer, iBuffer);
 }
 
-void VulkanEngine::createVertexBuffer() {
+VkBuffer* VulkanEngine::createVertexBuffer() {
 
 	VkDeviceSize bufferSize = sizeof(models[mCount]->vertices[0]) * models[mCount]->vertices.size();
 
@@ -1285,9 +1287,11 @@ void VulkanEngine::createVertexBuffer() {
 	models[mCount]->vertices.shrink_to_fit();
 	vkDestroyBuffer(device, stagingBuffer, nullptr);
 	vkFreeMemory(device, stagingBufferMemory, nullptr);
+
+	return &vertexBuffers[mCount];
 }
 
-void VulkanEngine::createIndexBuffer() {
+VkBuffer* VulkanEngine::createIndexBuffer() {
 	VkDeviceSize bufferSize = sizeof(models[mCount]->indices[0]) * models[mCount]->indices.size();
 
 	VkBuffer stagingBuffer;
@@ -1308,6 +1312,8 @@ void VulkanEngine::createIndexBuffer() {
 	models[mCount]->indices.shrink_to_fit();
 	vkDestroyBuffer(device, stagingBuffer, nullptr);
 	vkFreeMemory(device, stagingBufferMemory, nullptr);
+
+	return &indexBuffers[mCount];
 }
 #pragma endregion
 
@@ -1551,8 +1557,124 @@ void VulkanEngine::drawFrame() {
 	currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
 }
 
-void VulkanEngine::drawModel(VkBuffer* vertexBuffer, VkBuffer* indexBuffer, glm::mat4* transform) {
+void VulkanEngine::drawModel(VkBuffer* vertexBuffer, VkBuffer* indexBuffer, glm::mat4* transform, unsigned int imageIndex) {
+	VkCommandBufferBeginInfo beginInfo{};
+	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+	beginInfo.flags = 0; // Optional
+	beginInfo.pInheritanceInfo = nullptr; // Optional
 
+	if (vkBeginCommandBuffer(commandBuffers[currentFrame], &beginInfo) != VK_SUCCESS) throw std::runtime_error("failed to begin recording command buffer!");
+
+	//Starting render pass
+	VkRenderPassBeginInfo renderPassInfo{};
+	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+	renderPassInfo.renderPass = renderPass;
+	renderPassInfo.framebuffer = swapChainFrameBuffers[imageIndex];
+	renderPassInfo.renderArea.offset = { 0,0 };
+	renderPassInfo.renderArea.extent = swapChainExtent;
+
+	std::array<VkClearValue, 2> clearValues{};
+	clearValues[0].color = { {0.f,0.f,0.f,1.f} };
+	clearValues[1].depthStencil = { 1.f, 0 };
+	renderPassInfo.clearValueCount = static_cast<unsigned int>(clearValues.size());
+	renderPassInfo.pClearValues = clearValues.data();
+
+
+	vkCmdBeginRenderPass(commandBuffers[currentFrame], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+	VkViewport viewport{};
+	viewport.x = 0.0f;
+	viewport.y = 0.0f;
+	viewport.width = static_cast<float>(swapChainExtent.width);
+	viewport.height = static_cast<float>(swapChainExtent.height);
+	viewport.minDepth = 0.0f;
+	viewport.maxDepth = 1.0f;
+	vkCmdSetViewport(commandBuffers[currentFrame], 0, 1, &viewport);
+
+	VkRect2D scissor{};
+	scissor.offset = { 0, 0 };
+	scissor.extent = swapChainExtent;
+	vkCmdSetScissor(commandBuffers[currentFrame], 0, 1, &scissor);
+	for (size_t model = 0; model < mCount; model++) {
+		updateUniformBuffer(currentFrame, model);
+		vkCmdBindPipeline(commandBuffers[currentFrame], VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipelines[models[model]->pipeline]);
+		VkBuffer ivertexBuffers[] = { vertexBuffers[model] };
+		VkDeviceSize offesets[] = { 0 };
+		vkCmdBindVertexBuffers(commandBuffers[currentFrame], 0, 1, ivertexBuffers, offesets);
+		vkCmdBindIndexBuffer(commandBuffers[currentFrame], indexBuffers[model], 0, VK_INDEX_TYPE_UINT32);
+
+		vkCmdBindDescriptorSets(commandBuffers[currentFrame], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayouts[models[model]->pipeline], 0, 1, &descriptorSets[currentFrame], 0, nullptr);
+
+		vkCmdDrawIndexed(commandBuffers[currentFrame], static_cast<uint16_t>(models[model]->indices_size), 1, 0, 0, 0);
+	}
+	vkCmdEndRenderPass(commandBuffers[currentFrame]);
+	//test
+	if (vkEndCommandBuffer(commandBuffers[currentFrame]) != VK_SUCCESS) throw std::runtime_error("failed to record command buffer");
+}
+
+unsigned int VulkanEngine::preDraw() {
+	vkWaitForFences(device, 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
+
+	unsigned int imageIndex;
+	auto result = vkAcquireNextImageKHR(device, swapChain, UINT64_MAX, imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
+
+	if (result == VK_ERROR_OUT_OF_DATE_KHR) {
+		recreateSwapChain();
+		return;
+	}
+	else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
+		throw std::runtime_error("failed to acquire swap chain image");
+	}
+
+	vkResetFences(device, 1, &inFlightFences[currentFrame]);
+
+	vkResetCommandBuffer(commandBuffers[currentFrame], 0);
+
+	return imageIndex;
+}
+
+void VulkanEngine::postDraw(unsigned int imageIndex) {
+	VkSubmitInfo submitInfo{};
+	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+
+	VkSemaphore waitSemaphores[] = { imageAvailableSemaphores[currentFrame] };
+	VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
+	submitInfo.waitSemaphoreCount = 1;
+	submitInfo.pWaitSemaphores = waitSemaphores;
+	submitInfo.pWaitDstStageMask = waitStages;
+	submitInfo.commandBufferCount = 1;
+	submitInfo.pCommandBuffers = &commandBuffers[currentFrame];
+
+	VkSemaphore signalSemaphores[] = { renderFinishedSemaphores[currentFrame] };
+	submitInfo.signalSemaphoreCount = 1;
+	submitInfo.pSignalSemaphores = signalSemaphores;
+
+	if (vkQueueSubmit(graphicsQueue, 1, &submitInfo, inFlightFences[currentFrame]) != VK_SUCCESS) throw std::runtime_error("failed to submit draw command buffer!");
+
+
+	VkPresentInfoKHR presentInfo{};
+	presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+
+	presentInfo.waitSemaphoreCount = 1;
+	presentInfo.pWaitSemaphores = signalSemaphores;
+
+	VkSwapchainKHR swapChains[] = { swapChain };
+	presentInfo.swapchainCount = 1;
+	presentInfo.pSwapchains = swapChains;
+	presentInfo.pImageIndices = &imageIndex;
+	presentInfo.pResults = nullptr; // Optional
+
+	auto result = vkQueuePresentKHR(presentQueue, &presentInfo);
+
+	if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || framebufferResized) {
+		framebufferResized = false;
+		recreateSwapChain();
+		return;
+	}
+	else if (result != VK_SUCCESS) {
+		throw std::runtime_error("failed to acquire swap chain image");
+	}
+	currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
 }
 
 void VulkanEngine::updateUniformBuffer(unsigned int currentImage, int obj) {

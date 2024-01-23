@@ -9,6 +9,8 @@ class RenderSystem : public System
 
 public:
 	RenderSystem();
-	~RenderSystem();
+
+	void loadModel(Entity entity, std::string modelPath);
+
 };
 

@@ -162,9 +162,9 @@ private:
 
 	void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory, int offset = 0);
 
-	void createVertexBuffer();
+	VkBuffer* createVertexBuffer();
 
-	void createIndexBuffer();
+	VkBuffer* createIndexBuffer();
 
 	void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 
@@ -217,13 +217,17 @@ public:
 
 	void drawFrame();
 
-	void drawModel(VkBuffer* vertexBuffer, VkBuffer* indexBuffer, glm::mat4* transform);
+	void drawModel(VkBuffer* vertexBuffer, VkBuffer* indexBuffer, glm::mat4* transform, unsigned int imageIndex);
+
+	unsigned int preDraw();
+
+	void postDraw(unsigned int imageIndex);
 
 	void updateUniformBuffer(unsigned int currentImage, int obj);
 
 	void recreateSwapChain();
 
 
-	void loadModel(std::string model_path);
+	std::pair<VkBuffer*, VkBuffer*> loadModel(std::string model_path);
 	void createTextureImage(std::string texture_path);
 };

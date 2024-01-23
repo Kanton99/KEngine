@@ -1,13 +1,12 @@
 #include "App.h"
-#include "SpriteComponent.h"
 #include <time.h>
 #include <Windows.h>
 #include <memory>
 //#include <vulkan.h>
 #include <SDL_vulkan.h>
+#include "Coordinator.h"
 
 #define FRAMERATE 30
-
 void App::Input()
 {
 	SDL_Event event;
@@ -60,7 +59,6 @@ void App::start()
 		Input();
 		/*Update();
 		Render(renderer);*/
-		engine->drawFrame();
 		Sleep(1000 * frameLength);
 	}
 }
@@ -68,7 +66,8 @@ void App::start()
 void App::init() {
 	//MemoryManager.startUp() //TODO Make Memorymanager
 	//ResourceManager.startUp()) //TODO Make resource manager
-	engine = VulkanEngine::startUp();
+	//engine = VulkanEngine::startUp();
+	gCoordinator.init();
 }
 
 void App::destroy() {

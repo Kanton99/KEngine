@@ -77,9 +77,6 @@
     <ClInclude Include="App.h">
       <Filter>File di intestazione</Filter>
     </ClInclude>
-    <ClInclude Include="SpriteComponent.h">
-      <Filter>File di intestazione\ECS\Components</Filter>
-    </ClInclude>
     <ClInclude Include="VulkanEngine.h">
       <Filter>File di intestazione</Filter>
     </ClInclude>
