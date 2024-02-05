@@ -39,11 +39,9 @@ void App::Update()
 	//this->root->update();
 }
 
-void App::Render(std::shared_ptr<SDL_Renderer> context)
+void App::Render()
 {
-	SDL_RenderClear(context.get());
-	//this->root->render(context);
-	SDL_RenderPresent(context.get());
+	renderSystem->draw();
 }
 
 void App::start()
@@ -56,7 +54,7 @@ void App::start()
 	engine->models[1]->transform = glm::translate(engine->models[1]->transform, glm::vec3(0.1f, 0.f, 0.f));*/
 	gCoordinator.Init();
 	gCoordinator.registerComponent<RenderComponent>();
-	auto renderSystem = gCoordinator.registerSystem<RenderSystem>();
+	renderSystem = gCoordinator.registerSystem<RenderSystem>();
 
 	
 	float frameLength = 1.f / FRAMERATE;
@@ -77,5 +75,6 @@ void App::init() {
 }
 
 void App::destroy() {
-	engine->cleanup();
+	//engine->cleanup();
+	renderSystem->cleanUp();
 }

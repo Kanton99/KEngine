@@ -5,14 +5,16 @@
 
 class RenderSystem : public System
 {
-	void draw();
 
 	std::unique_ptr<VulkanEngine> engine;
 
 public:
+	void draw();
 	RenderSystem();
 
 	void loadModel(Entity entity, std::string modelPath);
+
+	void cleanUp();
 
 };
 

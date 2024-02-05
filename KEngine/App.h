@@ -18,11 +18,12 @@ private:
 	std::unique_ptr<Entity> root;
 	//std::unique_ptr<VulkanEngine> engine;
 	//VulkanEngine* engine;
+	std::shared_ptr<RenderSystem> renderSystem;
 //Functions
 private:
 	void Input();
 	void Update();
-	void Render(std::shared_ptr<SDL_Renderer> context);
+	void Render();
 public:
 	void start();
 	void init();

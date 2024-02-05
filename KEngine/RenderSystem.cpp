@@ -31,4 +31,7 @@ void RenderSystem::loadModel(Entity entity, std::string modelPath)
 	renderComponent.indices = buffers.second;
 }
 
+void RenderSystem::CleanUp() {
+	this->engine->cleanup();
+}
 
