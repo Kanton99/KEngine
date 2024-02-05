@@ -1620,7 +1620,7 @@ unsigned int VulkanEngine::preDraw() {
 
 	if (result == VK_ERROR_OUT_OF_DATE_KHR) {
 		recreateSwapChain();
-		return;
+		return -1;
 	}
 	else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
 		throw std::runtime_error("failed to acquire swap chain image");

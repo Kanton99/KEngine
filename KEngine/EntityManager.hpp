@@ -3,8 +3,8 @@
 #include <bitset>
 #include <queue>
 #include <array>
-using Entity = uint32_t;
 
+using Entity = std::uint32_t;
 const Entity MAX_ENTITIES = 5000;
 
 #pragma region Components //TODO move to own file

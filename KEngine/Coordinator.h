@@ -1,5 +1,5 @@
 #pragma once
-#include "EntityManager.h"
+#include "EntityManager.hpp"
 #include "ComponentManager.h"
 #include "SystemManager.h"
 class Coordinator
@@ -44,7 +44,7 @@ public:
 
 		auto signature = mEntityManager->GetSignature(entity);
 		signature.set(mComponentManager->GetComponentType<T>(), true);
-		mEntityManager->SetSignature(entity, signature);
+		mEntityManager->setSignature(entity, signature);
 
 		mSystemManager->EntitySignatureChanged(entity, signature);
 	}
@@ -56,7 +56,7 @@ public:
 
 		auto signature = mEntityManager->GetSignature(entity);
 		signature.set(mComponentManager->GetComponentType<T>(), false);
-		mEntityManager->SetSignature(entity, signature);
+		mEntityManager->setSignature(entity, signature);
 
 		mSystemManager->EntitySignatureChanged(entity, signature);
 	}

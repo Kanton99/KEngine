@@ -1,5 +1,5 @@
 #pragma once
-#include "EntityManager.h"
+#include "EntityManager.hpp"
 #include "ComponentArray.h"
 #include "RenderComponent.h"
 #include "TransformComponent.h"
@@ -20,7 +20,7 @@ private:
 
 		assert(mComponentTypes.find(typeName) != mComponentTypes.end() && "Component not registered before use");
 
-		return std::static_pointer_cast<ComponentType<T>>(mComponentArrays[typeName]);
+		return std::static_pointer_cast<ComponentArray<T>>(mComponentArrays[typeName]);
 	}
 
 public:
@@ -70,7 +70,7 @@ public:
 	T& GetComponent(Entity entity)
 	{
 		// Get a reference to a component from the array for an entity
-		return GetComponentArray<T>()->GetData(entity);
+		return getComponentArray<T>()->getData(entity);
 	}
 
 	void EntityDestroyed(Entity entity)
@@ -81,7 +81,7 @@ public:
 		{
 			auto const& component = pair.second;
 
-			component->EntityDestroyed(entity);
+			component->entityDestroyed(entity);
 		}
 	}
 };

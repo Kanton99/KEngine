@@ -5,6 +5,7 @@
 //#include <vulkan.h>
 #include <SDL_vulkan.h>
 #include "Coordinator.h"
+#include "RenderSystem.h"
 
 #define FRAMERATE 30
 void App::Input()
@@ -22,7 +23,6 @@ void App::Input()
 			{
 			case SDL_WINDOWEVENT_MINIMIZED:
 			case SDL_WINDOWEVENT_RESIZED:
-				engine->framebufferResized = true;
 				break;
 			default:
 				break;
@@ -36,28 +36,34 @@ void App::Input()
 
 void App::Update()
 {
-	this->root->update();
+	//this->root->update();
 }
 
 void App::Render(std::shared_ptr<SDL_Renderer> context)
 {
 	SDL_RenderClear(context.get());
-	this->root->render(context);
+	//this->root->render(context);
 	SDL_RenderPresent(context.get());
 }
 
 void App::start()
 {
-	engine->loadModel("Resources/Models/gunaxe.obj");
+	/*engine->loadModel("Resources/Models/gunaxe.obj");
 	engine->createTextureImage("Resources/Textures/lambert4_Base_color.png");
 
 	engine->loadModel("Resources/Models/gunaxe.obj");
 	engine->createTextureImage("Resources/Textures/lambert4_Base_color.png");
-	engine->models[1]->transform = glm::translate(engine->models[1]->transform, glm::vec3(0.1f, 0.f, 0.f));
+	engine->models[1]->transform = glm::translate(engine->models[1]->transform, glm::vec3(0.1f, 0.f, 0.f));*/
+	gCoordinator.Init();
+	gCoordinator.registerComponent<RenderComponent>();
+	auto renderSystem = gCoordinator.registerSystem<RenderSystem>();
+
+	
 	float frameLength = 1.f / FRAMERATE;
 	while (true) {
 		Input();
 		/*Update();
+		
 		Render(renderer);*/
 		Sleep(1000 * frameLength);
 	}
@@ -67,7 +73,7 @@ void App::init() {
 	//MemoryManager.startUp() //TODO Make Memorymanager
 	//ResourceManager.startUp()) //TODO Make resource manager
 	//engine = VulkanEngine::startUp();
-	gCoordinator.init();
+	gCoordinator.Init();
 }
 
 void App::destroy() {

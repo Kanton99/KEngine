@@ -1,10 +1,8 @@
 #pragma once
 
-#include "EntityManager.h"
-#include "Coordinator.h"
+#include "EntityManager.hpp"
 #include <set>
 
-extern Coordinator gCoordinator;
 class System
 {
 public:

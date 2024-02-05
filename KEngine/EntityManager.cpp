@@ -1,4 +1,6 @@
-#include "EntityManager.h"
+#include "EntityManager.hpp"
+
+#include <assert.h>
 
 EntityManager::EntityManager():
 	mLivingEntityCount(0)

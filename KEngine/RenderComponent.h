@@ -1,8 +1,7 @@
 #pragma once
 #include "VulkanEngine.h"
-class RenderComponent
+struct RenderComponent
 {
-public:
 	VkBuffer *vertices;
 	VkBuffer *indices;
 };

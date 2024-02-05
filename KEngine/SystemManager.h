@@ -1,6 +1,6 @@
 #pragma once
 #include <memory>
-#include "EntityManager.h"
+#include "EntityManager.hpp"
 #include <unordered_map>
 #include "System.h"
 class SystemManager

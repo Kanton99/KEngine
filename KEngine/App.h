@@ -3,11 +3,13 @@
 #undef main
 #include <iostream>
 
-#include "Entity.h"
+//#include "Entity.h"
+#include "Coordinator.h"
 #include "VulkanEngine.h"
 
 
-Coordinator gCoordinator;
+
+extern Coordinator gCoordinator;
 
 class App
 {
@@ -15,8 +17,7 @@ class App
 private:
 	std::unique_ptr<Entity> root;
 	//std::unique_ptr<VulkanEngine> engine;
-	VulkanEngine* engine;
-
+	//VulkanEngine* engine;
 //Functions
 private:
 	void Input();

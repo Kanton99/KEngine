@@ -1,5 +1,7 @@
 #pragma once
 #include "System.h"
+#include <memory>
+#include "VulkanEngine.h"
 
 class RenderSystem : public System
 {

@@ -1,12 +1,16 @@
 #pragma once
-#include "EntityManager.h"
+#include "EntityManager.hpp"
 #include <unordered_map>
+
+#ifndef NDEBUG
+#include <assert.h>
+#endif
 
 class IComponentArray 
 {
 public:
 	virtual ~IComponentArray() = default;
-	virtual void EntityDestroyed(Entity entity) = 0;
+	virtual void entityDestroyed(Entity entity) = 0;
 };
 
 template<typename T>
@@ -60,7 +64,7 @@ public:
 		if (mEntityToIndexMap.find(entity) != mEntityToIndexMap.end())
 		{
 			// Remove the entity's component if it existed
-			RemoveData(entity);
+			this->removeData(entity);
 		}
 	}
 };

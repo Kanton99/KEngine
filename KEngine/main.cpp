@@ -1,6 +1,8 @@
 #include "App.h"
 #include <iostream>
-int Entity::eCounter = 0;
+#include "Coordinator.h"
+//int Entity::eCounter = 0;
+Coordinator gCoordinator;
 int main() {
 	try {
 		App* app = new App();
