@@ -6,6 +6,7 @@
 //#include "Entity.h"
 #include "Coordinator.h"
 #include "VulkanEngine.h"
+#include "RenderSystem.h"
 
 
 
@@ -15,9 +16,6 @@ class App
 {
 //Variables
 private:
-	std::unique_ptr<Entity> root;
-	//std::unique_ptr<VulkanEngine> engine;
-	//VulkanEngine* engine;
 	std::shared_ptr<RenderSystem> renderSystem;
 //Functions
 private:

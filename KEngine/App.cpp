@@ -5,7 +5,7 @@
 //#include <vulkan.h>
 #include <SDL_vulkan.h>
 #include "Coordinator.h"
-#include "RenderSystem.h"
+//#include "RenderSystem.h"
 
 #define FRAMERATE 30
 void App::Input()
@@ -54,15 +54,28 @@ void App::start()
 	engine->models[1]->transform = glm::translate(engine->models[1]->transform, glm::vec3(0.1f, 0.f, 0.f));*/
 	gCoordinator.Init();
 	gCoordinator.registerComponent<RenderComponent>();
+	gCoordinator.registerComponent<Transform>();
+
 	renderSystem = gCoordinator.registerSystem<RenderSystem>();
 
-	
+	Signature signature;
+	signature.set(gCoordinator.getComponentType<Transform>());
+	signature.set(gCoordinator.getComponentType<RenderComponent>());
+	gCoordinator.setSystemSignature<RenderSystem>(signature);
+
+	auto GunAxe1 = gCoordinator.createEntity();
+
+	gCoordinator.addComponent(GunAxe1, Transform{glm::mat4()});
+	gCoordinator.addComponent(GunAxe1, RenderComponent());
+
+	renderSystem->loadModel(GunAxe1, "Resources/Models/gunaxe.obj");
+
 	float frameLength = 1.f / FRAMERATE;
 	while (true) {
 		Input();
-		/*Update();
+		/*Update();*/
 		
-		Render(renderer);*/
+		Render();
 		Sleep(1000 * frameLength);
 	}
 }

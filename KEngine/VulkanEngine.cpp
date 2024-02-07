@@ -861,7 +861,6 @@ void VulkanEngine::createDescriptorSets() {
 	//	bufferInfo.offset = 0;
 	//	bufferInfo.range = sizeof(UniformBufferObject);
 
-
 	//	VkDescriptorImageInfo imageInfo{};
 	//	imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 	//	imageInfo.imageView = textureImageView;
@@ -884,7 +883,7 @@ void VulkanEngine::createDescriptorSets() {
 	//	descriptorWrite[1].descriptorCount = 1;
 	//	descriptorWrite[1].pImageInfo = &imageInfo;
 
-	//	vkUpdateDescriptorSets(device, static_cast<unsigned int>(descriptorWrite.size()), descriptorWrite.data(), 0, nullptr);
+	//vkUpdateDescriptorSets(device, static_cast<unsigned int>(descriptorWrite.size()), descriptorWrite.data(), 0, nullptr);
 	//}
 }
 #pragma endregion
@@ -1597,6 +1596,7 @@ void VulkanEngine::drawModel(VkBuffer* vertexBuffer, VkBuffer* indexBuffer, glm:
 	vkCmdSetScissor(commandBuffers[currentFrame], 0, 1, &scissor);
 	for (size_t model = 0; model < mCount; model++) {
 		updateUniformBuffer(currentFrame, model);
+		
 		vkCmdBindPipeline(commandBuffers[currentFrame], VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipelines[models[model]->pipeline]);
 		VkBuffer ivertexBuffers[] = { vertexBuffers[model] };
 		VkDeviceSize offesets[] = { 0 };

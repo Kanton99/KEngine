@@ -56,7 +56,7 @@ public:
 	void AddComponent(Entity entity, T component)
 	{
 		// Add a component to the array for an entity
-		GetComponentArray<T>()->InsertData(entity, component);
+		getComponentArray<T>()->insertData(entity, component);
 	}
 
 	template<typename T>
