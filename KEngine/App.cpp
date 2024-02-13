@@ -70,7 +70,7 @@ void App::start()
 	gCoordinator.addComponent(GunAxe1, RenderComponent());
 
 	renderSystem->loadModel(GunAxe1, "Resources/Models/gunaxe.obj");
-
+	renderSystem->loadTexture(GunAxe1, "Resources/Textures/lambert4_Base_color.png");
 	float frameLength = 1.f / FRAMERATE;
 	while (true) {
 		Input();

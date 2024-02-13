@@ -14,6 +14,8 @@ public:
 
 	void loadModel(Entity entity, std::string modelPath);
 
+	void loadTexture(Entity entity, std::string texturePath);
+
 	void cleanUp();
 
 };

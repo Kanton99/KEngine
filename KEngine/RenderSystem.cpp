@@ -32,6 +32,11 @@ void RenderSystem::loadModel(Entity entity, std::string modelPath)
 	renderComponent.indices = buffers.second;
 }
 
+void RenderSystem::loadTexture(Entity entity, std::string texturePath) {
+	engine->createTextureImage(texturePath);
+
+}
+
 void RenderSystem::cleanUp() {
 	this->engine->cleanup();
 }
