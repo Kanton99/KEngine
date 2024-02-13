@@ -8,14 +8,14 @@ extern Coordinator gCoordinator;
 void RenderSystem::draw()
 {
 	//TODO Clear the render
-	//auto imageIndex = engine->preDraw();
+	auto imageIndex = engine->preDraw();
 	for (auto entity : mEntities) {
 		RenderComponent renderComponent = gCoordinator.getComponent<RenderComponent>(entity);
 		Transform transformComponent = gCoordinator.getComponent<Transform>(entity);
 
-		//engine->drawModel(renderComponent.vertices, renderComponent.indices, &transformComponent.transform, imageIndex);
+		engine->drawModel(renderComponent.vertices, renderComponent.indices, &transformComponent.transform, imageIndex);
 	}
-	//engine->postDraw(imageIndex);
+	engine->postDraw(imageIndex);
 }
 
 RenderSystem::RenderSystem() :

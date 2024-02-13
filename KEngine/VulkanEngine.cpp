@@ -855,36 +855,36 @@ void VulkanEngine::createDescriptorSets() {
 	descriptorSets.resize(MAX_FRAMES_IN_FLIGHT);
 	if (vkAllocateDescriptorSets(device, &allocInfo, descriptorSets.data()) != VK_SUCCESS) throw std::runtime_error("failed to allocate descriptor sets");
 
-	//for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-	//	VkDescriptorBufferInfo bufferInfo{};
-	//	bufferInfo.buffer = uniformBuffers[i];
-	//	bufferInfo.offset = 0;
-	//	bufferInfo.range = sizeof(UniformBufferObject);
+	/*for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+		VkDescriptorBufferInfo bufferInfo{};
+		bufferInfo.buffer = uniformBuffers[i];
+		bufferInfo.offset = 0;
+		bufferInfo.range = sizeof(UniformBufferObject);
 
-	//	VkDescriptorImageInfo imageInfo{};
-	//	imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-	//	imageInfo.imageView = textureImageView;
-	//	imageInfo.sampler = textureSampler;
+		VkDescriptorImageInfo imageInfo{};
+		imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		imageInfo.imageView = textureImageViews[0];
+		imageInfo.sampler = textureSamplers[0];
 
-	//	std::array<VkWriteDescriptorSet, 2> descriptorWrite{};
-	//	descriptorWrite[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-	//	descriptorWrite[0].dstSet = descriptorSets[i];
-	//	descriptorWrite[0].dstBinding = 0;
-	//	descriptorWrite[0].dstArrayElement = 0;
-	//	descriptorWrite[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	//	descriptorWrite[0].descriptorCount = 1;
-	//	descriptorWrite[0].pBufferInfo = &bufferInfo;
+		std::array<VkWriteDescriptorSet, 2> descriptorWrite{};
+		descriptorWrite[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		descriptorWrite[0].dstSet = descriptorSets[i];
+		descriptorWrite[0].dstBinding = 0;
+		descriptorWrite[0].dstArrayElement = 0;
+		descriptorWrite[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		descriptorWrite[0].descriptorCount = 1;
+		descriptorWrite[0].pBufferInfo = &bufferInfo;
 
-	//	descriptorWrite[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-	//	descriptorWrite[1].dstSet = descriptorSets[i];
-	//	descriptorWrite[1].dstBinding = 1;
-	//	descriptorWrite[1].dstArrayElement = 0;
-	//	descriptorWrite[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	//	descriptorWrite[1].descriptorCount = 1;
-	//	descriptorWrite[1].pImageInfo = &imageInfo;
+		descriptorWrite[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		descriptorWrite[1].dstSet = descriptorSets[i];
+		descriptorWrite[1].dstBinding = 1;
+		descriptorWrite[1].dstArrayElement = 0;
+		descriptorWrite[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		descriptorWrite[1].descriptorCount = 1;
+		descriptorWrite[1].pImageInfo = &imageInfo;
 
-	//vkUpdateDescriptorSets(device, static_cast<unsigned int>(descriptorWrite.size()), descriptorWrite.data(), 0, nullptr);
-	//}
+	vkUpdateDescriptorSets(device, static_cast<unsigned int>(descriptorWrite.size()), descriptorWrite.data(), 0, nullptr);
+	}*/
 }
 #pragma endregion
 
@@ -1222,6 +1222,12 @@ void VulkanEngine::recordCommandBuffer(VkCommandBuffer commandBuffer, unsigned i
 //TODO integrate with resource manager
 //TODO Change to expand buffer when adding new models
  #pragma region Model loading
+
+/// <summary>
+/// Load model to the GPU
+/// </summary>
+/// <param name="model_path"></param>
+/// <returns></returns>
 std::pair<VkBuffer*,VkBuffer*> VulkanEngine::loadModel(std::string model_path) {
 	tinyobj::attrib_t attrib;
 	std::vector<tinyobj::shape_t> shapes;
@@ -1265,6 +1271,10 @@ std::pair<VkBuffer*,VkBuffer*> VulkanEngine::loadModel(std::string model_path) {
 	return std::pair<VkBuffer*, VkBuffer*>(vBuffer, iBuffer);
 }
 
+/// <summary>
+/// Create vertex buffer
+/// </summary>
+/// <returns></returns>
 VkBuffer* VulkanEngine::createVertexBuffer() {
 
 	VkDeviceSize bufferSize = sizeof(models[mCount]->vertices[0]) * models[mCount]->vertices.size();
@@ -1290,6 +1300,10 @@ VkBuffer* VulkanEngine::createVertexBuffer() {
 	return &vertexBuffers[mCount];
 }
 
+/// <summary>
+/// Create index buffer
+/// </summary>
+/// <returns></returns>
 VkBuffer* VulkanEngine::createIndexBuffer() {
 	VkDeviceSize bufferSize = sizeof(models[mCount]->indices[0]) * models[mCount]->indices.size();
 
@@ -1321,6 +1335,12 @@ void VulkanEngine::createDefaultGraphicsPipeline() {
 	createPipeline("Resources/Shaders/Build/vert.spv", "Resources/Shaders/Build/frag.spv", "default");
 }
 
+/// <summary>
+/// Create pipeline for vertex adìnd fragment shader
+/// </summary>
+/// <param name="vertShader"></param>
+/// <param name="fragShader"></param>
+/// <param name="shaderID"></param>
 void VulkanEngine::createPipeline(const std::string vertShader, const std::string fragShader, const std::string shaderID) {
 	if (shaderID == "default" && defaultPipelineBuilt) throw std::runtime_error("Can't make new default pipeline");
 	//shader loading
@@ -1493,6 +1513,9 @@ void VulkanEngine::createPipeline(const std::string vertShader, const std::strin
 }
 #pragma endregion
 
+/// <summary>
+/// Draw a single frame
+/// </summary>
 void VulkanEngine::drawFrame() {
 	vkWaitForFences(device, 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
 
@@ -1556,6 +1579,13 @@ void VulkanEngine::drawFrame() {
 	currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
 }
 
+/// <summary>
+/// Draw a single model
+/// </summary>
+/// <param name="vertexBuffer"></param>
+/// <param name="indexBuffer"></param>
+/// <param name="transform"></param>
+/// <param name="imageIndex"></param>
 void VulkanEngine::drawModel(VkBuffer* vertexBuffer, VkBuffer* indexBuffer, glm::mat4* transform, unsigned int imageIndex) {
 	VkCommandBufferBeginInfo beginInfo{};
 	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -1612,6 +1642,10 @@ void VulkanEngine::drawModel(VkBuffer* vertexBuffer, VkBuffer* indexBuffer, glm:
 	if (vkEndCommandBuffer(commandBuffers[currentFrame]) != VK_SUCCESS) throw std::runtime_error("failed to record command buffer");
 }
 
+/// <summary>
+/// All instructions needed before drawing a frame
+/// </summary>
+/// <returns></returns>
 unsigned int VulkanEngine::preDraw() {
 	vkWaitForFences(device, 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
 
@@ -1629,10 +1663,13 @@ unsigned int VulkanEngine::preDraw() {
 	vkResetFences(device, 1, &inFlightFences[currentFrame]);
 
 	vkResetCommandBuffer(commandBuffers[currentFrame], 0);
-
 	return imageIndex;
 }
 
+/// <summary>
+/// All instructions needed after drawing a frame
+/// </summary>
+/// <param name="imageIndex"></param>
 void VulkanEngine::postDraw(unsigned int imageIndex) {
 	VkSubmitInfo submitInfo{};
 	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -1676,6 +1713,7 @@ void VulkanEngine::postDraw(unsigned int imageIndex) {
 	}
 	currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
 }
+
 
 void VulkanEngine::updateUniformBuffer(unsigned int currentImage, int obj) {
 	static auto startTime = std::chrono::high_resolution_clock::now();

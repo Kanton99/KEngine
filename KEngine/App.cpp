@@ -5,6 +5,7 @@
 //#include <vulkan.h>
 #include <SDL_vulkan.h>
 #include "Coordinator.h"
+#include "RenderSystem.h"
 //#include "RenderSystem.h"
 
 #define FRAMERATE 30

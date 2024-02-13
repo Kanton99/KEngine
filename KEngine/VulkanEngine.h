@@ -73,9 +73,13 @@ private:
 
 	VkRenderPass renderPass;
 	VkDescriptorSetLayout descriptorSetLayout;
-	std::unordered_map<std::string,VkPipelineLayout> pipelineLayouts;
+
+#pragma region Pipelines
+	std::unordered_map<std::string, VkPipelineLayout> pipelineLayouts;
 	bool defaultPipelineBuilt = false;
-	std::unordered_map<std::string,VkPipeline> graphicsPipelines;
+	std::unordered_map<std::string, VkPipeline> graphicsPipelines;
+#pragma endregion
+
 
 	std::vector<VkFramebuffer> swapChainFrameBuffers;
 
