@@ -8,6 +8,9 @@ class RenderSystem : public System
 
 	std::unique_ptr<VulkanEngine> engine;
 
+public: //TODO do more secure
+	SDL_Window* window;
+
 public:
 	void draw();
 	RenderSystem();

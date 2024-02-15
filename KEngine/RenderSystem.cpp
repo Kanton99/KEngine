@@ -8,6 +8,7 @@ extern Coordinator gCoordinator;
 void RenderSystem::draw()
 {
 	//TODO Clear the render
+	
 	auto imageIndex = engine->preDraw();
 	for (auto entity : mEntities) {
 		RenderComponent renderComponent = gCoordinator.getComponent<RenderComponent>(entity);
@@ -21,15 +22,15 @@ void RenderSystem::draw()
 RenderSystem::RenderSystem() :
 	engine(std::unique_ptr<VulkanEngine>(VulkanEngine::get()))
 {
-
+	window = engine->_window;
 }
 
 void RenderSystem::loadModel(Entity entity, std::string modelPath)
 {
 	auto buffers = engine->loadModel(modelPath);
-	RenderComponent renderComponent = gCoordinator.getComponent<RenderComponent>(entity);
-	renderComponent.vertices = buffers.first;
-	renderComponent.indices = buffers.second;
+	RenderComponent *renderComponent = &(gCoordinator.getComponent<RenderComponent>(entity));
+	renderComponent->vertices = buffers.first;
+	renderComponent->indices = buffers.second;
 }
 
 void RenderSystem::loadTexture(Entity entity, std::string texturePath) {

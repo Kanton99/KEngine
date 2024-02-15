@@ -1201,7 +1201,7 @@ void VulkanEngine::recordCommandBuffer(VkCommandBuffer commandBuffer, unsigned i
 	scissor.extent = swapChainExtent;
 	vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 	for (size_t model = 0; model < mCount; model++) {
-		updateUniformBuffer(currentFrame, model);
+		//updateUniformBuffer(currentFrame, model);
 		vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipelines[models[model]->pipeline]);
 		VkBuffer ivertexBuffers[] = { vertexBuffers[model] };
 		VkDeviceSize offesets[] = { 0 };
@@ -1624,7 +1624,7 @@ void VulkanEngine::drawModel(VkBuffer* vertexBuffer, VkBuffer* indexBuffer, glm:
 	scissor.offset = { 0, 0 };
 	scissor.extent = swapChainExtent;
 	vkCmdSetScissor(commandBuffers[currentFrame], 0, 1, &scissor);
-	for (size_t model = 0; model < mCount; model++) {
+	/*for (size_t model = 0; model < mCount; model++) {
 		updateUniformBuffer(currentFrame, model);
 		
 		vkCmdBindPipeline(commandBuffers[currentFrame], VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipelines[models[model]->pipeline]);
@@ -1636,7 +1636,21 @@ void VulkanEngine::drawModel(VkBuffer* vertexBuffer, VkBuffer* indexBuffer, glm:
 		vkCmdBindDescriptorSets(commandBuffers[currentFrame], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayouts[models[model]->pipeline], 0, 1, &descriptorSets[currentFrame], 0, nullptr);
 
 		vkCmdDrawIndexed(commandBuffers[currentFrame], static_cast<uint16_t>(models[model]->indices_size), 1, 0, 0, 0);
-	}
+	}*/
+	//TODO move pipelines location
+	updateUniformBuffer(currentFrame, transform);
+	vkCmdBindPipeline(commandBuffers[currentFrame], VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipelines[models[0]->pipeline]);
+	VkBuffer ivertexBuffers[] = { *vertexBuffer };
+	VkDeviceSize offsets[] = { 0 };
+	vkCmdBindVertexBuffers(commandBuffers[currentFrame], 0, 1, ivertexBuffers, offsets);
+	vkCmdBindIndexBuffer(commandBuffers[currentFrame], *indexBuffer, 0, VK_INDEX_TYPE_UINT32);
+
+	vkCmdBindDescriptorSets(commandBuffers[currentFrame], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayouts[models[0]->pipeline], 0, 1, &descriptorSets[currentFrame], 0, nullptr);
+
+	//TODO change model[0]->indeces_size
+	vkCmdDrawIndexed(commandBuffers[currentFrame], static_cast<uint16_t>(models[0]->indices_size), 1, 0, 0, 0);
+
+
 	vkCmdEndRenderPass(commandBuffers[currentFrame]);
 	//test
 	if (vkEndCommandBuffer(commandBuffers[currentFrame]) != VK_SUCCESS) throw std::runtime_error("failed to record command buffer");
@@ -1715,14 +1729,14 @@ void VulkanEngine::postDraw(unsigned int imageIndex) {
 }
 
 
-void VulkanEngine::updateUniformBuffer(unsigned int currentImage, int obj) {
+void VulkanEngine::updateUniformBuffer(unsigned int currentImage, glm::mat4 *obj) {
 	static auto startTime = std::chrono::high_resolution_clock::now();
 
 	auto currentTime = std::chrono::high_resolution_clock::now();
 	float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
 
 	UniformBufferObject ubo{};
-	ubo.model = glm::rotate(models[obj]->transform, time * glm::radians(90.f), glm::vec3(0.f, 0.f, 1.f));
+	ubo.model = glm::rotate(*obj, time * glm::radians(90.f), glm::vec3(0.f, 0.f, 1.f));
 
 	ubo.view = glm::lookAt(glm::vec3(0.3f, 0.3f, 0.3f), glm::vec3(0.f, 0.f, 0.f), glm::vec3(0.f, 0.f, 1.f));
 

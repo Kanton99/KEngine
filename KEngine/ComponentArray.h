@@ -26,8 +26,9 @@ private:
 
 public:
 	void insertData(Entity entity, T component) {
+#ifdef DEBUG
 		assert(mEntityToIndexMap.find(entity) == mEntityToIndexMap.end() && "Component added to same entity more than once");
-
+#endif
 		// Put new entry at end and update the maps
 		size_t newIndex = mSize;
 		mEntityToIndexMap[entity] = newIndex;
@@ -36,8 +37,9 @@ public:
 		++mSize;
 	}
 	void removeData(Entity entity) {
+#ifdef DEBUG
 		assert(mEntityToIndexMap.find(entity) != mEntityToIndexMap.end() && "Removing non-existent component.");
-
+#endif
 		// Copy element at end into deleted element's place to maintain density
 		size_t indexOfRemovedEntity = mEntityToIndexMap[entity];
 		size_t indexOfLastElement = mSize - 1;
@@ -55,8 +57,9 @@ public:
 	}
 
 	T& getData(Entity entity) {
+#ifdef DEBUG
 		assert(mEntityToIndexMap.find(entity) != mEntityToIndexMap.end() && "Retrieving non-existent component.");
-
+#endif
 		// Return a reference to the entity's component
 		return mComponentArray[mEntityToIndexMap[entity]];
 	}

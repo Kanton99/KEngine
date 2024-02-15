@@ -227,7 +227,8 @@ public:
 
 	void postDraw(unsigned int imageIndex);
 
-	void updateUniformBuffer(unsigned int currentImage, int obj);
+	//void updateUniformBuffer(unsigned int currentImage, int obj);
+	void updateUniformBuffer(unsigned int currentImage, glm::mat4 *obj);
 
 	void recreateSwapChain();
 

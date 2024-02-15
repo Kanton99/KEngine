@@ -7,6 +7,7 @@
 #include "Coordinator.h"
 #include "RenderSystem.h"
 //#include "RenderSystem.h"
+#include <random>
 
 #define FRAMERATE 30
 void App::Input()
@@ -64,13 +65,25 @@ void App::start()
 	signature.set(gCoordinator.getComponentType<RenderComponent>());
 	gCoordinator.setSystemSignature<RenderSystem>(signature);
 
-	auto GunAxe1 = gCoordinator.createEntity();
+	std::mt19937_64 rng(std::random_device{}());
 
-	gCoordinator.addComponent(GunAxe1, Transform{glm::mat4()});
-	gCoordinator.addComponent(GunAxe1, RenderComponent());
+	// Define the range of the random float
+	std::uniform_real_distribution<float> dist(0.0f, 0.1f);
+	for (int i = 0; i < 100; i++){
+		auto GunAxe1 = gCoordinator.createEntity();
+		auto space = glm::mat4(1.f);
 
-	renderSystem->loadModel(GunAxe1, "Resources/Models/gunaxe.obj");
-	renderSystem->loadTexture(GunAxe1, "Resources/Textures/lambert4_Base_color.png");
+		// Generate a random float
+		float random_float = dist(rng);
+		space[0][3] = random_float;
+		random_float = dist(rng);
+		space[2][3] = random_float;
+		gCoordinator.addComponent(GunAxe1, Transform{ space });
+		gCoordinator.addComponent(GunAxe1, RenderComponent());
+
+		renderSystem->loadModel(GunAxe1, "Resources/Models/gunaxe.obj");
+		renderSystem->loadTexture(GunAxe1, "Resources/Textures/lambert4_Base_color.png");
+	}
 	float frameLength = 1.f / FRAMERATE;
 	while (true) {
 		Input();
