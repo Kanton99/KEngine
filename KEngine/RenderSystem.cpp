@@ -5,6 +5,10 @@
 #include <SDL_vulkan.h>
 
 extern Coordinator gCoordinator;
+
+/// <summary>
+/// Draw one frame
+/// </summary>
 void RenderSystem::draw()
 {
 	//TODO Clear the render
@@ -25,6 +29,11 @@ RenderSystem::RenderSystem() :
 	window = engine->_window;
 }
 
+/// <summary>
+/// Load 3d model for an enity
+/// </summary>
+/// <param name="entity"></param>
+/// <param name="modelPath"></param>
 void RenderSystem::loadModel(Entity entity, std::string modelPath)
 {
 	auto buffers = engine->loadModel(modelPath);
@@ -33,11 +42,19 @@ void RenderSystem::loadModel(Entity entity, std::string modelPath)
 	renderComponent->indices = buffers.second;
 }
 
+/// <summary>
+/// Load texture for an entity's model
+/// </summary>
+/// <param name="entity"></param>
+/// <param name="texturePath"></param>
 void RenderSystem::loadTexture(Entity entity, std::string texturePath) {
 	engine->createTextureImage(texturePath);
 
 }
 
+/// <summary>
+/// Clean up the engine's GPU memory
+/// </summary>
 void RenderSystem::cleanUp() {
 	this->engine->cleanup();
 }

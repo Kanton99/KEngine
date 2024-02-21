@@ -28,6 +28,11 @@ const bool enableValidationLayers = true;
 
 const std::vector<const char*> validationLayers = { "VK_LAYER_KHRONOS_validation" };
 
+/// <summary>
+/// Read a file
+/// </summary>
+/// <param name="filename"></param>
+/// <returns></returns>
 static std::vector<char> readFile(const std::string& filename) {
 	std::ifstream file(filename, std::ios::ate | std::ios::binary);
 	if (!file.is_open()) throw std::runtime_error("failed to open file");
@@ -43,6 +48,10 @@ static std::vector<char> readFile(const std::string& filename) {
 }
 
 #pragma region debug
+/// <summary>
+/// Check if validation is supported by the GPU
+/// </summary>
+/// <returns></returns>
 bool VulkanEngine::checkValidationSupport() {
 	unsigned int layerCount;
 	vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
@@ -67,6 +76,14 @@ bool VulkanEngine::checkValidationSupport() {
 	return true;
 }
 
+/// <summary>
+/// Craete structures to debug GPU calls
+/// </summary>
+/// <param name="instance"></param>
+/// <param name="pCreateInfo"></param>
+/// <param name="pAllocator"></param>
+/// <param name="pDebugMessenger"></param>
+/// <returns></returns>
 VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pDebugMessenger) {
 	auto func = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(instance, "vkCreateDebugUtilsMessengerEXT");
 	if (func != nullptr) {
@@ -77,6 +94,9 @@ VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMes
 	}
 }
 
+/// <summary>
+/// Setup the messanger for GPU calls debug
+/// </summary>
 void VulkanEngine::setupDebugMessenger()
 {
 	if (!enableValidationLayers) return;
@@ -95,6 +115,14 @@ void VulkanEngine::setupDebugMessenger()
 	}
 }
 
+/// <summary>
+/// Debug Callback
+/// </summary>
+/// <param name="messageSeverity"></param>
+/// <param name="messageType"></param>
+/// <param name="pCallbackData"></param>
+/// <param name="pUserData"></param>
+/// <returns></returns>
 VKAPI_ATTR VkBool32 VKAPI_CALL VulkanEngine::debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData)
 {
 	if (messageSeverity >= VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT) {
@@ -104,6 +132,9 @@ VKAPI_ATTR VkBool32 VKAPI_CALL VulkanEngine::debugCallback(VkDebugUtilsMessageSe
 	return VK_FALSE;
 }
 
+/// <summary>
+/// Destroy the debug utilities
+/// </summary>
 void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger, const VkAllocationCallbacks* pAllocator) {
 	auto func = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(instance, "vkDestroyDebugUtilsMessengerEXT");
 	if (func != nullptr) {
@@ -114,6 +145,9 @@ void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT
 
 VulkanEngine* VulkanEngine::engine = 0;
 
+/// <summary>
+/// Initialize the engine
+/// </summary>
 void VulkanEngine::init() {
 	system("compile.bat");
 	SDL_Init(SDL_INIT_VIDEO);
@@ -160,6 +194,10 @@ void VulkanEngine::init() {
 	_isInitialized = true;
 }
 
+/// <summary>
+/// Get pointer to the engine
+/// </summary>
+/// <returns></returns>
 VulkanEngine* VulkanEngine::get()
 {
 	if (engine == 0) engine = new VulkanEngine();
@@ -168,6 +206,9 @@ VulkanEngine* VulkanEngine::get()
 	return engine;
 }
 
+/// <summary>
+/// Cleanup GPU memory
+/// </summary>
 void VulkanEngine::cleanup() {
 	vkDeviceWaitIdle(device);
 	if (_isInitialized) {
@@ -225,6 +266,10 @@ void VulkanEngine::cleanup() {
 }
 
 #pragma region Instance Creation
+/// <summary>
+/// Get the required API extensions
+/// </summary>
+/// <returns></returns>
 std::vector<const char*> VulkanEngine::getRequiredExtensions()
 {
 
@@ -244,6 +289,9 @@ std::vector<const char*> VulkanEngine::getRequiredExtensions()
 	return extensions;
 }
 
+/// <summary>
+/// Create a new instance object
+/// </summary>
 void VulkanEngine::createInstance() {
 	if (enableValidationLayers && !checkValidationSupport()) {
 		throw std::runtime_error("validation layers requested, but not available!");
@@ -260,9 +308,6 @@ void VulkanEngine::createInstance() {
 	VkInstanceCreateInfo createInfo{};
 	createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
 	createInfo.pApplicationInfo = &appInfo;
-
-	//TODO 
-	//check for extension support
 
 	auto extensions = getRequiredExtensions();
 	createInfo.enabledExtensionCount = static_cast<unsigned int>(extensions.size());
@@ -281,6 +326,11 @@ void VulkanEngine::createInstance() {
 #pragma endregion
 
 #pragma region Create Device
+/// <summary>
+/// Find the physical GPU queue families
+/// </summary>
+/// <param name="device"></param>
+/// <returns></returns>
 QueueFamilyIndices VulkanEngine::findQueueFamilies(VkPhysicalDevice device) {
 	QueueFamilyIndices indices;
 
@@ -303,6 +353,11 @@ QueueFamilyIndices VulkanEngine::findQueueFamilies(VkPhysicalDevice device) {
 	return indices;
 }
 
+/// <summary>
+/// Query GPU for swapchain support
+/// </summary>
+/// <param name="device"></param>
+/// <returns></returns>
 SwapChainSupportDetails VulkanEngine::querySwapChainSupport(VkPhysicalDevice device)
 {
 	SwapChainSupportDetails details;
@@ -328,6 +383,11 @@ SwapChainSupportDetails VulkanEngine::querySwapChainSupport(VkPhysicalDevice dev
 	return details;
 }
 
+/// <summary>
+/// Check if the physical GPU is suitable for the engine
+/// </summary>
+/// <param name="device"></param>
+/// <returns></returns>
 bool VulkanEngine::isDeviceSuitable(VkPhysicalDevice device) {
 	QueueFamilyIndices indices = findQueueFamilies(device);
 
@@ -345,6 +405,9 @@ bool VulkanEngine::isDeviceSuitable(VkPhysicalDevice device) {
 	return indices.isComplete() && extensionSupported && swapChainAdequate && supportedFeatures.samplerAnisotropy;
 }
 
+/// <summary>
+/// Pick which physical device to use
+/// </summary>
 void VulkanEngine::pickPhysicalDevice()
 {
 	unsigned int deviceCount = 0;
@@ -364,6 +427,11 @@ void VulkanEngine::pickPhysicalDevice()
 	if (physicalDevice == VK_NULL_HANDLE) throw std::runtime_error("failed to find suitable GPU");
 }
 
+/// <summary>
+/// Check the physical GPU's extension support
+/// </summary>
+/// <param name="device"></param>
+/// <returns></returns>
 bool VulkanEngine::checkDeviceExtensionSupport(VkPhysicalDevice device)
 {
 	unsigned int extensionCount;
@@ -380,6 +448,9 @@ bool VulkanEngine::checkDeviceExtensionSupport(VkPhysicalDevice device)
 	return requiredExtensions.empty();
 }
 
+/// <summary>
+/// Create a logical copy of the GPU
+/// </summary>
 void VulkanEngine::createLogicalDevice()
 {
 	device = VkDevice();
@@ -426,6 +497,11 @@ void VulkanEngine::createLogicalDevice()
 #pragma endregion
 
 #pragma region Create and Recreate Swap Chain
+/// <summary>
+/// Choose swap surface format
+/// </summary>
+/// <param name="availableFormats"></param>
+/// <returns></returns>
 VkSurfaceFormatKHR VulkanEngine::chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats)
 {
 	for (const auto& availableFormat : availableFormats) {
@@ -435,6 +511,11 @@ VkSurfaceFormatKHR VulkanEngine::chooseSwapSurfaceFormat(const std::vector<VkSur
 	return availableFormats[0];
 }
 
+/// <summary>
+/// Choose swap preset mode
+/// </summary>
+/// <param name="availablePresentModes"></param>
+/// <returns></returns>
 VkPresentModeKHR VulkanEngine::chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes) {
 	for (const auto& availablePresentMode : availablePresentModes) {
 		if (availablePresentMode == VK_PRESENT_MODE_MAILBOX_KHR) return availablePresentMode;
@@ -443,6 +524,11 @@ VkPresentModeKHR VulkanEngine::chooseSwapPresentMode(const std::vector<VkPresent
 	return VK_PRESENT_MODE_FIFO_KHR;
 }
 
+/// <summary>
+/// Choose frame size
+/// </summary>
+/// <param name="capabilities"></param>
+/// <returns></returns>
 VkExtent2D VulkanEngine::chooseSwapExtent(const VkSurfaceCapabilitiesKHR capabilities) {
 	if (capabilities.currentExtent.width != std::numeric_limits<unsigned int>::max()) {
 		return capabilities.currentExtent;
@@ -463,6 +549,9 @@ VkExtent2D VulkanEngine::chooseSwapExtent(const VkSurfaceCapabilitiesKHR capabil
 	}
 }
 
+/// <summary>
+/// Free GPU memory fo swapchains data
+/// </summary>
 void VulkanEngine::cleanupSwapChain() {
 	vkDestroyImageView(device, depthImageView, nullptr);
 	vkDestroyImage(device, depthImage, nullptr);
@@ -478,6 +567,9 @@ void VulkanEngine::cleanupSwapChain() {
 	vkDestroySwapchainKHR(device, swapChain, nullptr);
 }
 
+/// <summary>
+/// Recreate swapchains in case of window resize
+/// </summary>
 void VulkanEngine::recreateSwapChain() {
 	auto min = SDL_GetWindowFlags(_window);
 	while (min & SDL_WINDOW_MINIMIZED) {
@@ -495,6 +587,9 @@ void VulkanEngine::recreateSwapChain() {
 	createFrameBuffers();
 }
 
+/// <summary>
+/// Create swapchains
+/// </summary>
 void VulkanEngine::createSwapChain() {
 	SwapChainSupportDetails swapChainSupport = querySwapChainSupport(physicalDevice);
 
@@ -551,10 +646,16 @@ void VulkanEngine::createSwapChain() {
 #pragma endregion
 
 #pragma region Init Structures
+/// <summary>
+/// Create SLD surface where to show frames
+/// </summary>
 void VulkanEngine::createSurface() {
 	if (SDL_Vulkan_CreateSurface(_window, instance, &surface) == SDL_FALSE) throw std::runtime_error("Couldn't create Vulkan Surface");
 }
 
+/// <summary>
+/// Create image views for swapchains
+/// </summary>
 void VulkanEngine::createImageViews() {
 	swapChainImageViews.resize(swapChainImages.size());
 	for (size_t i = 0; i < swapChainImages.size(); i++) {
@@ -562,6 +663,11 @@ void VulkanEngine::createImageViews() {
 	}
 }
 
+/// <summary>
+/// Create shader module for device
+/// </summary>
+/// <param name="code"></param>
+/// <returns></returns>
 VkShaderModule VulkanEngine::createShaderModule(const std::vector<char>& code) {
 	VkShaderModuleCreateInfo createInfo{};
 	createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
@@ -577,6 +683,10 @@ VkShaderModule VulkanEngine::createShaderModule(const std::vector<char>& code) {
 }
 
 //TODO Maybe add for post-processing
+
+/// <summary>
+/// Create render pass
+/// </summary>
 void VulkanEngine::createRenderPass() {
 	VkAttachmentDescription colorAttachment{};
 	colorAttachment.format = swapChainImageFormat;
@@ -635,6 +745,9 @@ void VulkanEngine::createRenderPass() {
 	if (vkCreateRenderPass(device, &renderPassInfo, nullptr, &renderPass) != VK_SUCCESS) throw std::runtime_error("failed to create render pass!");
 }
 
+/// <summary>
+/// Create Frame buffers
+/// </summary>
 void VulkanEngine::createFrameBuffers() {
 	swapChainFrameBuffers.resize(swapChainImageViews.size());
 
@@ -654,6 +767,9 @@ void VulkanEngine::createFrameBuffers() {
 	}
 }
 
+/// <summary>
+/// Create command pool for GPU commands
+/// </summary>
 void VulkanEngine::createCommandPool() {
 	QueueFamilyIndices queueFamilyIndices = findQueueFamilies(physicalDevice);
 
@@ -665,6 +781,9 @@ void VulkanEngine::createCommandPool() {
 	if (vkCreateCommandPool(device, &poolInfo, nullptr, &commandPool) != VK_SUCCESS) throw std::runtime_error("failed to create command pool!");
 }
 
+/// <summary>
+/// Create Command buffers for GPU commands
+/// </summary>
 void VulkanEngine::createCommandBuffers() {
 	commandBuffers.resize(MAX_FRAMES_IN_FLIGHT);
 	VkCommandBufferAllocateInfo allocInfo{};
@@ -676,6 +795,9 @@ void VulkanEngine::createCommandBuffers() {
 	if (vkAllocateCommandBuffers(device, &allocInfo, commandBuffers.data()) != VK_SUCCESS) throw std::runtime_error("failed to allocate command buffers!");
 }
 
+/// <summary>
+/// Create semaphores and fences to sync buffers
+/// </summary>
 void VulkanEngine::createSyncObjects() {
 	imageAvailableSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
 	renderFinishedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
@@ -697,6 +819,12 @@ void VulkanEngine::createSyncObjects() {
 	}
 }
 
+/// <summary>
+/// Find the PGU memory type
+/// </summary>
+/// <param name="typeFilter"></param>
+/// <param name="properties"></param>
+/// <returns></returns>
 unsigned int VulkanEngine::findMemoryType(unsigned int typeFilter, VkMemoryPropertyFlags properties) {
 	VkPhysicalDeviceMemoryProperties memProperties;
 	vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memProperties);
@@ -710,6 +838,15 @@ unsigned int VulkanEngine::findMemoryType(unsigned int typeFilter, VkMemoryPrope
 	throw std::runtime_error("failed to find suitable memory type!");
 }
 
+/// <summary>
+/// Create new GPU buffer
+/// </summary>
+/// <param name="size"></param>
+/// <param name="usage"></param>
+/// <param name="properties"></param>
+/// <param name="buffer"></param>
+/// <param name="bufferMemory"></param>
+/// <param name="offset"></param>
 void VulkanEngine::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory, int offset) {
 	VkBufferCreateInfo bufferInfo{};
 	bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
@@ -735,6 +872,12 @@ void VulkanEngine::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkM
 
 }
 
+/// <summary>
+/// Copy GPU buffer data from srcBuffer to dstBuffer
+/// </summary>
+/// <param name="srcBuffer"></param>
+/// <param name="dstBuffer"></param>
+/// <param name="size"></param>
 void VulkanEngine::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size) {
 	auto commandBuffer = beginSingleTimeCommands();
 
@@ -747,6 +890,9 @@ void VulkanEngine::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSi
 	endSingleTimeCommands(commandBuffer);
 }
 
+/// <summary>
+/// Create depth buffer
+/// </summary>
 void VulkanEngine::createDepthResources() {
 	auto depthFormat = findDepthFormat();
 
@@ -754,6 +900,13 @@ void VulkanEngine::createDepthResources() {
 	depthImageView = createImageView(depthImage, depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT);
 }
 
+/// <summary>
+/// Find GPU supported formats from candidates
+/// </summary>
+/// <param name="candidates"></param>
+/// <param name="tiling"></param>
+/// <param name="features"></param>
+/// <returns>First supported format among candidates</returns>
 VkFormat VulkanEngine::findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features) {
 	for (VkFormat format : candidates) {
 		VkFormatProperties props;
@@ -770,6 +923,11 @@ VkFormat VulkanEngine::findSupportedFormat(const std::vector<VkFormat>& candidat
 
 	throw std::runtime_error("failed to find supported format!");
 }
+
+/// <summary>
+/// Find GPU supported depth format
+/// </summary>
+/// <returns>Supported format between VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT</returns>
 VkFormat VulkanEngine::findDepthFormat() {
 	return findSupportedFormat(
 		{ VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT },
@@ -778,6 +936,9 @@ VkFormat VulkanEngine::findDepthFormat() {
 	);
 }
 
+/// <summary>
+/// Check if the format has the stencil component
+/// </summary>
 bool hasStencilComponent(VkFormat format) {
 	return format == VK_FORMAT_D32_SFLOAT_S8_UINT || format == VK_FORMAT_D24_UNORM_S8_UINT;
 }
@@ -785,6 +946,10 @@ bool hasStencilComponent(VkFormat format) {
 #pragma endregion
 
 #pragma region Uniforms
+
+/// <summary>
+/// Create the layout of Descriptor sets
+/// </summary>
 void VulkanEngine::createDesciptorSetLayout() {
 	VkDescriptorSetLayoutBinding ubolayoutBinding{};
 	ubolayoutBinding.binding = 0;
@@ -814,6 +979,9 @@ void VulkanEngine::createDesciptorSetLayout() {
 	}
 }
 
+/// <summary>
+/// Create uniform buffers
+/// </summary>
 void VulkanEngine::createUniformBuffers() {
 	VkDeviceSize bufferSize = sizeof(UniformBufferObject);
 
@@ -828,6 +996,9 @@ void VulkanEngine::createUniformBuffers() {
 	}
 }
 
+/// <summary>
+/// Create descriptor pools
+/// </summary>
 void VulkanEngine::createDescriptorPool() {
 	std::array<VkDescriptorPoolSize, 2> poolSize{};
 	poolSize[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
@@ -844,6 +1015,9 @@ void VulkanEngine::createDescriptorPool() {
 	if (vkCreateDescriptorPool(device, &poolInfo, nullptr, &descriptorPool) != VK_SUCCESS) throw std::runtime_error("failed to create descriptor pool");
 }
 
+/// <summary>
+/// Create descripto sets
+/// </summary>
 void VulkanEngine::createDescriptorSets() {
 	std::vector<VkDescriptorSetLayout> layouts(MAX_FRAMES_IN_FLIGHT, descriptorSetLayout);
 	VkDescriptorSetAllocateInfo allocInfo{};
@@ -890,6 +1064,10 @@ void VulkanEngine::createDescriptorSets() {
 
 //TODO Change to expand buffers when adding new textures
 #pragma region Texture Loading
+/// <summary>
+/// Create GPU texture from image in texture_path
+/// </summary>
+/// <param name="texture_path"></param>
 void VulkanEngine::createTextureImage(std::string texture_path) {
 	textureImageMemories.resize(mCount);
 	textureImages.resize(mCount);
@@ -959,6 +1137,17 @@ void VulkanEngine::createTextureImage(std::string texture_path) {
 	}
 }
 
+/// <summary>
+/// Create image in device from passed data
+/// </summary>
+/// <param name="width"></param>
+/// <param name="height"></param>
+/// <param name="format"></param>
+/// <param name="tiling"></param>
+/// <param name="usage"></param>
+/// <param name="properties"></param>
+/// <param name="image"></param>
+/// <param name="imageMemory"></param>
 void VulkanEngine::createImage(unsigned int width, unsigned int height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory) {
 
 	VkImageCreateInfo imageInfo{};
@@ -992,6 +1181,13 @@ void VulkanEngine::createImage(unsigned int width, unsigned int height, VkFormat
 	vkBindImageMemory(device, image, imageMemory, 0);
 }
 
+/// <summary>
+/// Define the layout of a trainsition image
+/// </summary>
+/// <param name="image"></param>
+/// <param name="format"></param>
+/// <param name="oldLayout"></param>
+/// <param name="newLayout"></param>
 void VulkanEngine::transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout) {
 	auto commandBuffer = beginSingleTimeCommands();
 
@@ -1043,6 +1239,13 @@ void VulkanEngine::transitionImageLayout(VkImage image, VkFormat format, VkImage
 	endSingleTimeCommands(commandBuffer);
 }
 
+/// <summary>
+/// Copy buffer data to an image
+/// </summary>
+/// <param name="buffer"></param>
+/// <param name="image"></param>
+/// <param name="width"></param>
+/// <param name="height"></param>
 void VulkanEngine::copyBufferToImage(VkBuffer buffer, VkImage image, unsigned int width, unsigned int height) {
 	auto commandBuffer = beginSingleTimeCommands();
 
@@ -1071,10 +1274,20 @@ void VulkanEngine::copyBufferToImage(VkBuffer buffer, VkImage image, unsigned in
 	endSingleTimeCommands(commandBuffer);
 }
 
+/// <summary>
+/// Create image view for a texture
+/// </summary>
 void VulkanEngine::createTextureImageView() {
 	textureImageViews[mCount-1] = createImageView(textureImages[mCount - 1], VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_ASPECT_COLOR_BIT);
 }
 
+/// <summary>
+/// Create an image view for <b>image</b>
+/// </summary>
+/// <param name="image"></param>
+/// <param name="format"></param>
+/// <param name="aspectFlags"></param>
+/// <returns></returns>
 VkImageView VulkanEngine::createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags) {
 	VkImageViewCreateInfo viewInfo{};
 	viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
@@ -1093,6 +1306,9 @@ VkImageView VulkanEngine::createImageView(VkImage image, VkFormat format, VkImag
 	return imageView;
 }
 
+/// <summary>
+/// Create texture sampler for GPU
+/// </summary>
 void VulkanEngine::createTextureSampler() {
 	VkSamplerCreateInfo samplerInfo{};
 	samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
@@ -1127,7 +1343,10 @@ void VulkanEngine::createTextureSampler() {
 #pragma endregion
 
 #pragma region Commmands
-
+/// <summary>
+/// Setup GPU for command to be executed once
+/// </summary>
+/// <returns></returns>
 VkCommandBuffer VulkanEngine::beginSingleTimeCommands() {
 	VkCommandBufferAllocateInfo allocInfo{};
 	allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -1148,6 +1367,10 @@ VkCommandBuffer VulkanEngine::beginSingleTimeCommands() {
 
 }
 
+/// <summary>
+/// Free the command buffer after single time command
+/// </summary>
+/// <param name="commandBuffer"></param>
 void VulkanEngine::endSingleTimeCommands(VkCommandBuffer commandBuffer) {
 	vkEndCommandBuffer(commandBuffer);
 
@@ -1162,6 +1385,11 @@ void VulkanEngine::endSingleTimeCommands(VkCommandBuffer commandBuffer) {
 	vkFreeCommandBuffers(device, commandPool, 1, &commandBuffer);
 }
 
+/// <summary>
+/// Record the command buffer for the GPU
+/// </summary>
+/// <param name="commandBuffer"></param>
+/// <param name="imageIndex"></param>
 void VulkanEngine::recordCommandBuffer(VkCommandBuffer commandBuffer, unsigned int imageIndex) {
 	VkCommandBufferBeginInfo beginInfo{};
 	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -1227,7 +1455,7 @@ void VulkanEngine::recordCommandBuffer(VkCommandBuffer commandBuffer, unsigned i
 /// Load model to the GPU
 /// </summary>
 /// <param name="model_path"></param>
-/// <returns></returns>
+/// <returns>Pointers to the buffer objects where vector and indices data are stored</returns>
 std::pair<VkBuffer*,VkBuffer*> VulkanEngine::loadModel(std::string model_path) {
 	tinyobj::attrib_t attrib;
 	std::vector<tinyobj::shape_t> shapes;
@@ -1331,6 +1559,9 @@ VkBuffer* VulkanEngine::createIndexBuffer() {
 #pragma endregion
 
 #pragma region Pipelines
+/// <summary>
+/// Createa a basic render pipeline for the device
+/// </summary>
 void VulkanEngine::createDefaultGraphicsPipeline() {
 	createPipeline("Resources/Shaders/Build/vert.spv", "Resources/Shaders/Build/frag.spv", "default");
 }
@@ -1728,7 +1959,11 @@ void VulkanEngine::postDraw(unsigned int imageIndex) {
 	currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
 }
 
-
+/// <summary>
+/// Custom update for uniform buffer
+/// </summary>
+/// <param name="currentImage"></param>
+/// <param name="obj"></param>
 void VulkanEngine::updateUniformBuffer(unsigned int currentImage, glm::mat4 *obj) {
 	static auto startTime = std::chrono::high_resolution_clock::now();
 
