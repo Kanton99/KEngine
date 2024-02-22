@@ -1855,21 +1855,8 @@ void VulkanEngine::drawModel(VkBuffer* vertexBuffer, VkBuffer* indexBuffer, glm:
 	scissor.offset = { 0, 0 };
 	scissor.extent = swapChainExtent;
 	vkCmdSetScissor(commandBuffers[currentFrame], 0, 1, &scissor);
-	/*for (size_t model = 0; model < mCount; model++) {
-		updateUniformBuffer(currentFrame, model);
-		
-		vkCmdBindPipeline(commandBuffers[currentFrame], VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipelines[models[model]->pipeline]);
-		VkBuffer ivertexBuffers[] = { vertexBuffers[model] };
-		VkDeviceSize offesets[] = { 0 };
-		vkCmdBindVertexBuffers(commandBuffers[currentFrame], 0, 1, ivertexBuffers, offesets);
-		vkCmdBindIndexBuffer(commandBuffers[currentFrame], indexBuffers[model], 0, VK_INDEX_TYPE_UINT32);
-
-		vkCmdBindDescriptorSets(commandBuffers[currentFrame], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayouts[models[model]->pipeline], 0, 1, &descriptorSets[currentFrame], 0, nullptr);
-
-		vkCmdDrawIndexed(commandBuffers[currentFrame], static_cast<uint16_t>(models[model]->indices_size), 1, 0, 0, 0);
-	}*/
 	//TODO move pipelines location
-	updateUniformBuffer(currentFrame, transform);
+	//updateUniformBuffer(currentFrame, transform);
 	vkCmdBindPipeline(commandBuffers[currentFrame], VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipelines[models[0]->pipeline]);
 	VkBuffer ivertexBuffers[] = { *vertexBuffer };
 	VkDeviceSize offsets[] = { 0 };

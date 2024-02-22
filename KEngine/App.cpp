@@ -70,7 +70,7 @@ void App::start()
 	// Define the range of the random float
 	std::uniform_real_distribution<float> dist(0.0f, 0.1f);
 	for (int i = 0; i < 100; i++){
-		auto GunAxe1 = gCoordinator.createEntity();
+		auto GunAxe = gCoordinator.createEntity();
 		auto space = glm::mat4(1.f);
 
 		// Generate a random float
@@ -78,11 +78,11 @@ void App::start()
 		space[0][3] = random_float;
 		random_float = dist(rng);
 		space[2][3] = random_float;
-		gCoordinator.addComponent(GunAxe1, Transform{ space });
-		gCoordinator.addComponent(GunAxe1, RenderComponent());
+		gCoordinator.addComponent(GunAxe, Transform{ space });
+		gCoordinator.addComponent(GunAxe, RenderComponent());
 
-		renderSystem->loadModel(GunAxe1, "Resources/Models/gunaxe.obj");
-		renderSystem->loadTexture(GunAxe1, "Resources/Textures/lambert4_Base_color.png");
+		renderSystem->loadModel(GunAxe, "Resources/Models/gunaxe.obj");
+		renderSystem->loadTexture(GunAxe, "Resources/Textures/lambert4_Base_color.png");
 	}
 	float frameLength = 1.f / FRAMERATE;
 	while (true) {
