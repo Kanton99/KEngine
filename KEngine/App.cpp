@@ -68,8 +68,8 @@ void App::start()
 	std::mt19937_64 rng(std::random_device{}());
 
 	// Define the range of the random float
-	std::uniform_real_distribution<float> dist(0.0f, 0.1f);
-	for (int i = 0; i < 100; i++){
+	std::uniform_real_distribution<float> dist(0.0f, 0.01f);
+	for (int i = 0; i < 10; i++){
 		auto GunAxe = gCoordinator.createEntity();
 		auto space = glm::mat4(1.f);
 

@@ -4,4 +4,6 @@ struct RenderComponent
 {
 	VkBuffer *vertices;
 	VkBuffer *indices;
+
+	VkDescriptorSet* descriptor;
 };

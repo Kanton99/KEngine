@@ -1060,6 +1060,37 @@ void VulkanEngine::createDescriptorSets() {
 	vkUpdateDescriptorSets(device, static_cast<unsigned int>(descriptorWrite.size()), descriptorWrite.data(), 0, nullptr);
 	}*/
 }
+
+VkDescriptorSet* VulkanEngine::createDescriptorSet() {
+	VkDescriptorSetAllocateInfo allocInfo = {};
+	allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+	allocInfo.descriptorPool = descriptorPool;
+	allocInfo.descriptorSetCount = 1;
+	allocInfo.pSetLayouts = &descriptorSetLayout;
+
+	VkDescriptorSet descriptorSet;
+	vkAllocateDescriptorSets(device, &allocInfo, &descriptorSet);
+
+	return &descriptorSet;
+}
+
+void VulkanEngine::updateDescriptorSet(VkDescriptorSet* descriptorSet, glm::mat4 transform) {
+	VkDescriptorBufferInfo bufferInfo{};
+	bufferInfo.buffer = uniformBuffers[0];
+	bufferInfo.offset = 0;
+	bufferInfo.range = sizeof(UniformBufferObject);
+
+	VkWriteDescriptorSet descriptorWrite = {};
+	descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+	descriptorWrite.dstSet = *descriptorSet;
+	descriptorWrite.dstBinding = 0; // Descriptor set layout binding index
+	descriptorWrite.dstArrayElement = 0;
+	descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	descriptorWrite.descriptorCount = 1;
+	descriptorWrite.pBufferInfo = &bufferInfo; // Information about the buffer to bind
+
+	vkUpdateDescriptorSets(device, 1, &descriptorWrite, 0, nullptr);
+}
 #pragma endregion
 
 //TODO Change to expand buffers when adding new textures
@@ -1495,7 +1526,6 @@ std::pair<VkBuffer*,VkBuffer*> VulkanEngine::loadModel(std::string model_path) {
 	auto vBuffer = createVertexBuffer();
 	auto iBuffer = createIndexBuffer();
 	mCount++;
-
 	return std::pair<VkBuffer*, VkBuffer*>(vBuffer, iBuffer);
 }
 
@@ -1856,7 +1886,7 @@ void VulkanEngine::drawModel(VkBuffer* vertexBuffer, VkBuffer* indexBuffer, glm:
 	scissor.extent = swapChainExtent;
 	vkCmdSetScissor(commandBuffers[currentFrame], 0, 1, &scissor);
 	//TODO move pipelines location
-	//updateUniformBuffer(currentFrame, transform);
+	updateUniformBuffer(currentFrame, transform);
 	vkCmdBindPipeline(commandBuffers[currentFrame], VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipelines[models[0]->pipeline]);
 	VkBuffer ivertexBuffers[] = { *vertexBuffer };
 	VkDeviceSize offsets[] = { 0 };

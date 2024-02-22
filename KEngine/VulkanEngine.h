@@ -235,4 +235,7 @@ public:
 
 	std::pair<VkBuffer*, VkBuffer*> loadModel(std::string model_path);
 	void createTextureImage(std::string texture_path);
+
+	VkDescriptorSet* createDescriptorSet();
+	void updateDescriptorSet(VkDescriptorSet* descriptorSet, glm::mat4 transform);
 };
