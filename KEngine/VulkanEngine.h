@@ -8,15 +8,15 @@
 #include "Vertex.h"
 #include "Model.h"
 
-const unsigned int WIDTH = 800;
-const unsigned int HEIGHT = 600;
+const uint32_t WIDTH = 800;
+const uint32_t HEIGHT = 600;
 
 const std::string MODEL_PATH = "Resources/Models/gunaxe.obj";
 const std::string TEXTURE_PATH = "Resources/Textures/lambert4_Base_color.png";
 
 struct QueueFamilyIndices {
 	std::optional<uint32_t> graphicsFamily;
-	std::optional<unsigned int> presentFamily;
+	std::optional<uint32_t> presentFamily;
 
 	bool isComplete() {
 		return graphicsFamily.has_value() && presentFamily.has_value();
@@ -42,6 +42,7 @@ public:
 	bool framebufferResized = false;
 	static VulkanEngine *engine;
 	std::vector<Model*> models;
+
 private:
 	VkInstance instance;
 	bool checkValidationSupport();
@@ -89,11 +90,11 @@ private:
 	std::vector<VkSemaphore> imageAvailableSemaphores;
 	std::vector<VkSemaphore> renderFinishedSemaphores;
 	std::vector<VkFence> inFlightFences;
-	unsigned int currentFrame = 0;
+	uint32_t currentFrame = 0;
 
 	std::vector<Vertex> vertices;
 	int mCount;
-	std::vector<unsigned int> indices;
+	std::vector<uint32_t> indices;
 	std::vector<VkBuffer> vertexBuffers;
 	std::vector<VkDeviceMemory> vertexBufferMemories;
 
@@ -158,11 +159,11 @@ private:
 	void createCommandPool();
 	void createCommandBuffers();
 
-	void recordCommandBuffer(VkCommandBuffer commandBuffer, unsigned int imageIndex);
+	void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
 
 	void createSyncObjects();
 
-	unsigned int findMemoryType(unsigned int typeFilter, VkMemoryPropertyFlags properties);
+	uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
 
 	void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory, int offset = 0);
 
@@ -180,7 +181,7 @@ private:
 
 	void createDescriptorSets();
 
-	void createImage(unsigned int width, unsigned int height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory);
+	void createImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory);
 
 	VkCommandBuffer beginSingleTimeCommands();
 
@@ -188,7 +189,7 @@ private:
 
 	void transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout);
 
-	void copyBufferToImage(VkBuffer buffer, VkImage image, unsigned int width, unsigned int height);
+	void copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
 
 	void createTextureImageView();
 
@@ -221,14 +222,14 @@ public:
 
 	void drawFrame();
 
-	void drawModel(VkBuffer* vertexBuffer, VkBuffer* indexBuffer, glm::mat4* transform, unsigned int imageIndex);
+	void drawModel(VkBuffer* vertexBuffer, VkBuffer* indexBuffer, glm::mat4* transform, uint32_t imageIndex);
 
-	unsigned int preDraw();
+	uint32_t preDraw();
 
-	void postDraw(unsigned int imageIndex);
+	void postDraw(uint32_t imageIndex);
 
-	//void updateUniformBuffer(unsigned int currentImage, int obj);
-	void updateUniformBuffer(unsigned int currentImage, glm::mat4 *obj);
+	//void updateUniformBuffer(uint32_t currentImage, int obj);
+	void updateUniformBuffer(uint32_t currentImage, glm::mat4 *obj);
 
 	void recreateSwapChain();
 
