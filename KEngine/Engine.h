@@ -16,9 +16,9 @@ class Engine
 {
 public://Members
 	bool _isInitialized{ false };
-	int _frameNumber{ 0 };
+	uint32_t _frameNumber{ 0 };
 	bool stop_rendering{ false };
-	VkExtent2D _windowExtent{ 1700 , 900 };
+	VkExtent2D _windowExtent{ 800, 450 };
 
 	struct SDL_Window* _window{ nullptr };
 

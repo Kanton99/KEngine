@@ -40,6 +40,9 @@
     <Filter Include="File di intestazione\Engine">
       <UniqueIdentifier>{a928737b-0c0c-41e2-8d83-1623722c1e18}</UniqueIdentifier>
     </Filter>
+    <Filter Include="File di intestazione\New Engine">
+      <UniqueIdentifier>{9db014ab-1319-4728-9f34-f1b4d84cd591}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -58,6 +61,21 @@
       <Filter>File di origine</Filter>
     </ClCompile>
     <ClCompile Include="RenderSystem.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="VkBootstrap\VkBootstrap.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="vk_initializers.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="vk_images.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="fmt\src\format.cc">
       <Filter>File di origine</Filter>
     </ClCompile>
   </ItemGroup>
@@ -106,6 +124,27 @@
     </ClInclude>
     <ClInclude Include="Model.h">
       <Filter>File di intestazione\Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine.h">
+      <Filter>File di intestazione\New Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="vk_initializers.h">
+      <Filter>File di intestazione\New Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="vk_types.h">
+      <Filter>File di intestazione\New Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="VkBootstrap\VkBootstrap.h">
+      <Filter>File di intestazione\New Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="VkBootstrap\VkBootstrapDispatch.h">
+      <Filter>File di intestazione\New Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="vk_images.h">
+      <Filter>File di intestazione\New Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="DeletionQueue.h">
+      <Filter>File di intestazione\New Engine</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

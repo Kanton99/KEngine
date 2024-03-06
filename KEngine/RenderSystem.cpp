@@ -4,6 +4,7 @@
 #include "Coordinator.h"
 #include <SDL_vulkan.h>
 
+
 extern Coordinator gCoordinator;
 
 /// <summary>
@@ -12,7 +13,7 @@ extern Coordinator gCoordinator;
 void RenderSystem::draw()
 {
 	//TODO Clear the render
-	
+	/*
 	auto imageIndex = engine->preDraw();
 	for (auto entity : mEntities) {
 		RenderComponent renderComponent = gCoordinator.getComponent<RenderComponent>(entity);
@@ -20,12 +21,14 @@ void RenderSystem::draw()
 
 		engine->drawModel(renderComponent.vertices, renderComponent.indices, &transformComponent.transform, imageIndex);
 	}
-	engine->postDraw(imageIndex);
+	engine->postDraw(imageIndex);*/
 }
 
 RenderSystem::RenderSystem() :
-	engine(std::unique_ptr<VulkanEngine>(VulkanEngine::get()))
+	//engine(std::unique_ptr<VulkanEngine>(VulkanEngine::get()))
+	engine(std::unique_ptr<Engine>(new Engine()))
 {
+	engine->init();
 	window = engine->_window;
 }
 
@@ -36,10 +39,10 @@ RenderSystem::RenderSystem() :
 /// <param name="modelPath"></param>
 void RenderSystem::loadModel(Entity entity, std::string modelPath)
 {
-	auto buffers = engine->loadModel(modelPath);
-	RenderComponent *renderComponent = &(gCoordinator.getComponent<RenderComponent>(entity));
-	renderComponent->vertices = buffers.first;
-	renderComponent->indices = buffers.second;
+	//auto buffers = engine->loadModel(modelPath);
+	//RenderComponent *renderComponent = &(gCoordinator.getComponent<RenderComponent>(entity));
+	//renderComponent->vertices = buffers.first;
+	//renderComponent->indices = buffers.second;
 }
 
 /// <summary>
@@ -48,7 +51,7 @@ void RenderSystem::loadModel(Entity entity, std::string modelPath)
 /// <param name="entity"></param>
 /// <param name="texturePath"></param>
 void RenderSystem::loadTexture(Entity entity, std::string texturePath) {
-	engine->createTextureImage(texturePath);
+	//engine->createTextureImage(texturePath);
 
 }
 
