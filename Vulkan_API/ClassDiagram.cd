@@ -1,0 +1,25 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1">
+  <Class Name="Engine" Collapsed="true">
+    <Position X="0.5" Y="3" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>UIAEAhEQAgABEABQAAIGEQAAAARagAIQAAGAACEgEAg=</HashCode>
+      <FileName>Engine.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Struct Name="DeletionQueue" Collapsed="true">
+    <Position X="2.75" Y="2.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAgAAAAAAAAAEAAgAAAAAAAA=</HashCode>
+      <FileName>DeletionQueue.h</FileName>
+    </TypeIdentifier>
+  </Struct>
+  <Struct Name="FrameData" Collapsed="true">
+    <Position X="0.5" Y="4.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAgAAQAAAQEAAAAAAABAAAAAAQAA=</HashCode>
+      <FileName>Engine.h</FileName>
+    </TypeIdentifier>
+  </Struct>
+  <Font Name="Segoe UI" Size="9" />
+</ClassDiagram>

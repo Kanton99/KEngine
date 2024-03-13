@@ -5,6 +5,8 @@ VisualStudioVersion = 17.7.34031.279
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "KEngine", "KEngine\KEngine.vcxproj", "{06BA34E2-8B51-4446-A3AA-E0E45625C2AA}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Vulkan_API", "Vulkan_API\Vulkan_API.vcxproj", "{F1125954-C160-4531-8080-84305904B92D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -21,6 +23,14 @@ Global
 		{06BA34E2-8B51-4446-A3AA-E0E45625C2AA}.Release|x64.Build.0 = Release|x64
 		{06BA34E2-8B51-4446-A3AA-E0E45625C2AA}.Release|x86.ActiveCfg = Release|Win32
 		{06BA34E2-8B51-4446-A3AA-E0E45625C2AA}.Release|x86.Build.0 = Release|Win32
+		{F1125954-C160-4531-8080-84305904B92D}.Debug|x64.ActiveCfg = Debug|x64
+		{F1125954-C160-4531-8080-84305904B92D}.Debug|x64.Build.0 = Debug|x64
+		{F1125954-C160-4531-8080-84305904B92D}.Debug|x86.ActiveCfg = Debug|Win32
+		{F1125954-C160-4531-8080-84305904B92D}.Debug|x86.Build.0 = Debug|Win32
+		{F1125954-C160-4531-8080-84305904B92D}.Release|x64.ActiveCfg = Release|x64
+		{F1125954-C160-4531-8080-84305904B92D}.Release|x64.Build.0 = Release|x64
+		{F1125954-C160-4531-8080-84305904B92D}.Release|x86.ActiveCfg = Release|Win32
+		{F1125954-C160-4531-8080-84305904B92D}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

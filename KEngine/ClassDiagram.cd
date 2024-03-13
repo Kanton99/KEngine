@@ -1,129 +1,80 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <ClassDiagram MajorVersion="1" MinorVersion="1">
-  <Class Name="Model" Collapsed="true">
-    <Position X="9.5" Y="1.5" Width="1.5" />
-    <TypeIdentifier>
-      <HashCode>AABAQAAAAAAAAgAAAAAAAAAAAAAUAAAAAQgAAAACAgA=</HashCode>
-      <FileName>Model.h</FileName>
-    </TypeIdentifier>
-  </Class>
-  <Class Name="IComponentArray" Collapsed="true">
-    <Position X="0.5" Y="0.5" Width="1.5" />
-    <TypeIdentifier>
-      <HashCode>AgAAAAAAAAAAAAAAAAAAAAAIAAAAAAAAAAAAAAAAAAA=</HashCode>
-      <FileName>ComponentArray.h</FileName>
-    </TypeIdentifier>
-  </Class>
-  <Class Name="App" Collapsed="true">
-    <Position X="6" Y="0.5" Width="1.5" />
-    <TypeIdentifier>
-      <HashCode>AAQAAAAAAAAAAAAgAAAgAEAAEAAAAAIAABAAAAQAAAA=</HashCode>
-      <FileName>App.h</FileName>
-    </TypeIdentifier>
-  </Class>
-  <Class Name="SystemManager" Collapsed="true">
-    <Position X="7.75" Y="2.5" Width="1.5" />
-    <TypeIdentifier>
-      <HashCode>AggAAAAAAAABEAAAAAAAAAAAAAAEAAAAAAAABAAAAAA=</HashCode>
-      <FileName>SystemManager.h</FileName>
-    </TypeIdentifier>
-  </Class>
-  <Class Name="System" Collapsed="true">
-    <Position X="3.5" Y="0.5" Width="1.5" />
-    <TypeIdentifier>
-      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAAAAAA=</HashCode>
-      <FileName>System.h</FileName>
-    </TypeIdentifier>
-  </Class>
-  <Class Name="Coordinator" Collapsed="true">
-    <Position X="9.5" Y="0.5" Width="1.5" />
-    <TypeIdentifier>
-      <HashCode>AAEABAAAAAAAAAAkCACAAAQAAIEAAAAAAAiCAAAAgAA=</HashCode>
-      <FileName>Coordinator.h</FileName>
-    </TypeIdentifier>
-  </Class>
   <Class Name="ComponentManager" Collapsed="true">
-    <Position X="7.75" Y="0.5" Width="1.5" />
+    <Position X="6.25" Y="0.75" Width="1.5" />
     <TypeIdentifier>
       <HashCode>ggAAAAAAAAAIAAAAAAAAJAABAAAIAACEAAAAAAAACAA=</HashCode>
       <FileName>ComponentManager.h</FileName>
     </TypeIdentifier>
   </Class>
-  <Class Name="RenderSystem" Collapsed="true">
-    <Position X="3.5" Y="1.75" Width="1.5" />
+  <Class Name="Coordinator" Collapsed="true">
+    <Position X="8" Y="0.75" Width="1.5" />
     <TypeIdentifier>
-      <HashCode>AAAAAAAAAAAAAAgAAAIAAAAAAAAAAAAAAAACAAQAAAA=</HashCode>
-      <FileName>RenderSystem.h</FileName>
+      <HashCode>AAEABAAAAAAAAAAkCACAAAQAAIEAAAAAAAiCAAAAgAA=</HashCode>
+      <FileName>Coordinator.h</FileName>
     </TypeIdentifier>
   </Class>
-  <Class Name="RenderComponent" Collapsed="true">
-    <Position X="6" Y="2.5" Width="1.5" />
+  <Class Name="EntityManager" Collapsed="true">
+    <Position X="6.25" Y="1.75" Width="1.5" />
     <TypeIdentifier>
-      <HashCode>AAAAQAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAA=</HashCode>
-      <FileName>RenderComponent.h</FileName>
+      <HashCode>AAEAAAEAAAAAEAAAQBAAAAAABAAAEAAAAAAAAAAAgAA=</HashCode>
+      <FileName>EntityManager.hpp</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="SystemManager" Collapsed="true">
+    <Position X="8" Y="1.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AggAAAAAAAABEAAAAAAAAAAAAAAEAAAAAAAABAAAAAA=</HashCode>
+      <FileName>SystemManager.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="IComponentArray" Collapsed="true">
+    <Position X="3.75" Y="0.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAIAAACAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>ComponentArray.h</FileName>
     </TypeIdentifier>
   </Class>
   <Class Name="ComponentArray&lt;T&gt;" Collapsed="true">
-    <Position X="0.5" Y="1.75" Width="1.75" />
+    <Position X="3.75" Y="2" Width="1.5" />
     <TypeIdentifier>
       <HashCode>AIAQAAAAEAAQAAAAAAAAAAAAQQACAAAAAAAAAAAAAAA=</HashCode>
       <FileName>ComponentArray.h</FileName>
     </TypeIdentifier>
   </Class>
-  <Class Name="EntityManager" Collapsed="true">
-    <Position X="7.75" Y="1.5" Width="1.5" />
+  <Class Name="RenderSystem" Collapsed="true">
+    <Position X="0.75" Y="2" Width="1.5" />
     <TypeIdentifier>
-      <HashCode>AAEAAAEAAAAAEAAAQBAAAAAABAAAEAAAAAAAAAAAgAA=</HashCode>
-      <FileName>EntityManager.h</FileName>
+      <HashCode>QAAAAAAABAAAAAgAAAIAAAAAAAAAAAAIAAACAAQAAAA=</HashCode>
+      <FileName>RenderSystem.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="System" Collapsed="true">
+    <Position X="0.75" Y="0.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAAAAAA=</HashCode>
+      <FileName>System.h</FileName>
     </TypeIdentifier>
   </Class>
   <Class Name="Entity" Collapsed="true">
-    <Position X="6" Y="1.5" Width="1.5" />
+    <Position X="9.75" Y="0.75" Width="1.5" />
     <TypeIdentifier>
       <HashCode>EAAABAAAAAAAAAQACFCAAAACACAAAAAAAAAAAAAUAgA=</HashCode>
       <FileName>Entity.h</FileName>
     </TypeIdentifier>
   </Class>
-  <Class Name="VulkanEngine" Collapsed="true">
-    <Position X="9.5" Y="2.5" Width="1.5" />
+  <Struct Name="RenderComponent" Collapsed="true">
+    <Position X="6.25" Y="3" Width="1.5" />
     <TypeIdentifier>
-      <HashCode>bYQUwICSxhYCEY1JoISmRxDERRDR8pJgo6BworUoSI4=</HashCode>
-      <FileName>VulkanEngine.h</FileName>
-    </TypeIdentifier>
-  </Class>
-  <Struct Name="QueueFamilyIndices" Collapsed="true">
-    <Position X="6" Y="3.75" Width="1.5" />
-    <TypeIdentifier>
-      <HashCode>AAAQAAAAAAAAAAAAAAIAAAAAAAAAAAAAAAAAAAEAAAA=</HashCode>
-      <FileName>VulkanEngine.h</FileName>
-    </TypeIdentifier>
-  </Struct>
-  <Struct Name="SwapChainSupportDetails" Collapsed="true">
-    <Position X="7.75" Y="3.75" Width="1.5" />
-    <TypeIdentifier>
-      <HashCode>AAAAAAAAAAAAEBAAAAAAAAAAAAAAAAAAAAAAAAABAAA=</HashCode>
-      <FileName>VulkanEngine.h</FileName>
+      <HashCode>AAAAQAAAAAAAAABAAAAAAAAAAAAQAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>RenderComponent.h</FileName>
     </TypeIdentifier>
   </Struct>
   <Struct Name="Transform" Collapsed="true">
-    <Position X="9.5" Y="3.75" Width="1.5" />
+    <Position X="8" Y="3" Width="1.5" />
     <TypeIdentifier>
       <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAA=</HashCode>
       <FileName>TransformComponent.h</FileName>
-    </TypeIdentifier>
-  </Struct>
-  <Struct Name="UniformBufferObject" Collapsed="true">
-    <Position X="6" Y="4.75" Width="1.5" />
-    <TypeIdentifier>
-      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAIBAA=</HashCode>
-      <FileName>VulkanEngine.h</FileName>
-    </TypeIdentifier>
-  </Struct>
-  <Struct Name="Vertex" Collapsed="true">
-    <Position X="7.75" Y="4.75" Width="1.5" />
-    <TypeIdentifier>
-      <HashCode>AAAAAAAAAAAAAAABAAAAAYAAAAAAAACAAAIAAAAAAQA=</HashCode>
-      <FileName>Vertex.h</FileName>
     </TypeIdentifier>
   </Struct>
   <Font Name="Segoe UI" Size="9" />
