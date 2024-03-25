@@ -15,7 +15,7 @@ struct FrameData {
 
 constexpr unsigned int FRAME_OVERLAP = 2;
 
-class Engine
+class VulkanEngine
 {
 public://Members
 	bool _isInitialized{ false };
@@ -56,8 +56,12 @@ public://Members
 	VkExtent2D _drawExtent;
 #pragma endregion
 
+
+private://Members
+
+
 public: //Methods
-	static Engine& Get();
+	static VulkanEngine& Get();
 
 	//initializes everything in the engine
 	void init();
@@ -67,13 +71,13 @@ public: //Methods
 
 	//draw loop
 	void draw();
+	void draw_background(VkCommandBuffer cmd);
 
 	//run main loop
 	void run();
 
 	FrameData& get_current_frame() { return _frames[_frameNumber % FRAME_OVERLAP]; };
 
-private://Members
 private://Methods
 
 	void init_vulkan();

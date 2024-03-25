@@ -24,7 +24,7 @@
 /// <summary>
 /// Initialize 
 /// </summary>
-void Engine::init() {
+void VulkanEngine::init() {
 	// We initialize SDL and create a window with it. 
 	SDL_Init(SDL_INIT_VIDEO);
 
@@ -51,7 +51,7 @@ void Engine::init() {
 	_isInitialized = true;
 }
 
-void Engine::init_vulkan() {
+void VulkanEngine::init_vulkan() {
 	vkb::InstanceBuilder builder;
 
 #ifdef DEBUG 
@@ -118,7 +118,7 @@ void Engine::init_vulkan() {
 	});
 }
 
-void Engine::cleanup() {
+void VulkanEngine::cleanup() {
 	if (_isInitialized) {
 		vkDeviceWaitIdle(_device);
 		_mainDeletionQueue.flush();
@@ -145,7 +145,7 @@ void Engine::cleanup() {
 }
 
 
-void Engine::draw() {
+void VulkanEngine::draw() {
 	VK_CHECK(vkWaitForFences(_device, 1, &get_current_frame()._renderFence, true, 10000000));
 
 	get_current_frame()._deletionQueue.flush();
@@ -160,25 +160,27 @@ void Engine::draw() {
 
 	VkCommandBufferBeginInfo cmdBeginInfo = vkinit::command_buffer_begin_info(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 
+	_drawExtent.width = _drawImage.imageExtent.width;
+	_drawExtent.height = _drawImage.imageExtent.height;
+
 	VK_CHECK(vkBeginCommandBuffer(cmd, &cmdBeginInfo));
 
-	//make the swapchain image into writable mode before rendering
-	vkutil::transition_image(cmd, _swapchainImages[swapchainImageIndex], VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL);
+	//transition out main draw image into general layout so we can write into it
+	//we will overwrite it all so we don't car about what was the older layout
+	vkutil::transition_image(cmd, _drawImage.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL);
 
-	//make a clear-color frame from frame number
-	VkClearColorValue clearValue;
-	float flash = abs(sin(_frameNumber / 120.f));
-	clearValue = { {0.f,0.f,flash,1.f} };
+	draw_background(cmd);
 
-	auto clearRange = vkinit::image_subresource_range(VK_IMAGE_ASPECT_COLOR_BIT);
+	//transition the draw image and the swapchain image into their correct transfer layouts
+	vkutil::transition_image(cmd, _drawImage.image, VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+	vkutil::transition_image(cmd, _swapchainImages[swapchainImageIndex], VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
-	//clear image
-	vkCmdClearColorImage(cmd, _swapchainImages[swapchainImageIndex], VK_IMAGE_LAYOUT_GENERAL, &clearValue, 1, &clearRange);
+	//execute a copy from the draw image into the swapchain
+	vkutil::copy_image_to_image(cmd, _drawImage.image, _swapchainImages[swapchainImageIndex], _drawExtent, _swapchainExtent);
 
-	//make the swapchain image into presentable mode
-	vkutil::transition_image(cmd, _swapchainImages[swapchainImageIndex], VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+	//set swapchain image layout to Present so we can show it on screen
+	vkutil::transition_image(cmd, _swapchainImages[swapchainImageIndex], VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
 
-	//finalize the command buffer
 	VK_CHECK(vkEndCommandBuffer(cmd));
 
 	//prepare the submission to the queue.
@@ -218,8 +220,21 @@ void Engine::draw() {
 	_frameNumber++;
 
 }
+void VulkanEngine::draw_background(VkCommandBuffer cmd)
+{
+	//make a clear-color frame from frame number
+	VkClearColorValue clearValue;
+	float flash = abs(sin(_frameNumber / 120.f));
+	clearValue = { {0.f,0.f,flash,1.f} };
+
+	auto clearRange = vkinit::image_subresource_range(VK_IMAGE_ASPECT_COLOR_BIT);
+
+	//clear image
+	vkCmdClearColorImage(cmd, _drawImage.image, VK_IMAGE_LAYOUT_GENERAL, &clearValue, 1, &clearRange);
+	
+}
 #pragma region SWAPCHAIN
-void Engine::create_swapchain(uint32_t width, uint32_t height)
+void VulkanEngine::create_swapchain(uint32_t width, uint32_t height)
 {
 	vkb::SwapchainBuilder swapchainBuilder(_chosenGPU, _device, _surface);
 	_swapchainImageFormat = VK_FORMAT_B8G8R8A8_UNORM;
@@ -238,7 +253,7 @@ void Engine::create_swapchain(uint32_t width, uint32_t height)
 	_swapchainImageViews = vkbSwapchain.get_image_views().value();
 }
 
-void Engine::init_swapchain() {
+void VulkanEngine::init_swapchain() {
 	create_swapchain(_windowExtent.width, _windowExtent.height);
 
 	//draw image size will match the window
@@ -282,7 +297,7 @@ void Engine::init_swapchain() {
 
 }
 
-void Engine::destroy_swapchain() {
+void VulkanEngine::destroy_swapchain() {
 	vkDestroySwapchainKHR(_device, _swapchain, nullptr);
 
 	for (int i = 0; i < _swapchainImageViews.size(); i++) vkDestroyImageView(_device, _swapchainImageViews[i], nullptr);
@@ -290,7 +305,7 @@ void Engine::destroy_swapchain() {
 #pragma endregion
 
 #pragma region COMMAND_BUFFERS
-void Engine::init_commands() {
+void VulkanEngine::init_commands() {
 	/*VkCommandPoolCreateInfo commandPoolInfo = {};
 	commandPoolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
 	commandPoolInfo.pNext = nullptr;
@@ -315,7 +330,7 @@ void Engine::init_commands() {
 #pragma endregion
 
 #pragma region SYNCHRONIZATION
-void Engine::init_sync_structures() {
+void VulkanEngine::init_sync_structures() {
 	VkFenceCreateInfo fenceCreteInfo = vkinit::fence_create_info(VK_FENCE_CREATE_SIGNALED_BIT);
 	VkSemaphoreCreateInfo semaphoreCreateInfo = vkinit::semaphore_create_info();
 

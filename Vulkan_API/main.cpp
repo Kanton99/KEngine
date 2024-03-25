@@ -4,7 +4,7 @@
 #include "Engine.h"
 #include <Windows.h>
 int main() {
-	Engine *engine = new Engine();
+	VulkanEngine *engine = new VulkanEngine();
 	engine->init();
 	while (1) {
 		engine->draw();

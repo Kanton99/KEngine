@@ -9,7 +9,7 @@ class RenderSystem : public System
 {
 
 	//std::unique_ptr<VulkanEngine> engine;
-	std::unique_ptr<Engine> engine;
+	std::unique_ptr<VulkanEngine> engine;
 
 public: //TODO do more secure
 	SDL_Window* window;

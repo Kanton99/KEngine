@@ -26,7 +26,7 @@ void RenderSystem::draw()
 
 RenderSystem::RenderSystem() :
 	//engine(std::unique_ptr<VulkanEngine>(VulkanEngine::get()))
-	engine(std::unique_ptr<Engine>(new Engine()))
+	engine(std::unique_ptr<VulkanEngine>(new VulkanEngine()))
 {
 	engine->init();
 	window = engine->_window;
