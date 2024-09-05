@@ -1,0 +1,9 @@
+{
+  "dependencies": [
+    "glm",
+    "sdl2",
+    "vk-bootstrap",
+    "volk",
+    "vulkan-memory-allocator-hpp"
+  ]
+}
