@@ -29,7 +29,7 @@ int main() {
 	//	return -1;
 	//}
 
-	vkEngine *engine = new vkEngine(window);
+	vkEngine *engine =vkEngine::get(window);
 	engine->init();
 
 	engine->cleanup();

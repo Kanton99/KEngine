@@ -2,6 +2,7 @@
 # and include sub-projects here.
 #
 cmake_minimum_required (VERSION 3.24)
+set(CMAKE_CXX_STANDARD 20)
 project("vkEngine")
 
 # Enable Hot Reload for MSVC compilers if supported.

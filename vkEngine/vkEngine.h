@@ -1,8 +1,11 @@
 #pragma once
+#define VULKAN_HPP_DISPATCH_LOADER_DYNAMIC 1
 #include <vulkan/vulkan.hpp>
 #include <SDL.h>
 #include <VkBootstrap.h>
 #include <memory>
+
+
 
 class vkEngine
 {
@@ -16,16 +19,20 @@ private:
 	vkEngine(SDL_Window* window);
 private:
 	static vkEngine* _engine;
+
+	bool _dynamicStorageCreated;
 #pragma region init
-	VkInstance _instance;
+	vk::Instance _instance;
 	SDL_Window* _window;
-	VkSurfaceKHR _surface;
-	VkDebugUtilsMessengerEXT _debug_messanger;
+	vk::SurfaceKHR _surface;
+#ifndef NDEBUG
+	vk::DebugUtilsMessengerEXT _debug_messanger;
+#endif // !DEBUG
 
-	VkDevice _device;
-	VkPhysicalDevice _physDevice;
+	vk::Device _device;
+	vk::PhysicalDevice _physDevice;
 
-	VkQueue _graohics_queue;
+	vk::Queue _graphics_queue;
 #pragma endregion
 
 };
