@@ -1,9 +1,15 @@
 {
   "dependencies": [
     "glm",
-    "sdl2",
+    {
+      "name": "sdl2",
+      "features": [
+        "vulkan"
+      ]
+    },
     "vk-bootstrap",
     "volk",
-    "vulkan-memory-allocator-hpp"
+    "vulkan-memory-allocator-hpp",
+    "sdl2-image"
   ]
 }

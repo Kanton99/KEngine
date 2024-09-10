@@ -14,6 +14,7 @@ find_package(SDL2 CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)
 find_package(vk-bootstrap CONFIG REQUIRED)
 find_package(Vulkan REQUIRED)
+find_package(unofficial-vulkan-memory-allocator-hpp CONFIG REQUIRED)
 
 add_executable(${PROJECT_NAME} main.cpp "vkEngine.h" "vkEngine.cpp")
 
@@ -22,3 +23,4 @@ target_link_libraries(${PROJECT_NAME} PRIVATE glm::glm)
 target_link_libraries(${PROJECT_NAME} PRIVATE vk-bootstrap::vk-bootstrap vk-bootstrap::vk-bootstrap-compiler-warnings)
 
 target_link_libraries(${PROJECT_NAME} PRIVATE Vulkan::Vulkan)
+target_link_libraries(${PROJECT_NAME} PRIVATE unofficial::VulkanMemoryAllocator-Hpp::VulkanMemoryAllocator-Hpp)
