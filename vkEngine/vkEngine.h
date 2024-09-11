@@ -1,6 +1,6 @@
 #pragma once
-#define VULKAN_HPP_DISPATCH_LOADER_DYNAMIC 1
 #include <vulkan/vulkan.hpp>
+#include <vulkan/vulkan_extension_inspection.hpp>
 #include <SDL.h>
 #include <VkBootstrap.h>
 #include <memory>
@@ -30,7 +30,7 @@ private:
 #endif // !DEBUG
 
 	vk::Device _device;
-	vk::PhysicalDevice _physDevice;
+	vk::PhysicalDevice _phys_device;
 
 	vk::Queue _graphics_queue;
 #pragma endregion
