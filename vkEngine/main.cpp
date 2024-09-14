@@ -33,5 +33,7 @@ int main() {
 	engine->init();
 
 	engine->cleanup();
+
+	SDL_DestroyWindow(window);
 	return 0;
 }
