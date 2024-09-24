@@ -24,9 +24,9 @@ target_link_libraries(${PROJECT_NAME} PRIVATE $<TARGET_NAME_IF_EXISTS:SDL2::SDL2
 target_link_libraries(${PROJECT_NAME} PRIVATE glm::glm)
 target_link_libraries(${PROJECT_NAME} PRIVATE vk-bootstrap::vk-bootstrap vk-bootstrap::vk-bootstrap-compiler-warnings)
 
-target_compile_definitions(Vulkan::Headers INTERFACE
-	VULKAN_HPP_DISPATCH_LOADER_DYNAMIC=1
-)
+#target_compile_definitions(Vulkan::Headers INTERFACE
+#	VULKAN_HPP_DISPATCH_LOADER_DYNAMIC=1
+#)
 
 target_link_libraries(${PROJECT_NAME} PRIVATE Vulkan::Vulkan Vulkan::Headers)
 target_link_libraries(${PROJECT_NAME} PRIVATE unofficial::VulkanMemoryAllocator-Hpp::VulkanMemoryAllocator-Hpp)
