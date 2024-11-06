@@ -19,3 +19,4 @@ KEngine.kdev4
 Session.vim
 build/
 notes.txt
+/vcpkg-configuration.json
