@@ -9,8 +9,7 @@
     },
     "sdl2-image",
     "vk-bootstrap",
-    "volk",
     "vulkan-memory-allocator-hpp",
-    "vulkan-headers"
+    "volk"
   ]
 }
