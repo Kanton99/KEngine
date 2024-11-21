@@ -1,9 +1,7 @@
 #pragma once
-#include <cstdint>
 #define VULKAN_HPP_NO_CONSTRUCTORS
 #include "util_structs.hpp"
 #include <SDL.h>
-#include <VkBootstrap.h>
 #include <vulkan/vulkan.hpp>
 #include <vulkan/vulkan_extension_inspection.hpp>
 
@@ -18,8 +16,7 @@ public:
 private:
   vkEngine(SDL_Window *window);
 
-  void _init_instance();
-  void _init_devices();
+  void _init_vulkan();
 
 #ifndef NDEBUG
   void _init_debug_utils();
