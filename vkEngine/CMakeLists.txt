@@ -11,8 +11,9 @@ find_package(glm CONFIG REQUIRED)
 find_package(Vulkan REQUIRED)
 find_package(unofficial-vulkan-memory-allocator-hpp CONFIG REQUIRED)
 find_package(VulkanHeaders CONFIG)
+find_package(vk-bootstrap CONFIG REQUIRED)
 
-add_executable(${PROJECT_NAME} main.cpp "vkEngine.h" "vkEngine.cpp")
+add_executable(${PROJECT_NAME} main.cpp "vkEngine.h" "vkEngine.cpp" "util_structs.hpp")
 
 target_link_libraries(${PROJECT_NAME} PRIVATE $<TARGET_NAME_IF_EXISTS:SDL2::SDL2main> $<IF:$<TARGET_EXISTS:SDL2::SDL2>,SDL2::SDL2,SDL2::SDL2-static>)
 target_link_libraries(${PROJECT_NAME} PRIVATE glm::glm)
@@ -20,6 +21,6 @@ target_link_libraries(${PROJECT_NAME} PRIVATE glm::glm)
 target_compile_definitions(Vulkan::Headers INTERFACE
 	VULKAN_HPP_DISPATCH_LOADER_DYNAMIC=1
 )
-
+target_link_libraries(${PROJECT_NAME} PRIVATE vk-bootstrap::vk-bootstrap vk-bootstrap::vk-bootstrap-compiler-warnings ${CMAKE_DL_LIBS})
 target_link_libraries(${PROJECT_NAME} PRIVATE Vulkan::Vulkan Vulkan::Headers)
 target_link_libraries(${PROJECT_NAME} PRIVATE unofficial::VulkanMemoryAllocator-Hpp::VulkanMemoryAllocator-Hpp)

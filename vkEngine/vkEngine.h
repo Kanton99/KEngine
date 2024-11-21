@@ -1,30 +1,13 @@
 #pragma once
 #include <cstdint>
-#include <functional>
-#include <stack>
 #define VULKAN_HPP_NO_CONSTRUCTORS
+#include "util_structs.hpp"
 #include <SDL.h>
 #include <VkBootstrap.h>
-#include <memory>
 #include <vulkan/vulkan.hpp>
 #include <vulkan/vulkan_extension_inspection.hpp>
 
-struct DeletionStack {
-  std::stack<std::function<void()>> deletors;
-
-  void push_function(std::function<void()> &&function) {
-    deletors.push(function);
-  }
-
-  void flush() {
-    while (!deletors.empty()) {
-      auto func = deletors.top();
-      func();
-      deletors.pop();
-    }
-  }
-};
-
+namespace mvk {
 class vkEngine {
 public:
   static vkEngine *get(SDL_Window *window);
@@ -49,7 +32,7 @@ private:
 
 private:
   static vkEngine *_engine;
-  DeletionStack stack;
+  mvk::DeletionStack stack;
 
   vk::Instance _instance;
   SDL_Window *_window;
@@ -69,8 +52,7 @@ private:
 
   vk::CommandBuffer _graphics_command_buffer;
 
-  vk::SwapchainKHR graphic_swapchain;
+  mvk::SwapChain graphic_swapchain;
   vk::Extent2D swapchain_extent;
-  std::vector<vk::Image> swapchain_images;
-  std::vector<vk::ImageView> swapchain_image_views;
 };
+} // namespace mvk

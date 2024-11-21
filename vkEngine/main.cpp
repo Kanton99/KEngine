@@ -1,4 +1,7 @@
+#include <SDL_vulkan.h>
+#include <VkBootstrap.h>
 #include <exception>
+#include <vulkan/vulkan_core.h>
 #define SDL_MAIN_HANDLED
 #include "vkEngine.h"
 #include <SDL.h>
@@ -29,8 +32,8 @@ int main() {
     //	std::cout << "Failed to get the surface from the window\n";
     //	return -1;
     // }
-
-    vkEngine *engine = vkEngine::get(window);
+    /**/
+    mvk::vkEngine *engine = mvk::vkEngine::get(window);
     engine->init();
     int i;
     std::cin >> i;

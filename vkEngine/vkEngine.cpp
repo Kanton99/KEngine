@@ -23,16 +23,16 @@ VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
 #endif
 #endif
 
-vkEngine *vkEngine::_engine = nullptr;
+mvk::vkEngine *mvk::vkEngine::_engine = nullptr;
 
-vkEngine *vkEngine::get(SDL_Window *window) {
+mvk::vkEngine *mvk::vkEngine::get(SDL_Window *window) {
   if (!_engine) {
-    _engine = new vkEngine(window);
+    _engine = new mvk::vkEngine(window);
   }
   return _engine;
 }
 
-void vkEngine::init() {
+void mvk::vkEngine::init() {
 #if VULKAN_HPP_DISPATCH_LOADER_DYNAMIC == 1
   VULKAN_HPP_DEFAULT_DISPATCHER.init();
 #endif // VULKAN_HPP_DISPATCH_LOADER_DYNAMIC
@@ -66,11 +66,11 @@ void vkEngine::init() {
   this->_init_swapchain(width, height);
 }
 
-void vkEngine::cleanup() { this->stack.flush(); }
+void mvk::vkEngine::cleanup() { this->stack.flush(); }
 
-vkEngine::vkEngine(SDL_Window *window) : _window(window) {}
+mvk::vkEngine::vkEngine(SDL_Window *window) : _window(window) {}
 
-void vkEngine::_allocate_command_buffer(vk::CommandBuffer buffer) {
+void mvk::vkEngine::_allocate_command_buffer(vk::CommandBuffer buffer) {
   vk::CommandBufferAllocateInfo buffer_allocation_info{
       .commandPool = this->_command_pool,
       .level = vk::CommandBufferLevel::ePrimary,
@@ -78,12 +78,12 @@ void vkEngine::_allocate_command_buffer(vk::CommandBuffer buffer) {
   buffer = this->_device.allocateCommandBuffers(buffer_allocation_info).front();
 }
 
-void vkEngine::_record_command_buffer() {}
+void mvk::vkEngine::_record_command_buffer() {}
 
-void vkEngine::_init_instance() {
+void mvk::vkEngine::_init_instance() {
   vk::ApplicationInfo app_info{.pApplicationName = "KEngine",
                                .applicationVersion = VK_MAKE_VERSION(0, 0, 1),
-                               .pEngineName = "vkEngine",
+                               .pEngineName = "mvk::vkEngine",
                                .engineVersion = VK_MAKE_VERSION(0, 0, 1),
                                .apiVersion = VK_API_VERSION_1_3};
 
@@ -112,7 +112,7 @@ void vkEngine::_init_instance() {
   this->stack.push_function(
       [=, this]() { this->_instance.destroySurfaceKHR(this->_surface); });
 }
-void vkEngine::_init_devices() {
+void mvk::vkEngine::_init_devices() {
   this->_phys_device = this->_instance.enumeratePhysicalDevices().front();
 
   std::vector<vk::QueueFamilyProperties> queueFamilyProperties =
@@ -193,7 +193,7 @@ void vkEngine::_init_devices() {
 }
 
 #ifndef NDEBUG
-void vkEngine::_init_debug_utils() {
+void mvk::vkEngine::_init_debug_utils() {
   std::vector<vk::ExtensionProperties> props =
       vk::enumerateInstanceExtensionProperties();
 
@@ -225,7 +225,7 @@ void vkEngine::_init_debug_utils() {
 }
 #endif // CREATE DEBUG UTILS MESSENGER
 
-void vkEngine::_init_command_pool(int queue_family_index) {
+void mvk::vkEngine::_init_command_pool(int queue_family_index) {
   vk::CommandPoolCreateInfo create_command_pool_info{
       .flags = {vk::CommandPoolCreateFlagBits::eResetCommandBuffer},
       .queueFamilyIndex = static_cast<uint32_t>(queue_family_index)};
@@ -236,7 +236,7 @@ void vkEngine::_init_command_pool(int queue_family_index) {
       [=, this]() { this->_device.destroyCommandPool(commandPool); });
 }
 
-void vkEngine::_init_swapchain(uint32_t width, uint32_t height) {
+void mvk::vkEngine::_init_swapchain(uint32_t width, uint32_t height) {
 
   // Get Format
   auto formats = this->_phys_device.getSurfaceFormatsKHR(this->_surface);
@@ -304,30 +304,31 @@ void vkEngine::_init_swapchain(uint32_t width, uint32_t height) {
     swapchain_create_info.pQueueFamilyIndices = queue_family_indeces;
   }
 
-  this->graphic_swapchain =
+  this->graphic_swapchain.swapchain =
       this->_device.createSwapchainKHR(swapchain_create_info);
 
   this->stack.push_function([=, this]() {
-    this->_device.destroySwapchainKHR(this->graphic_swapchain);
+    this->_device.destroySwapchainKHR(this->graphic_swapchain.swapchain);
   });
 
-  this->swapchain_images =
-      this->_device.getSwapchainImagesKHR(this->graphic_swapchain);
+  this->graphic_swapchain.images =
+      this->_device.getSwapchainImagesKHR(this->graphic_swapchain.swapchain);
 
-  this->swapchain_image_views.reserve(this->swapchain_images.size());
+  this->graphic_swapchain.imageViews.reserve(
+      this->graphic_swapchain.images.size());
 
   vk::ImageViewCreateInfo image_view_info{
       .viewType = vk::ImageViewType::e2D,
       .format = format,
       .subresourceRange = {vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1}};
-  for (auto image : this->swapchain_images) {
+  for (auto image : this->graphic_swapchain.images) {
     image_view_info.image = image;
-    this->swapchain_image_views.push_back(
+    this->graphic_swapchain.imageViews.push_back(
         this->_device.createImageView(image_view_info));
   }
 
   this->stack.push_function([=, this]() {
-    for (auto imageView : this->swapchain_image_views) {
+    for (auto imageView : this->graphic_swapchain.imageViews) {
       this->_device.destroyImageView(imageView);
     }
   });
