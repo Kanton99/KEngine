@@ -29,7 +29,7 @@ private:
 
 private:
   static vkEngine *_engine;
-  mvk::DeletionStack stack;
+  mvk::DeletionStack deletion_stack;
 
   vk::Instance _instance;
   SDL_Window *_window;
@@ -41,8 +41,6 @@ private:
   vk::Device _device;
   vk::PhysicalDevice _phys_device;
 
-  unsigned int graphics_queue_index;
-  unsigned int present_queue_index;
   vk::Queue _graphics_queue;
 
   vk::CommandPool _command_pool;

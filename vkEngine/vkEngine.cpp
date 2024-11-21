@@ -41,7 +41,7 @@ void mvk::vkEngine::init() {
   this->_init_swapchain(width, height);
 }
 
-void mvk::vkEngine::cleanup() { this->stack.flush(); }
+void mvk::vkEngine::cleanup() { this->deletion_stack.flush(); }
 
 mvk::vkEngine::vkEngine(SDL_Window *window) : _window(window) {}
 
@@ -68,9 +68,15 @@ void mvk::vkEngine::_init_vulkan() {
 
   this->_instance = vk::Instance(inst_ret.value().instance);
 
+  this->deletion_stack.push_function(
+      [=, this]() { this->_instance.destroy(); });
+
 #ifndef NDEBUG
   this->_debug_messanger =
       vk::DebugUtilsMessengerEXT(inst_ret->debug_messenger);
+  this->deletion_stack.push_function([=, this]() {
+    this->_instance.destroyDebugUtilsMessengerEXT(this->_debug_messanger);
+  });
 #endif // !NDEBUG
 
   VkSurfaceKHR surface;
@@ -80,6 +86,8 @@ void mvk::vkEngine::_init_vulkan() {
     std::cerr << "Error generating surface\n";
   }
   this->_surface = vk::SurfaceKHR(surface);
+  this->deletion_stack.push_function(
+      [=, this]() { this->_instance.destroySurfaceKHR(this->_surface); });
 
   vkb::PhysicalDeviceSelector selector{inst_ret.value()};
   vkb::PhysicalDevice vkb_phys_device =
@@ -94,6 +102,10 @@ void mvk::vkEngine::_init_vulkan() {
 
   this->_device = vk::Device(vkb_device.device);
   this->_phys_device = vk::PhysicalDevice(vkb_phys_device.physical_device);
+  this->_graphics_queue =
+      vk::Queue(vkb_device.get_queue(vkb::QueueType::graphics).value());
+
+  this->deletion_stack.push_function([=, this]() { this->_device.destroy(); });
 }
 
 void mvk::vkEngine::_init_command_pool(int queue_family_index) {}
@@ -120,13 +132,22 @@ void mvk::vkEngine::_init_swapchain(uint32_t width, uint32_t height) {
 
   this->graphic_swapchain.images.reserve(_swapchainImages.size());
   for (auto image : _swapchainImages) {
-    this->graphic_swapchain.images.push_back(vk::Image(image));
+    this->graphic_swapchain.images.emplace_back(vk::Image(image));
   }
 
   this->graphic_swapchain.imageViews.reserve(_swapchainImageViews.size());
   for (auto image : _swapchainImageViews) {
-    this->graphic_swapchain.imageViews.push_back(vk::ImageView(image));
+    this->graphic_swapchain.imageViews.emplace_back(vk::ImageView(image));
   }
 
   this->graphic_swapchain.format = vk::Format(vkbSwapchain.image_format);
+
+  this->deletion_stack.push_function([=, this]() {
+    this->_device.destroySwapchainKHR(this->graphic_swapchain.swapchain);
+
+    for (unsigned long i = 0; i < this->graphic_swapchain.imageViews.size();
+         i++) {
+      this->_device.destroyImageView(this->graphic_swapchain.imageViews[i]);
+    }
+  });
 }
