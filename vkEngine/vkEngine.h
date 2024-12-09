@@ -1,10 +1,8 @@
 #pragma once
-#include <vulkan/vulkan_handles.hpp>
 #define VULKAN_HPP_NO_CONSTRUCTORS
 #include "util_structs.hpp"
 #include <SDL.h>
 #include <vulkan/vulkan.hpp>
-#include <vulkan/vulkan_extension_inspection.hpp>
 
 namespace mvk {
 class vkEngine {
