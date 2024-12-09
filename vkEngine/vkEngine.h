@@ -1,4 +1,5 @@
 #pragma once
+#include <vulkan/vulkan_handles.hpp>
 #define VULKAN_HPP_NO_CONSTRUCTORS
 #include "util_structs.hpp"
 #include <SDL.h>
@@ -13,7 +14,7 @@ public:
 
   void cleanup();
 
-private:
+private: // Methods
   vkEngine(SDL_Window *window);
 
   void _init_vulkan();
@@ -27,7 +28,10 @@ private:
   void _allocate_command_buffer(vk::CommandBuffer buffer);
   void _record_command_buffer();
 
-private:
+  void _init_graphic_pipeline();
+  vk::ShaderModule _create_shader_module();
+
+private: // Members
   static vkEngine *_engine;
   mvk::DeletionStack deletion_stack;
 

@@ -21,3 +21,4 @@ build/
 notes.txt
 /vcpkg-configuration.json
 *.so
+resources/shaders/compiled/*

@@ -1,4 +1,5 @@
 #include "vkEngine.h"
+#include "utils.hpp"
 #include <SDL_video.h>
 #include <SDL_vulkan.h>
 #include <VkBootstrap.h>
@@ -150,4 +151,9 @@ void mvk::vkEngine::_init_swapchain(uint32_t width, uint32_t height) {
       this->_device.destroyImageView(this->graphic_swapchain.imageViews[i]);
     }
   });
+}
+
+void mvk::vkEngine::_init_graphic_pipeline() {
+  auto vertShaderCode = read_file("resources/shaders/compiled/vert.spv");
+  auto fragShaderCode = read_file("resources/shaders/compiled/frag.spv");
 }
