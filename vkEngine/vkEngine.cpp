@@ -1,7 +1,6 @@
 #include "vkEngine.h"
 #include "utils.hpp"
-#include <SDL_video.h>
-#include <SDL_vulkan.h>
+#include <SDL3/SDL_vulkan.h>
 #include <VkBootstrap.h>
 #include <iostream>
 #include <vector>
@@ -81,9 +80,10 @@ void mvk::vkEngine::_init_vulkan() {
 #endif // !NDEBUG
 
   VkSurfaceKHR surface;
-  if (SDL_Vulkan_CreateSurface(this->_window,
+  if (!SDL_Vulkan_CreateSurface(this->_window,
                                static_cast<VkInstance>(this->_instance),
-                               &surface) == SDL_FALSE) {
+                               nullptr,
+                               &surface)) {
     std::cerr << "Error generating surface\n";
   }
   this->_surface = vk::SurfaceKHR(surface);

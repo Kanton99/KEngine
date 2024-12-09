@@ -1,8 +1,8 @@
 #pragma once
 #define VULKAN_HPP_NO_CONSTRUCTORS
 #include "util_structs.hpp"
-#include <SDL.h>
 #include <vulkan/vulkan.hpp>
+#include <SDL3/SDL.h>
 
 namespace mvk {
 class vkEngine {

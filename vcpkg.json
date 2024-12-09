@@ -8,9 +8,16 @@
       ]
     },
     "sdl2-image",
+    {
+      "name": "sdl3",
+      "features": [
+        "vulkan",
+        "wayland",
+        "x11"
+      ]
+    },
     "vk-bootstrap",
     "volk",
-    "vulkan-memory-allocator-hpp",
-    "sdl3"
+    "vulkan-memory-allocator-hpp"
   ]
 }
