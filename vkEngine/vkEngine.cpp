@@ -39,6 +39,8 @@ void mvk::vkEngine::init() {
   SDL_GetWindowSize(this->_window, &width, &height);
 
   this->_init_swapchain(width, height);
+
+  this->_init_graphic_pipeline();
 }
 
 void mvk::vkEngine::cleanup() { this->deletion_stack.flush(); }
@@ -154,6 +156,48 @@ void mvk::vkEngine::_init_swapchain(uint32_t width, uint32_t height) {
 }
 
 void mvk::vkEngine::_init_graphic_pipeline() {
-  auto vertShaderCode = read_file("resources/shaders/compiled/vert.spv");
-  auto fragShaderCode = read_file("resources/shaders/compiled/frag.spv");
+  auto vert_shader_code = read_file("../resources/shaders/compiled/vert.spv");
+  auto frag_shader_code = read_file("../resources/shaders/compiled/frag.spv");
+
+  auto vert_module = create_shader_module(vert_shader_code, this->_device);
+  auto frag_module = create_shader_module(frag_shader_code, this->_device);
+
+  this->deletion_stack.push_function([=, this]() {
+      this->_device.destroyShaderModule(vert_module);
+      this->_device.destroyShaderModule(frag_module);
+      });
+
+  vk::PipelineShaderStageCreateInfo vert_shader_stage_info{
+    .stage = vk::ShaderStageFlagBits::eVertex,
+    .module = vert_module,
+    .pName= "main",
+  };
+
+  vk::PipelineShaderStageCreateInfo frag_shader_stage_info{
+    .stage = vk::ShaderStageFlagBits::eFragment,
+    .module = frag_module,
+    .pName = "main",
+  };
+
+  vk::PipelineShaderStageCreateInfo stages[] = { vert_shader_stage_info, frag_shader_stage_info };
+
+  //Dynamic State
+  std::vector<vk::DynamicState> dynamic_states = {
+      vk::DynamicState::eViewport,
+      vk::DynamicState::eScissor
+  };
+
+  vk::PipelineDynamicStateCreateInfo dynamic_state_create_info{
+      .dynamicStateCount = dynamic_states.size(),
+      .pDynamicStates = dynamic_states.data()
+  };
+
+  //Vertex input
+  vk::PipelineVertexInputStateCreateInfo vertex_input_state_info{
+      .vertexBindingDescriptionCount = 0,
+      .vertexAttributeDescriptionCount = 0
+  };
+
+  //Input Assembly
+
 }
