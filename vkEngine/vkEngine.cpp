@@ -1,9 +1,13 @@
 #include "vkEngine.h"
 #include "utils.hpp"
+#include "init.hpp"
+#include "pipeline_builder.hpp"
 #include <SDL3/SDL_vulkan.h>
 #include <VkBootstrap.h>
+#include <cstdint>
 #include <iostream>
 #include <vector>
+#include <vulkan/vulkan_enums.hpp>
 
 #if VULKAN_HPP_DISPATCH_LOADER_DYNAMIC == 1
 #ifndef DYNAMIC_LOADER_LOADED
@@ -166,38 +170,19 @@ void mvk::vkEngine::_init_graphic_pipeline() {
       this->_device.destroyShaderModule(vert_module);
       this->_device.destroyShaderModule(frag_module);
       });
+  
+  auto pipeline_layout_info = vk_init::pipeline_layout_create_info(); 
 
-  vk::PipelineShaderStageCreateInfo vert_shader_stage_info{
-    .stage = vk::ShaderStageFlagBits::eVertex,
-    .module = vert_module,
-    .pName= "main",
-  };
+  Pipeline_builder pipeline_builder;
 
-  vk::PipelineShaderStageCreateInfo frag_shader_stage_info{
-    .stage = vk::ShaderStageFlagBits::eFragment,
-    .module = frag_module,
-    .pName = "main",
-  };
+  pipeline_builder._pipeline_layout = _triangle_pipeline_layout;
+  pipeline_builder.set_shaders(vert_module, frag_module);
+  pipeline_builder.set_input_topology(vk::PrimitiveTopology::eTriangleList);
+  pipeline_builder.set_polygon_mode(vk::PolygonMode::eFill);
+  pipeline_builder.set_cull_mode(vk::CullModeFlagBits::eNone, vk::FrontFace::eClockwise);
+  pipeline_builder.set_multisampling_none();
+  pipeline_builder.disable_blending();
+  pipeline_builder.disable_depthtest();
 
-  vk::PipelineShaderStageCreateInfo stages[] = { vert_shader_stage_info, frag_shader_stage_info };
-
-  //Dynamic State
-  std::vector<vk::DynamicState> dynamic_states = {
-      vk::DynamicState::eViewport,
-      vk::DynamicState::eScissor
-  };
-
-  vk::PipelineDynamicStateCreateInfo dynamic_state_create_info{
-      .dynamicStateCount = dynamic_states.size(),
-      .pDynamicStates = dynamic_states.data()
-  };
-
-  //Vertex input
-  vk::PipelineVertexInputStateCreateInfo vertex_input_state_info{
-      .vertexBindingDescriptionCount = 0,
-      .vertexAttributeDescriptionCount = 0
-  };
-
-  //Input Assembly
-
+  /*pipeline_builder.set_color_attachment_format(_draw_image)*/
 }

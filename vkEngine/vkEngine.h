@@ -51,5 +51,9 @@ private: // Members
 
   mvk::SwapChain graphic_swapchain;
   vk::Extent2D swapchain_extent;
+
+  //temporary
+  vk::PipelineLayout _triangle_pipeline_layout;
+  vk::Pipeline _triangle_pipeline;
 };
 } // namespace mvk
