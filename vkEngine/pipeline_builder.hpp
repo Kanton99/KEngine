@@ -13,6 +13,8 @@ public:
 	vk::PipelineDepthStencilStateCreateInfo _depth_stencil;
 	vk::PipelineRenderingCreateInfo _rendering_info;
 	vk::Format _color_attachment_format;
+  vk::RenderPass _render_pass;
+  //TODO Add vertex input
 
 	Pipeline_builder() { clear(); }
 
@@ -29,4 +31,5 @@ public:
   void set_color_attachment_format(vk::Format format);
   void set_depth_format(vk::Format format);
   void disable_depthtest();
+  void set_render_pass(vk::Device device);
 };

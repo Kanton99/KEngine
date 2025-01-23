@@ -165,13 +165,9 @@ void mvk::vkEngine::_init_graphic_pipeline() {
 
   auto vert_module = create_shader_module(vert_shader_code, this->_device);
   auto frag_module = create_shader_module(frag_shader_code, this->_device);
-
-  this->deletion_stack.push_function([=, this]() {
-      this->_device.destroyShaderModule(vert_module);
-      this->_device.destroyShaderModule(frag_module);
-      });
   
   auto pipeline_layout_info = vk_init::pipeline_layout_create_info(); 
+  this->_triangle_pipeline_layout = this->_device.createPipelineLayout(pipeline_layout_info);
 
   Pipeline_builder pipeline_builder;
 
@@ -184,5 +180,19 @@ void mvk::vkEngine::_init_graphic_pipeline() {
   pipeline_builder.disable_blending();
   pipeline_builder.disable_depthtest();
 
-  /*pipeline_builder.set_color_attachment_format(_draw_image)*/
+  pipeline_builder.set_color_attachment_format(this->graphic_swapchain.format);
+  pipeline_builder.set_depth_format(vk::Format::eUndefined);
+
+  pipeline_builder.set_render_pass(this->_device);
+  _triangle_pipeline = pipeline_builder.build_pipeline(this->_device);
+  this->_render_pass = pipeline_builder._render_pass;
+
+  this->_device.destroyShaderModule(vert_module);
+  this->_device.destroyShaderModule(frag_module);
+
+  this->deletion_stack.push_function([&](){
+    this->_device.destroyPipelineLayout(this->_triangle_pipeline_layout);
+    this->_device.destroyRenderPass(this->_render_pass);
+    this->_device.destroyPipeline(this->_triangle_pipeline);
+  });
 }

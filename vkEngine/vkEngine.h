@@ -52,6 +52,7 @@ private: // Members
   mvk::SwapChain graphic_swapchain;
   vk::Extent2D swapchain_extent;
 
+  vk::RenderPass _render_pass;
   //temporary
   vk::PipelineLayout _triangle_pipeline_layout;
   vk::Pipeline _triangle_pipeline;
