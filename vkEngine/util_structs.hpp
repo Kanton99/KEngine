@@ -2,14 +2,13 @@
 #include <stack>
 #include <vector>
 #include <vulkan/vulkan.hpp>
-#include <vulkan/vulkan_enums.hpp>
-#include <vulkan/vulkan_handles.hpp>
 
 namespace mvk {
 struct SwapChain {
   vk::SwapchainKHR swapchain;
   std::vector<vk::Image> images;
   std::vector<vk::ImageView> imageViews;
+  std::vector<vk::Framebuffer> frameBuffers;
   vk::Format format;
 };
 

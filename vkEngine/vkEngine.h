@@ -29,6 +29,8 @@ private: // Methods
   void _init_graphic_pipeline();
   vk::ShaderModule _create_shader_module();
 
+  void _init_frame_buffers();
+
 private: // Members
   static vkEngine *_engine;
   mvk::DeletionStack deletion_stack;

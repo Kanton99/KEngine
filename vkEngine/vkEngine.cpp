@@ -8,6 +8,7 @@
 #include <iostream>
 #include <vector>
 #include <vulkan/vulkan_enums.hpp>
+#include <vulkan/vulkan_structs.hpp>
 
 #if VULKAN_HPP_DISPATCH_LOADER_DYNAMIC == 1
 #ifndef DYNAMIC_LOADER_LOADED
@@ -45,6 +46,7 @@ void mvk::vkEngine::init() {
   this->_init_swapchain(width, height);
 
   this->_init_graphic_pipeline();
+  this->_init_frame_buffers();
 }
 
 void mvk::vkEngine::cleanup() { this->deletion_stack.flush(); }
@@ -148,6 +150,8 @@ void mvk::vkEngine::_init_swapchain(uint32_t width, uint32_t height) {
   }
 
   this->graphic_swapchain.format = vk::Format(vkbSwapchain.image_format);
+  
+  this->swapchain_extent = vkbSwapchain.extent;
 
   this->deletion_stack.push_function([=, this]() {
     this->_device.destroySwapchainKHR(this->graphic_swapchain.swapchain);
@@ -194,5 +198,29 @@ void mvk::vkEngine::_init_graphic_pipeline() {
     this->_device.destroyPipelineLayout(this->_triangle_pipeline_layout);
     this->_device.destroyRenderPass(this->_render_pass);
     this->_device.destroyPipeline(this->_triangle_pipeline);
+  });
+}
+
+void mvk::vkEngine::_init_frame_buffers(){
+  this->graphic_swapchain.frameBuffers.resize(this->graphic_swapchain.imageViews.size());
+
+  for(size_t i = 0; i < graphic_swapchain.imageViews.size(); i++){
+    vk::ImageView attachments[] = {graphic_swapchain.imageViews[i]};
+
+    vk::FramebufferCreateInfo framebuffer_info{
+      .renderPass = this->_render_pass,
+      .attachmentCount = 1,
+      .pAttachments = attachments,
+      .width = this->swapchain_extent.width,
+      .height = this->swapchain_extent.height,
+      .layers = 1
+    };
+
+    graphic_swapchain.frameBuffers[i] = this->_device.createFramebuffer(framebuffer_info);
+
+  }
+  this->deletion_stack.push_function([&](){
+    for(auto frame_buffer : graphic_swapchain.frameBuffers)
+      this->_device.destroyFramebuffer(frame_buffer);
   });
 }
