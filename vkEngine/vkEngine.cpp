@@ -7,8 +7,6 @@
 #include <cstdint>
 #include <iostream>
 #include <vector>
-#include <vulkan/vulkan_enums.hpp>
-#include <vulkan/vulkan_structs.hpp>
 
 #if VULKAN_HPP_DISPATCH_LOADER_DYNAMIC == 1
 #ifndef DYNAMIC_LOADER_LOADED
@@ -117,7 +115,18 @@ void mvk::vkEngine::_init_vulkan() {
   this->deletion_stack.push_function([=, this]() { this->_device.destroy(); });
 }
 
-void mvk::vkEngine::_init_command_pool(int queue_family_index) {}
+void mvk::vkEngine::_init_command_pool(int queue_family_index) {
+  vk::CommandPoolCreateInfo pool_info{
+    .flags = vk::CommandPoolCreateFlagBits::eResetCommandBuffer,
+    .queueFamilyIndex = (uint32_t) queue_family_index
+  };
+
+  this->_command_pool = this->_device.createCommandPool(pool_info);
+
+  this->deletion_stack.push_function([&](){
+    this->_device.destroyCommandPool(this->_command_pool);
+  });
+}
 
 void mvk::vkEngine::_init_swapchain(uint32_t width, uint32_t height) {
   vkb::SwapchainBuilder swapchainBuilder{
