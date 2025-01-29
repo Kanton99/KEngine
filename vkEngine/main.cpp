@@ -28,9 +28,21 @@ int main() {
     mvk::vkEngine *engine = mvk::vkEngine::get(window);
     engine->init();
 
+    SDL_Event event;
+    bool running = true;
+
+    while(running){
+      while(SDL_PollEvent(&event)){
+        if(event.type == SDL_EVENT_QUIT) running = false;
+      }
+
+      SDL_Delay(10);
+    }
+
     engine->cleanup();
 
     SDL_DestroyWindow(window);
+    SDL_Quit();
   } catch (const std::exception &e) {
     std::cerr << e.what() << std::endl;
   }

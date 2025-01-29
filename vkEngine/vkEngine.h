@@ -10,6 +10,8 @@ public:
   static vkEngine *get(SDL_Window *window);
   void init();
 
+  void draw();
+
   void cleanup();
 
 private: // Methods
@@ -24,7 +26,7 @@ private: // Methods
   void _init_swapchain(uint32_t width, uint32_t height);
   void _init_command_pool(int queue_family_index);
   void _allocate_command_buffer(vk::CommandBuffer buffer);
-  void _record_command_buffer();
+  void _record_command_buffer(vk::CommandBuffer command_buffer, uint32_t image_index);
 
   void _init_graphic_pipeline();
   vk::ShaderModule _create_shader_module();

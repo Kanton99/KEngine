@@ -47,6 +47,9 @@ void mvk::vkEngine::init() {
   this->_init_frame_buffers();
 }
 
+void mvk::vkEngine::draw(){
+}
+
 void mvk::vkEngine::cleanup() { this->deletion_stack.flush(); }
 
 mvk::vkEngine::vkEngine(SDL_Window *window) : _window(window) {}
@@ -58,8 +61,6 @@ void mvk::vkEngine::_allocate_command_buffer(vk::CommandBuffer buffer) {
       .commandBufferCount = 1};
   buffer = this->_device.allocateCommandBuffers(buffer_allocation_info).front();
 }
-
-void mvk::vkEngine::_record_command_buffer() {}
 
 void mvk::vkEngine::_init_vulkan() {
   vkb::InstanceBuilder instance_builder;
@@ -233,3 +234,52 @@ void mvk::vkEngine::_init_frame_buffers(){
       this->_device.destroyFramebuffer(frame_buffer);
   });
 }
+
+void mvk::vkEngine::_record_command_buffer(vk::CommandBuffer command_buffer, uint32_t image_index){
+  vk::CommandBufferBeginInfo begin_info{
+    
+  };
+  command_buffer.begin(begin_info);
+  vk::ClearColorValue color_value{};
+  color_value.setFloat32({0.f,0.f,0.f,0.f});
+  vk::ClearValue clear_color{
+    .color = color_value
+  };
+
+  vk::RenderPassBeginInfo render_pass_info{
+    .renderPass = this->_render_pass,
+    .framebuffer = this->graphic_swapchain.frameBuffers[image_index],
+    .renderArea.offset = {0,0},
+    .renderArea.extent = this->swapchain_extent,
+    .clearValueCount = 1,
+    .pClearValues = &clear_color
+  };
+
+  command_buffer.beginRenderPass(render_pass_info, vk::SubpassContents::eInline);
+
+  command_buffer.bindPipeline(vk::PipelineBindPoint::eGraphics, this->_triangle_pipeline);
+
+  vk::Viewport viewport{
+    .x = 0.f,
+    .y = 0.f,
+    .width = static_cast<float>(this->swapchain_extent.width),
+    .height = static_cast<float>(this->swapchain_extent.height),
+    .minDepth = 0.f,
+    .maxDepth = 1.f
+  };
+  command_buffer.setViewport(0, viewport);
+
+  vk::Rect2D scissors{
+    .offset = {0, 0},
+    .extent = swapchain_extent
+  };
+
+  command_buffer.setScissor(0, scissors);
+
+  command_buffer.draw(3, 1, 0, 0);
+
+  command_buffer.endRenderPass();
+
+  command_buffer.end();
+}
+
