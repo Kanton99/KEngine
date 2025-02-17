@@ -26,13 +26,13 @@ private: // Methods
 #endif // NDEBUG
 
   void _initSwapchain(uint32_t width, uint32_t height);
-  void _initPommandPool(int queue_family_index);
-  void _recordCommandBuffer(vk::CommandBuffer command_buffer, uint32_t image_index);
+  void _initPommandPool(int queueFamilyIndex);
+  void _recordCommandBuffer(vk::CommandBuffer commandBuffer, uint32_t imageIndex);
   void _initSynchronizationObjects();
 
   void _allocateCommandBuffer(vk::CommandBuffer buffer);
-  AllocatedBuffer _allocateBuffer(size_t size, vk::BufferUsageFlagBits usage, vma::MemoryUsage memory_usage);
-  void _destroyBuffer(const vk::Buffer buffer);
+  AllocatedBuffer _allocateBuffer(size_t size, vk::BufferUsageFlagBits usage, vma::MemoryUsage memoryUsage);
+  void _destroyBuffer(const mvk::AllocatedBuffer& buffer);
 
   void _initGraphicPipeline();
   vk::ShaderModule _createShaderModule();
@@ -70,5 +70,8 @@ private: // Members
   //Synchro primitives
   vk::Semaphore _imageAvailableSempahore, _renderFinishedSemaphore;
   vk::Fence inFlightFence;
+
+  //Buffer allocation
+  vma::Allocator _allocator;
 };
 } // namespace mvk

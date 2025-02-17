@@ -198,11 +198,11 @@ void mvk::vkEngine::_initSwapchain(uint32_t width, uint32_t height) {
 }
 
 void mvk::vkEngine::_initGraphicPipeline() {
-  auto vertShaderCode = read_file("../resources/shaders/compiled/vert.spv");
-  auto fragShaderCode = read_file("../resources/shaders/compiled/frag.spv");
+  auto vertShaderCode = readFile("../resources/shaders/compiled/vert.spv");
+  auto fragShaderCode = readFile("../resources/shaders/compiled/frag.spv");
 
-  auto vert_module = createShaderModule(vertShaderCode, this->_device);
-  auto frag_module = createShaderModule(fragShaderCode, this->_device);
+  auto vertModule = createShaderModule(vertShaderCode, this->_device);
+  auto fragModule = createShaderModule(fragShaderCode, this->_device);
   
   auto pipelineLayoutInfo = vkInit::pipeline_layout_create_info(); 
   this->_trianglePipelineLayout = this->_device.createPipelineLayout(pipelineLayoutInfo);
@@ -210,7 +210,7 @@ void mvk::vkEngine::_initGraphicPipeline() {
   PipelineBuilder pipelineBuilder;
 
   pipelineBuilder._pipelineLayout = _trianglePipelineLayout;
-  pipelineBuilder.setShaders(vert_module, frag_module);
+  pipelineBuilder.setShaders(vertModule, fragModule);
   pipelineBuilder.setInputTopology(vk::PrimitiveTopology::eTriangleList);
   pipelineBuilder.setPolygonMode(vk::PolygonMode::eFill);
   pipelineBuilder.setCullMode(vk::CullModeFlagBits::eNone, vk::FrontFace::eClockwise);
@@ -223,10 +223,10 @@ void mvk::vkEngine::_initGraphicPipeline() {
 
   pipelineBuilder.setRenderPass(this->_device);
   _trianglePipeline = pipelineBuilder.buildPipeline(this->_device);
-  this->_renderPass = pipelineBuilder._render_pass;
+  this->_renderPass = pipelineBuilder._renderPass;
 
-  this->_device.destroyShaderModule(vert_module);
-  this->_device.destroyShaderModule(frag_module);
+  this->_device.destroyShaderModule(vertModule);
+  this->_device.destroyShaderModule(fragModule);
 
   this->deletionStack.pushFunction([&](){
     this->_device.destroyPipelineLayout(this->_trianglePipelineLayout);
@@ -241,7 +241,7 @@ void mvk::vkEngine::_initFrameBuffers(){
   for(size_t i = 0; i < graphicSwapchain.imageViews.size(); i++){
     vk::ImageView attachments[] = {graphicSwapchain.imageViews[i]};
 
-    vk::FramebufferCreateInfo framebuffer_info{
+    vk::FramebufferCreateInfo framebufferInfo{
       .renderPass = this->_renderPass,
       .attachmentCount = 1,
       .pAttachments = attachments,
@@ -250,20 +250,20 @@ void mvk::vkEngine::_initFrameBuffers(){
       .layers = 1
     };
 
-    graphicSwapchain.frameBuffers[i] = this->_device.createFramebuffer(framebuffer_info);
+    graphicSwapchain.frameBuffers[i] = this->_device.createFramebuffer(framebufferInfo);
 
   }
   this->deletionStack.pushFunction([&](){
-    for(auto frame_buffer : graphicSwapchain.frameBuffers)
-      this->_device.destroyFramebuffer(frame_buffer);
+    for(auto frameBuffer : graphicSwapchain.frameBuffers)
+      this->_device.destroyFramebuffer(frameBuffer);
   });
 }
 
-void mvk::vkEngine::_recordCommandBuffer(vk::CommandBuffer command_buffer, uint32_t image_index){
-  vk::CommandBufferBeginInfo begin_info{
+void mvk::vkEngine::_recordCommandBuffer(vk::CommandBuffer commandBuffer, uint32_t imageIndex){
+  vk::CommandBufferBeginInfo beginInfo{
     
   };
-  command_buffer.begin(begin_info);
+  commandBuffer.begin(beginInfo);
   vk::ClearColorValue color_value{};
   color_value.setFloat32({0.f,0.f,0.f,0.f});
   vk::ClearValue clear_color{
@@ -272,16 +272,16 @@ void mvk::vkEngine::_recordCommandBuffer(vk::CommandBuffer command_buffer, uint3
 
   vk::RenderPassBeginInfo render_pass_info{
     .renderPass = this->_renderPass,
-    .framebuffer = this->graphicSwapchain.frameBuffers[image_index],
+    .framebuffer = this->graphicSwapchain.frameBuffers[imageIndex],
     .renderArea.offset = {0,0},
     .renderArea.extent = this->swapchainExtent,
     .clearValueCount = 1,
     .pClearValues = &clear_color
   };
 
-  command_buffer.beginRenderPass(render_pass_info, vk::SubpassContents::eInline);
+  commandBuffer.beginRenderPass(render_pass_info, vk::SubpassContents::eInline);
 
-  command_buffer.bindPipeline(vk::PipelineBindPoint::eGraphics, this->_trianglePipeline);
+  commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, this->_trianglePipeline);
 
   vk::Viewport viewport{
     .x = 0.f,
@@ -291,20 +291,20 @@ void mvk::vkEngine::_recordCommandBuffer(vk::CommandBuffer command_buffer, uint3
     .minDepth = 0.f,
     .maxDepth = 1.f
   };
-  command_buffer.setViewport(0, viewport);
+  commandBuffer.setViewport(0, viewport);
 
   vk::Rect2D scissors{
     .offset = {0, 0},
     .extent = swapchainExtent
   };
 
-  command_buffer.setScissor(0, scissors);
+  commandBuffer.setScissor(0, scissors);
 
-  command_buffer.draw(3, 1, 0, 0);
+  commandBuffer.draw(3, 1, 0, 0);
 
-  command_buffer.endRenderPass();
+  commandBuffer.endRenderPass();
 
-  command_buffer.end();
+  commandBuffer.end();
 }
 
 void mvk::vkEngine::_initSynchronizationObjects(){
@@ -324,30 +324,27 @@ void mvk::vkEngine::_initSynchronizationObjects(){
   });
 }
 
-mvk::AllocatedBuffer mvk::vkEngine::_allocateBuffer(size_t size, vk::BufferUsageFlagBits usage, vma::MemoryUsage memory_usage){
-  vma::AllocationCreateInfo allocation_info{
+mvk::AllocatedBuffer mvk::vkEngine::_allocateBuffer(size_t size, vk::BufferUsageFlagBits usage, vma::MemoryUsage memoryUsage){
+  vma::AllocationCreateInfo allocationInfo{
     .flags = vma::AllocationCreateFlagBits::eMapped,
-    .usage = memory_usage,
+    .usage = memoryUsage,
   };
 
-  vk::BufferCreateInfo buffer_info{
+  vk::BufferCreateInfo bufferInfo{
     .size = size,
     .usage = usage
   };
-
-  vma::Allocator allocator{};
   
-  AllocatedBuffer alloc_buffer;
+  AllocatedBuffer allocBuffer;
 
-  auto vma_allocated_buffer = allocator.createBuffer(buffer_info,allocation_info);
+  auto vmaAllocatedBuffer = this->_allocator.createBuffer(bufferInfo,allocationInfo);
 
-  alloc_buffer.buffer = vma_allocated_buffer.first;
-  alloc_buffer.allocation = vma_allocated_buffer.second;
+  allocBuffer.buffer = vmaAllocatedBuffer.first;
+  allocBuffer.allocation = vmaAllocatedBuffer.second;
 
-  return alloc_buffer;
+  return allocBuffer;
 }
 
-void mvk::vkEngine::_destroyBuffer(vk::Buffer buffer){
-  vma::Allocator allocator{};
-  allocator.destroyBuffer(buffer, );
+void mvk::vkEngine::_destroyBuffer(const mvk::AllocatedBuffer& buffer){
+  this->_allocator.destroyBuffer(buffer.buffer, buffer.allocation); 
 }

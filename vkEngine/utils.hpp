@@ -1,3 +1,4 @@
+#include <cstdint>
 #include <fstream>
 #include <stdexcept>
 #include <vector>
@@ -6,7 +7,7 @@
 #include <filesystem>
 #include <iostream>
 
-static std::vector<char> read_file(const std::string& filename){
+static std::vector<char> readFile(const std::string& filename){
   std::ifstream file(filename, std::ios::ate | std::ios::binary);
 
   if(!file.is_open()){
@@ -26,11 +27,9 @@ static std::vector<char> read_file(const std::string& filename){
 }
 
 vk::ShaderModule createShaderModule(const std::vector<char> shader, const vk::Device device) {
-    vk::ShaderModuleCreateInfo shaderModCreateInfo{
-        .codeSize = shader.size(),
-        .pCode = reinterpret_cast<const uint32_t*>(shader.data())
-    };
-
+    vk::ShaderModuleCreateInfo shaderModCreateInfo;
+    shaderModCreateInfo.setCodeSize(shader.size());
+    shaderModCreateInfo.setPCode(reinterpret_cast<const uint32_t*>(shader.data()));  
     vk::ShaderModule module;
     module = device.createShaderModule(shaderModCreateInfo);
     return module;

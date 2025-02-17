@@ -1,6 +1,6 @@
 #include "init.hpp"
 
-vk::PipelineShaderStageCreateInfo vk_init::pipeline_shader_stage_create_info(vk::ShaderStageFlagBits stage, vk::ShaderModule shader_module, const char * entry){
+vk::PipelineShaderStageCreateInfo vkInit::pipeline_shader_stage_create_info(vk::ShaderStageFlagBits stage, vk::ShaderModule shader_module, const char * entry){
   vk::PipelineShaderStageCreateInfo info{
     .stage = stage,
     .module = shader_module,
@@ -10,7 +10,7 @@ vk::PipelineShaderStageCreateInfo vk_init::pipeline_shader_stage_create_info(vk:
   return info;
 }
 
-vk::PipelineLayoutCreateInfo vk_init::pipeline_layout_create_info(){
+vk::PipelineLayoutCreateInfo vkInit::pipeline_layout_create_info(){
   vk::PipelineLayoutCreateInfo info{
     .setLayoutCount = 0,
     .pSetLayouts = nullptr,
