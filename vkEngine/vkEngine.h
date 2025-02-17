@@ -1,7 +1,9 @@
 #pragma once
 #define VULKAN_HPP_NO_CONSTRUCTORS
+#define VMA_IMPLEMENTATION
 #include "util_structs.hpp"
 #include <vulkan/vulkan.hpp>
+#include <vulkan-memory-allocator-hpp/vk_mem_alloc.hpp>
 #include <SDL3/SDL.h>
 
 namespace mvk {
@@ -17,48 +19,56 @@ public:
 private: // Methods
   vkEngine(SDL_Window *window);
 
-  void _init_vulkan();
+  void _initVulkan();
 
 #ifndef NDEBUG
-  void _init_debug_utils();
+  void _initDebugUtils();
 #endif // NDEBUG
 
-  void _init_swapchain(uint32_t width, uint32_t height);
-  void _init_command_pool(int queue_family_index);
-  void _allocate_command_buffer(vk::CommandBuffer buffer);
-  void _record_command_buffer(vk::CommandBuffer command_buffer, uint32_t image_index);
+  void _initSwapchain(uint32_t width, uint32_t height);
+  void _initPommandPool(int queue_family_index);
+  void _recordCommandBuffer(vk::CommandBuffer command_buffer, uint32_t image_index);
+  void _initSynchronizationObjects();
 
-  void _init_graphic_pipeline();
-  vk::ShaderModule _create_shader_module();
+  void _allocateCommandBuffer(vk::CommandBuffer buffer);
+  AllocatedBuffer _allocateBuffer(size_t size, vk::BufferUsageFlagBits usage, vma::MemoryUsage memory_usage);
+  void _destroyBuffer(const vk::Buffer buffer);
 
-  void _init_frame_buffers();
+  void _initGraphicPipeline();
+  vk::ShaderModule _createShaderModule();
+
+  void _initFrameBuffers();
 
 private: // Members
   static vkEngine *_engine;
-  mvk::DeletionStack deletion_stack;
+  mvk::DeletionStack deletionStack;
 
   vk::Instance _instance;
   SDL_Window *_window;
   vk::SurfaceKHR _surface;
 #ifndef NDEBUG
-  vk::DebugUtilsMessengerEXT _debug_messanger;
+  vk::DebugUtilsMessengerEXT _debugMessanger;
 #endif // !DEBUG
 
   vk::Device _device;
-  vk::PhysicalDevice _phys_device;
+  vk::PhysicalDevice _physDevice;
 
-  vk::Queue _graphics_queue;
+  vk::Queue _graphicsQueue;
 
-  vk::CommandPool _command_pool;
+  vk::CommandPool _commandPool;
 
-  vk::CommandBuffer _graphics_command_buffer;
+  vk::CommandBuffer _graphicsCommandBuffer;
 
-  mvk::SwapChain graphic_swapchain;
-  vk::Extent2D swapchain_extent;
+  mvk::SwapChain graphicSwapchain;
+  vk::Extent2D swapchainExtent;
 
-  vk::RenderPass _render_pass;
+  vk::RenderPass _renderPass;
   //temporary
-  vk::PipelineLayout _triangle_pipeline_layout;
-  vk::Pipeline _triangle_pipeline;
+  vk::PipelineLayout _trianglePipelineLayout;
+  vk::Pipeline _trianglePipeline;
+
+  //Synchro primitives
+  vk::Semaphore _imageAvailableSempahore, _renderFinishedSemaphore;
+  vk::Fence inFlightFence;
 };
 } // namespace mvk

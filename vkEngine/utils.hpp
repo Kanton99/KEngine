@@ -25,13 +25,13 @@ static std::vector<char> read_file(const std::string& filename){
   return buffer;
 }
 
-vk::ShaderModule create_shader_module(const std::vector<char> shader, const vk::Device device) {
-    vk::ShaderModuleCreateInfo shader_mod_create_info{
+vk::ShaderModule createShaderModule(const std::vector<char> shader, const vk::Device device) {
+    vk::ShaderModuleCreateInfo shaderModCreateInfo{
         .codeSize = shader.size(),
         .pCode = reinterpret_cast<const uint32_t*>(shader.data())
     };
 
     vk::ShaderModule module;
-    module = device.createShaderModule(shader_mod_create_info);
+    module = device.createShaderModule(shaderModCreateInfo);
     return module;
 }

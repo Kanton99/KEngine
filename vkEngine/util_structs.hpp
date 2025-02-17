@@ -1,6 +1,7 @@
 #include <functional>
 #include <stack>
 #include <vector>
+#include <vulkan-memory-allocator-hpp/vk_mem_alloc.hpp>
 #include <vulkan/vulkan.hpp>
 
 namespace mvk {
@@ -15,7 +16,7 @@ struct SwapChain {
 struct DeletionStack {
   std::stack<std::function<void()>> deletors;
 
-  void push_function(std::function<void()> &&function) {
+  void pushFunction(std::function<void()> &&function) {
     deletors.push(function);
   }
 
@@ -28,4 +29,9 @@ struct DeletionStack {
   }
 };
 
+struct AllocatedBuffer{
+  vk::Buffer buffer;
+  vma::Allocation allocation;
+  vma::AllocationInfo allocationInfo;
+};
 } // namespace mvk

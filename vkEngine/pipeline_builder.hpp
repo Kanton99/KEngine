@@ -1,35 +1,35 @@
 #include <vector>
 #define VULKAN_HPP_NO_CONSTRUCTORS
 #include <vulkan/vulkan.hpp>
-class Pipeline_builder {
+class PipelineBuilder {
 public:
-	std::vector<vk::PipelineShaderStageCreateInfo> _shader_stages;
+	std::vector<vk::PipelineShaderStageCreateInfo> _shaderStages;
 
-	vk::PipelineInputAssemblyStateCreateInfo _input_assembly;
+	vk::PipelineInputAssemblyStateCreateInfo _inputAssembly;
 	vk::PipelineRasterizationStateCreateInfo _rasterizer;
-	vk::PipelineColorBlendAttachmentState _color_blend_attachment;
+	vk::PipelineColorBlendAttachmentState _colorBlendAttachment;
 	vk::PipelineMultisampleStateCreateInfo _multisampling;
-	vk::PipelineLayout _pipeline_layout;
-	vk::PipelineDepthStencilStateCreateInfo _depth_stencil;
-	vk::PipelineRenderingCreateInfo _rendering_info;
-	vk::Format _color_attachment_format;
-  vk::RenderPass _render_pass;
+	vk::PipelineLayout _pipelineLayout;
+	vk::PipelineDepthStencilStateCreateInfo _depthStencil;
+	vk::PipelineRenderingCreateInfo _renderingInfo;
+	vk::Format _colorAttachmentFormat;
+  vk::RenderPass _renderPass;
   //TODO Add vertex input
 
-	Pipeline_builder() { clear(); }
+	PipelineBuilder() { clear(); }
 
 	void clear();
 
-	vk::Pipeline build_pipeline(vk::Device device);
+	vk::Pipeline buildPipeline(vk::Device device);
 
-  void set_shaders(vk::ShaderModule vertex_shader, vk::ShaderModule fragment_shader);
-  void set_input_topology(vk::PrimitiveTopology topology);
-  void set_polygon_mode(vk::PolygonMode mode);
-  void set_cull_mode(vk::CullModeFlags cull_mode, vk::FrontFace front_face);
-  void set_multisampling_none();
-  void disable_blending();
-  void set_color_attachment_format(vk::Format format);
-  void set_depth_format(vk::Format format);
-  void disable_depthtest();
-  void set_render_pass(vk::Device device);
+  void setShaders(vk::ShaderModule vertexShader, vk::ShaderModule fragmentShader);
+  void setInputTopology(vk::PrimitiveTopology topology);
+  void setPolygonMode(vk::PolygonMode mode);
+  void setCullMode(vk::CullModeFlags cullMode, vk::FrontFace frontFace);
+  void setMultisamplingNone();
+  void disableBlending();
+  void setColorAttachmentFormat(vk::Format format);
+  void setDepthFormat(vk::Format format);
+  void disableDepthtest();
+  void setRenderPass(vk::Device device);
 };

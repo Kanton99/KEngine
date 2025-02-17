@@ -4,56 +4,56 @@
 #include <vulkan/vulkan_enums.hpp>
 #include "init.hpp"
 
-void Pipeline_builder::clear()
+void PipelineBuilder::clear()
 {
-	_input_assembly = vk::PipelineInputAssemblyStateCreateInfo();
+	_inputAssembly = vk::PipelineInputAssemblyStateCreateInfo();
 	_rasterizer = vk::PipelineRasterizationStateCreateInfo();
-	_color_blend_attachment = vk::PipelineColorBlendAttachmentState();
+	_colorBlendAttachment = vk::PipelineColorBlendAttachmentState();
 	_multisampling = vk::PipelineMultisampleStateCreateInfo();
-	_pipeline_layout = vk::PipelineLayout();
-	_depth_stencil = vk::PipelineDepthStencilStateCreateInfo();
-	_rendering_info = vk::PipelineRenderingCreateInfo();
-	_color_attachment_format = vk::Format();
-  _render_pass = vk::RenderPass();
+	_pipelineLayout = vk::PipelineLayout();
+	_depthStencil = vk::PipelineDepthStencilStateCreateInfo();
+	_renderingInfo = vk::PipelineRenderingCreateInfo();
+	_colorAttachmentFormat = vk::Format();
+  _renderPass = vk::RenderPass();
 
-	_shader_stages.clear();
+	_shaderStages.clear();
 }
 
-vk::Pipeline Pipeline_builder::build_pipeline(vk::Device device)
+vk::Pipeline PipelineBuilder::buildPipeline(vk::Device device)
 {
   // make viewport state from our stored viewport and scissor
   // at the moment we wont support multiple viewport or scissors
-  vk::PipelineViewportStateCreateInfo viewport_state{
+  vk::PipelineViewportStateCreateInfo viewportState{
     .viewportCount = 1,
     .scissorCount = 1
   };
   
   // setup dummy color blending.
-  vk::PipelineColorBlendStateCreateInfo color_blending{
+  vk::PipelineColorBlendStateCreateInfo colorBlending{
     .logicOpEnable = vk::False,
     .logicOp = vk::LogicOp::eCopy,
     .attachmentCount = 1,
-    .pAttachments = &_color_blend_attachment
+    .pAttachments = &_colorBlendAttachment
   };
 
   //clear vertexInputStateCreateInfo
-  vk::PipelineVertexInputStateCreateInfo _vertex_input_info{};
+  vk::PipelineVertexInputStateCreateInfo _vertexInputInfo{};
   
   //build actual pipeline_builder
   vk::GraphicsPipelineCreateInfo pipeline_info{
-    .pNext = &_rendering_info,
+    .pNext = &_renderingInfo,
 
-    .stageCount = (uint32_t)_shader_stages.size(),
-    .pStages = _shader_stages.data(),
-    .pVertexInputState = &_vertex_input_info,
-    .pInputAssemblyState = &_input_assembly,
-    .pViewportState = &viewport_state,
+    .stageCount = (uint32_t)_shaderStages.size(),
+    .pStages = _shaderStages.data(),
+    .pVertexInputState = &_vertexInputInfo,
+    .pInputAssemblyState = &_inputAssembly,
+    .pViewportState = &viewportState,
     .pRasterizationState = &_rasterizer,
     .pMultisampleState = &_multisampling,
-    .pDepthStencilState = &_depth_stencil,
-    .pColorBlendState = &color_blending,
-    .layout = _pipeline_layout,
-    .renderPass = _render_pass,
+    .pDepthStencilState = &_depthStencil,
+    .pColorBlendState = &colorBlending,
+    .layout = _pipelineLayout,
+    .renderPass = _renderPass,
     .subpass = 0
   };
 
@@ -71,30 +71,30 @@ vk::Pipeline Pipeline_builder::build_pipeline(vk::Device device)
   return pipeline;
 }
 
-void Pipeline_builder::set_shaders(vk::ShaderModule vertex_shader, vk::ShaderModule fragment_shader){
-  _shader_stages.clear();
+void PipelineBuilder::setShaders(vk::ShaderModule vertexShader, vk::ShaderModule fragmentShader){
+  _shaderStages.clear();
 
-  _shader_stages.push_back(vk_init::pipeline_shader_stage_create_info(vk::ShaderStageFlagBits::eVertex, vertex_shader));
-  _shader_stages.push_back(vk_init::pipeline_shader_stage_create_info(vk::ShaderStageFlagBits::eFragment, fragment_shader));
+  _shaderStages.push_back(vkInit::pipeline_shader_stage_create_info(vk::ShaderStageFlagBits::eVertex, vertexShader));
+  _shaderStages.push_back(vkInit::pipeline_shader_stage_create_info(vk::ShaderStageFlagBits::eFragment, fragmentShader));
 }
 
-void Pipeline_builder::set_input_topology(vk::PrimitiveTopology topology){
-  _input_assembly.topology = topology;
+void PipelineBuilder::setInputTopology(vk::PrimitiveTopology topology){
+  _inputAssembly.topology = topology;
 
-  _input_assembly.primitiveRestartEnable = vk::False;
+  _inputAssembly.primitiveRestartEnable = vk::False;
 }
 
-void Pipeline_builder::set_polygon_mode(vk::PolygonMode mode){
+void PipelineBuilder::setPolygonMode(vk::PolygonMode mode){
   _rasterizer.polygonMode = mode;
   _rasterizer.lineWidth = 1.f;
 }
 
-void Pipeline_builder::set_cull_mode(vk::CullModeFlags cull_mode, vk::FrontFace front_face){
-  _rasterizer.cullMode = cull_mode;
-  _rasterizer.frontFace = front_face;
+void PipelineBuilder::setCullMode(vk::CullModeFlags cullMode, vk::FrontFace frontFace){
+  _rasterizer.cullMode = cullMode;
+  _rasterizer.frontFace = frontFace;
 }
 
-void Pipeline_builder::set_multisampling_none(){
+void PipelineBuilder::setMultisamplingNone(){
   _multisampling.sampleShadingEnable = vk::False;
   _multisampling.rasterizationSamples = vk::SampleCountFlagBits::e1;
   _multisampling.minSampleShading = 1.f;
@@ -102,36 +102,36 @@ void Pipeline_builder::set_multisampling_none(){
   _multisampling.alphaToOneEnable = vk::False;
 }
 
-void Pipeline_builder::disable_blending(){
-  _color_blend_attachment.colorWriteMask = vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA;
-  _color_blend_attachment.blendEnable = vk::False;
+void PipelineBuilder::disableBlending(){
+  _colorBlendAttachment.colorWriteMask = vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA;
+  _colorBlendAttachment.blendEnable = vk::False;
 }
 
-void Pipeline_builder::set_color_attachment_format(vk::Format format){
-  _color_attachment_format = format;
-  _rendering_info.colorAttachmentCount = 1;
-  _rendering_info.pColorAttachmentFormats = &_color_attachment_format;
+void PipelineBuilder::setColorAttachmentFormat(vk::Format format){
+  _colorAttachmentFormat = format;
+  _renderingInfo.colorAttachmentCount = 1;
+  _renderingInfo.pColorAttachmentFormats = &_colorAttachmentFormat;
 }
 
-void Pipeline_builder::set_depth_format(vk::Format format){
-  _rendering_info.depthAttachmentFormat = format;
+void PipelineBuilder::setDepthFormat(vk::Format format){
+  _renderingInfo.depthAttachmentFormat = format;
 }
 
-void Pipeline_builder::disable_depthtest(){
-  _depth_stencil.depthTestEnable = vk::False;
-  _depth_stencil.depthWriteEnable = vk::False;
-  _depth_stencil.depthCompareOp = vk::CompareOp::eNever;
-  _depth_stencil.depthBoundsTestEnable = vk::False;
-  _depth_stencil.stencilTestEnable = vk::False;
-  _depth_stencil.front = {};
-  _depth_stencil.back = {};
-  _depth_stencil.minDepthBounds = 0.f;
-  _depth_stencil.maxDepthBounds = 1.f;
+void PipelineBuilder::disableDepthtest(){
+  _depthStencil.depthTestEnable = vk::False;
+  _depthStencil.depthWriteEnable = vk::False;
+  _depthStencil.depthCompareOp = vk::CompareOp::eNever;
+  _depthStencil.depthBoundsTestEnable = vk::False;
+  _depthStencil.stencilTestEnable = vk::False;
+  _depthStencil.front = {};
+  _depthStencil.back = {};
+  _depthStencil.minDepthBounds = 0.f;
+  _depthStencil.maxDepthBounds = 1.f;
 }
 
-void Pipeline_builder::set_render_pass(vk::Device device){
+void PipelineBuilder::setRenderPass(vk::Device device){
   vk::AttachmentDescription color_attachment{
-    .format = _color_attachment_format,
+    .format = _colorAttachmentFormat,
     .samples = vk::SampleCountFlagBits::e1,
 
     .loadOp = vk::AttachmentLoadOp::eClear,
@@ -144,7 +144,7 @@ void Pipeline_builder::set_render_pass(vk::Device device){
     .finalLayout = vk::ImageLayout::ePresentSrcKHR
   };
 
-  vk::AttachmentReference color_attachment_ref{
+  vk::AttachmentReference colorAttachmentRef{
     .attachment = 0,
     .layout = vk::ImageLayout::eColorAttachmentOptimal
   };
@@ -152,15 +152,15 @@ void Pipeline_builder::set_render_pass(vk::Device device){
   vk::SubpassDescription subpass{
     .pipelineBindPoint = vk::PipelineBindPoint::eGraphics,
     .colorAttachmentCount = 1,
-    .pColorAttachments = &color_attachment_ref
+    .pColorAttachments = &colorAttachmentRef
   };
 
-  vk::RenderPassCreateInfo render_pass_info{
+  vk::RenderPassCreateInfo renderPassInfo{
     .attachmentCount = 1,
     .pAttachments = &color_attachment,
     .subpassCount = 1,
     .pSubpasses = &subpass
   };
 
-  _render_pass = device.createRenderPass(render_pass_info);
+  _renderPass = device.createRenderPass(renderPassInfo);
 }

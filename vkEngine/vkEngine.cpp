@@ -7,6 +7,9 @@
 #include <cstdint>
 #include <iostream>
 #include <vector>
+#include <vulkan-memory-allocator-hpp/vk_mem_alloc.hpp>
+#include <vulkan-memory-allocator-hpp/vk_mem_alloc_handles.hpp>
+#include <vulkan/vulkan.hpp>
 
 #if VULKAN_HPP_DISPATCH_LOADER_DYNAMIC == 1
 #ifndef DYNAMIC_LOADER_LOADED
@@ -29,7 +32,7 @@ void mvk::vkEngine::init() {
   VULKAN_HPP_DEFAULT_DISPATCHER.init();
 #endif // VULKAN_HPP_DISPATCH_LOADER_DYNAMIC
 
-  this->_init_vulkan();
+  this->_initVulkan();
 
 #if VULKAN_HPP_DISPATCH_LOADER_DYNAMIC == 1
   VULKAN_HPP_DEFAULT_DISPATCHER.init(this->_instance);
@@ -41,31 +44,52 @@ void mvk::vkEngine::init() {
   int width, height;
   SDL_GetWindowSize(this->_window, &width, &height);
 
-  this->_init_swapchain(width, height);
+  this->_initSwapchain(width, height);
 
-  this->_init_graphic_pipeline();
-  this->_init_frame_buffers();
+  this->_initGraphicPipeline();
+  this->_initFrameBuffers();
 }
 
 void mvk::vkEngine::draw(){
+  auto ret = this->_device.waitForFences(this->inFlightFence,vk::True,UINT64_MAX);
+  this->_device.resetFences(this->inFlightFence);
+
+  uint32_t imageIndex = this->_device.acquireNextImageKHR(this->graphicSwapchain.swapchain, UINT64_MAX, this->_imageAvailableSempahore).value;
+
+  this->_graphicsCommandBuffer.reset();
+  this->_recordCommandBuffer(this->_graphicsCommandBuffer, imageIndex);
+
+  vk::PipelineStageFlags waitStages[] = {vk::PipelineStageFlagBits::eColorAttachmentOutput};
+  vk::Semaphore signalSemaphores[] = {this->_renderFinishedSemaphore};
+  vk::SubmitInfo submitInfo{
+    .waitSemaphoreCount = 1,
+    .pWaitSemaphores = &this->_imageAvailableSempahore,
+    .pWaitDstStageMask = waitStages,
+    .commandBufferCount = 1,
+    .pCommandBuffers = &this->_graphicsCommandBuffer,
+    .signalSemaphoreCount = 1,
+    .pSignalSemaphores = signalSemaphores
+  };
+
+  this->_graphicsQueue.submit(submitInfo, this->inFlightFence);
 }
 
-void mvk::vkEngine::cleanup() { this->deletion_stack.flush(); }
+void mvk::vkEngine::cleanup() { this->deletionStack.flush(); }
 
 mvk::vkEngine::vkEngine(SDL_Window *window) : _window(window) {}
 
-void mvk::vkEngine::_allocate_command_buffer(vk::CommandBuffer buffer) {
-  vk::CommandBufferAllocateInfo buffer_allocation_info{
-      .commandPool = this->_command_pool,
+void mvk::vkEngine::_allocateCommandBuffer(vk::CommandBuffer buffer) {
+  vk::CommandBufferAllocateInfo bufferAllocationInfo{
+      .commandPool = this->_commandPool,
       .level = vk::CommandBufferLevel::ePrimary,
       .commandBufferCount = 1};
-  buffer = this->_device.allocateCommandBuffers(buffer_allocation_info).front();
+  buffer = this->_device.allocateCommandBuffers(bufferAllocationInfo).front();
 }
 
-void mvk::vkEngine::_init_vulkan() {
-  vkb::InstanceBuilder instance_builder;
+void mvk::vkEngine::_initVulkan() {
+  vkb::InstanceBuilder instanceBuilder;
 
-  auto inst_ret = instance_builder.set_app_name("My Vulkan App")
+  auto instRet = instanceBuilder.set_app_name("My Vulkan App")
                       .request_validation_layers(true)
                       .require_api_version(1, 3, 0)
 #ifndef NDEBUG
@@ -73,16 +97,16 @@ void mvk::vkEngine::_init_vulkan() {
 #endif // !NDEBUG
                       .build();
 
-  this->_instance = vk::Instance(inst_ret.value().instance);
+  this->_instance = vk::Instance(instRet.value().instance);
 
-  this->deletion_stack.push_function(
+  this->deletionStack.pushFunction(
       [=, this]() { this->_instance.destroy(); });
 
 #ifndef NDEBUG
-  this->_debug_messanger =
-      vk::DebugUtilsMessengerEXT(inst_ret->debug_messenger);
-  this->deletion_stack.push_function([=, this]() {
-    this->_instance.destroyDebugUtilsMessengerEXT(this->_debug_messanger);
+  this->_debugMessanger =
+      vk::DebugUtilsMessengerEXT(instRet->debug_messenger);
+  this->deletionStack.pushFunction([=, this]() {
+    this->_instance.destroyDebugUtilsMessengerEXT(this->_debugMessanger);
   });
 #endif // !NDEBUG
 
@@ -94,44 +118,44 @@ void mvk::vkEngine::_init_vulkan() {
     std::cerr << "Error generating surface\n";
   }
   this->_surface = vk::SurfaceKHR(surface);
-  this->deletion_stack.push_function(
+  this->deletionStack.pushFunction(
       [=, this]() { this->_instance.destroySurfaceKHR(this->_surface); });
 
-  vkb::PhysicalDeviceSelector selector{inst_ret.value()};
-  vkb::PhysicalDevice vkb_phys_device =
+  vkb::PhysicalDeviceSelector selector{instRet.value()};
+  vkb::PhysicalDevice vkbPhysDevice =
       selector.set_minimum_version(1, 1)
           .set_surface(static_cast<VkSurfaceKHR>(this->_surface))
           .select()
           .value();
 
-  vkb::DeviceBuilder device_builder{vkb_phys_device};
+  vkb::DeviceBuilder deviceBuilder{vkbPhysDevice};
 
-  vkb::Device vkb_device = device_builder.build().value();
+  vkb::Device vkbDevice = deviceBuilder.build().value();
 
-  this->_device = vk::Device(vkb_device.device);
-  this->_phys_device = vk::PhysicalDevice(vkb_phys_device.physical_device);
-  this->_graphics_queue =
-      vk::Queue(vkb_device.get_queue(vkb::QueueType::graphics).value());
+  this->_device = vk::Device(vkbDevice.device);
+  this->_physDevice = vk::PhysicalDevice(vkbPhysDevice.physical_device);
+  this->_graphicsQueue =
+      vk::Queue(vkbDevice.get_queue(vkb::QueueType::graphics).value());
 
-  this->deletion_stack.push_function([=, this]() { this->_device.destroy(); });
+  this->deletionStack.pushFunction([=, this]() { this->_device.destroy(); });
 }
 
-void mvk::vkEngine::_init_command_pool(int queue_family_index) {
-  vk::CommandPoolCreateInfo pool_info{
+void mvk::vkEngine::_initPommandPool(int queueFamilyIndex) {
+  vk::CommandPoolCreateInfo poolInfo{
     .flags = vk::CommandPoolCreateFlagBits::eResetCommandBuffer,
-    .queueFamilyIndex = (uint32_t) queue_family_index
+    .queueFamilyIndex = (uint32_t) queueFamilyIndex
   };
 
-  this->_command_pool = this->_device.createCommandPool(pool_info);
+  this->_commandPool = this->_device.createCommandPool(poolInfo);
 
-  this->deletion_stack.push_function([&](){
-    this->_device.destroyCommandPool(this->_command_pool);
+  this->deletionStack.pushFunction([&](){
+    this->_device.destroyCommandPool(this->_commandPool);
   });
 }
 
-void mvk::vkEngine::_init_swapchain(uint32_t width, uint32_t height) {
+void mvk::vkEngine::_initSwapchain(uint32_t width, uint32_t height) {
   vkb::SwapchainBuilder swapchainBuilder{
-      static_cast<VkPhysicalDevice>(this->_phys_device),
+      static_cast<VkPhysicalDevice>(this->_physDevice),
       static_cast<VkDevice>(this->_device),
       static_cast<VkSurfaceKHR>(this->_surface)};
 
@@ -145,97 +169,97 @@ void mvk::vkEngine::_init_swapchain(uint32_t width, uint32_t height) {
           .value();
 
   // store swapchain and its related images
-  this->graphic_swapchain.swapchain = vkbSwapchain.swapchain;
+  this->graphicSwapchain.swapchain = vkbSwapchain.swapchain;
   auto _swapchainImages = vkbSwapchain.get_images().value();
   auto _swapchainImageViews = vkbSwapchain.get_image_views().value();
 
-  this->graphic_swapchain.images.reserve(_swapchainImages.size());
+  this->graphicSwapchain.images.reserve(_swapchainImages.size());
   for (auto image : _swapchainImages) {
-    this->graphic_swapchain.images.emplace_back(vk::Image(image));
+    this->graphicSwapchain.images.emplace_back(vk::Image(image));
   }
 
-  this->graphic_swapchain.imageViews.reserve(_swapchainImageViews.size());
+  this->graphicSwapchain.imageViews.reserve(_swapchainImageViews.size());
   for (auto image : _swapchainImageViews) {
-    this->graphic_swapchain.imageViews.emplace_back(vk::ImageView(image));
+    this->graphicSwapchain.imageViews.emplace_back(vk::ImageView(image));
   }
 
-  this->graphic_swapchain.format = vk::Format(vkbSwapchain.image_format);
+  this->graphicSwapchain.format = vk::Format(vkbSwapchain.image_format);
   
-  this->swapchain_extent = vkbSwapchain.extent;
+  this->swapchainExtent = vkbSwapchain.extent;
 
-  this->deletion_stack.push_function([=, this]() {
-    this->_device.destroySwapchainKHR(this->graphic_swapchain.swapchain);
+  this->deletionStack.pushFunction([=, this]() {
+    this->_device.destroySwapchainKHR(this->graphicSwapchain.swapchain);
 
-    for (unsigned long i = 0; i < this->graphic_swapchain.imageViews.size();
+    for (unsigned long i = 0; i < this->graphicSwapchain.imageViews.size();
          i++) {
-      this->_device.destroyImageView(this->graphic_swapchain.imageViews[i]);
+      this->_device.destroyImageView(this->graphicSwapchain.imageViews[i]);
     }
   });
 }
 
-void mvk::vkEngine::_init_graphic_pipeline() {
-  auto vert_shader_code = read_file("../resources/shaders/compiled/vert.spv");
-  auto frag_shader_code = read_file("../resources/shaders/compiled/frag.spv");
+void mvk::vkEngine::_initGraphicPipeline() {
+  auto vertShaderCode = read_file("../resources/shaders/compiled/vert.spv");
+  auto fragShaderCode = read_file("../resources/shaders/compiled/frag.spv");
 
-  auto vert_module = create_shader_module(vert_shader_code, this->_device);
-  auto frag_module = create_shader_module(frag_shader_code, this->_device);
+  auto vert_module = createShaderModule(vertShaderCode, this->_device);
+  auto frag_module = createShaderModule(fragShaderCode, this->_device);
   
-  auto pipeline_layout_info = vk_init::pipeline_layout_create_info(); 
-  this->_triangle_pipeline_layout = this->_device.createPipelineLayout(pipeline_layout_info);
+  auto pipelineLayoutInfo = vkInit::pipeline_layout_create_info(); 
+  this->_trianglePipelineLayout = this->_device.createPipelineLayout(pipelineLayoutInfo);
 
-  Pipeline_builder pipeline_builder;
+  PipelineBuilder pipelineBuilder;
 
-  pipeline_builder._pipeline_layout = _triangle_pipeline_layout;
-  pipeline_builder.set_shaders(vert_module, frag_module);
-  pipeline_builder.set_input_topology(vk::PrimitiveTopology::eTriangleList);
-  pipeline_builder.set_polygon_mode(vk::PolygonMode::eFill);
-  pipeline_builder.set_cull_mode(vk::CullModeFlagBits::eNone, vk::FrontFace::eClockwise);
-  pipeline_builder.set_multisampling_none();
-  pipeline_builder.disable_blending();
-  pipeline_builder.disable_depthtest();
+  pipelineBuilder._pipelineLayout = _trianglePipelineLayout;
+  pipelineBuilder.setShaders(vert_module, frag_module);
+  pipelineBuilder.setInputTopology(vk::PrimitiveTopology::eTriangleList);
+  pipelineBuilder.setPolygonMode(vk::PolygonMode::eFill);
+  pipelineBuilder.setCullMode(vk::CullModeFlagBits::eNone, vk::FrontFace::eClockwise);
+  pipelineBuilder.setMultisamplingNone();
+  pipelineBuilder.disableBlending();
+  pipelineBuilder.disableDepthtest();
 
-  pipeline_builder.set_color_attachment_format(this->graphic_swapchain.format);
-  pipeline_builder.set_depth_format(vk::Format::eUndefined);
+  pipelineBuilder.setColorAttachmentFormat(this->graphicSwapchain.format);
+  pipelineBuilder.setDepthFormat(vk::Format::eUndefined);
 
-  pipeline_builder.set_render_pass(this->_device);
-  _triangle_pipeline = pipeline_builder.build_pipeline(this->_device);
-  this->_render_pass = pipeline_builder._render_pass;
+  pipelineBuilder.setRenderPass(this->_device);
+  _trianglePipeline = pipelineBuilder.buildPipeline(this->_device);
+  this->_renderPass = pipelineBuilder._render_pass;
 
   this->_device.destroyShaderModule(vert_module);
   this->_device.destroyShaderModule(frag_module);
 
-  this->deletion_stack.push_function([&](){
-    this->_device.destroyPipelineLayout(this->_triangle_pipeline_layout);
-    this->_device.destroyRenderPass(this->_render_pass);
-    this->_device.destroyPipeline(this->_triangle_pipeline);
+  this->deletionStack.pushFunction([&](){
+    this->_device.destroyPipelineLayout(this->_trianglePipelineLayout);
+    this->_device.destroyRenderPass(this->_renderPass);
+    this->_device.destroyPipeline(this->_trianglePipeline);
   });
 }
 
-void mvk::vkEngine::_init_frame_buffers(){
-  this->graphic_swapchain.frameBuffers.resize(this->graphic_swapchain.imageViews.size());
+void mvk::vkEngine::_initFrameBuffers(){
+  this->graphicSwapchain.frameBuffers.resize(this->graphicSwapchain.imageViews.size());
 
-  for(size_t i = 0; i < graphic_swapchain.imageViews.size(); i++){
-    vk::ImageView attachments[] = {graphic_swapchain.imageViews[i]};
+  for(size_t i = 0; i < graphicSwapchain.imageViews.size(); i++){
+    vk::ImageView attachments[] = {graphicSwapchain.imageViews[i]};
 
     vk::FramebufferCreateInfo framebuffer_info{
-      .renderPass = this->_render_pass,
+      .renderPass = this->_renderPass,
       .attachmentCount = 1,
       .pAttachments = attachments,
-      .width = this->swapchain_extent.width,
-      .height = this->swapchain_extent.height,
+      .width = this->swapchainExtent.width,
+      .height = this->swapchainExtent.height,
       .layers = 1
     };
 
-    graphic_swapchain.frameBuffers[i] = this->_device.createFramebuffer(framebuffer_info);
+    graphicSwapchain.frameBuffers[i] = this->_device.createFramebuffer(framebuffer_info);
 
   }
-  this->deletion_stack.push_function([&](){
-    for(auto frame_buffer : graphic_swapchain.frameBuffers)
+  this->deletionStack.pushFunction([&](){
+    for(auto frame_buffer : graphicSwapchain.frameBuffers)
       this->_device.destroyFramebuffer(frame_buffer);
   });
 }
 
-void mvk::vkEngine::_record_command_buffer(vk::CommandBuffer command_buffer, uint32_t image_index){
+void mvk::vkEngine::_recordCommandBuffer(vk::CommandBuffer command_buffer, uint32_t image_index){
   vk::CommandBufferBeginInfo begin_info{
     
   };
@@ -247,23 +271,23 @@ void mvk::vkEngine::_record_command_buffer(vk::CommandBuffer command_buffer, uin
   };
 
   vk::RenderPassBeginInfo render_pass_info{
-    .renderPass = this->_render_pass,
-    .framebuffer = this->graphic_swapchain.frameBuffers[image_index],
+    .renderPass = this->_renderPass,
+    .framebuffer = this->graphicSwapchain.frameBuffers[image_index],
     .renderArea.offset = {0,0},
-    .renderArea.extent = this->swapchain_extent,
+    .renderArea.extent = this->swapchainExtent,
     .clearValueCount = 1,
     .pClearValues = &clear_color
   };
 
   command_buffer.beginRenderPass(render_pass_info, vk::SubpassContents::eInline);
 
-  command_buffer.bindPipeline(vk::PipelineBindPoint::eGraphics, this->_triangle_pipeline);
+  command_buffer.bindPipeline(vk::PipelineBindPoint::eGraphics, this->_trianglePipeline);
 
   vk::Viewport viewport{
     .x = 0.f,
     .y = 0.f,
-    .width = static_cast<float>(this->swapchain_extent.width),
-    .height = static_cast<float>(this->swapchain_extent.height),
+    .width = static_cast<float>(this->swapchainExtent.width),
+    .height = static_cast<float>(this->swapchainExtent.height),
     .minDepth = 0.f,
     .maxDepth = 1.f
   };
@@ -271,7 +295,7 @@ void mvk::vkEngine::_record_command_buffer(vk::CommandBuffer command_buffer, uin
 
   vk::Rect2D scissors{
     .offset = {0, 0},
-    .extent = swapchain_extent
+    .extent = swapchainExtent
   };
 
   command_buffer.setScissor(0, scissors);
@@ -283,3 +307,47 @@ void mvk::vkEngine::_record_command_buffer(vk::CommandBuffer command_buffer, uin
   command_buffer.end();
 }
 
+void mvk::vkEngine::_initSynchronizationObjects(){
+  vk::SemaphoreCreateInfo semaphore_info{};
+  vk::FenceCreateInfo fence_info{
+    .flags = vk::FenceCreateFlagBits::eSignaled
+  };
+
+  this->_imageAvailableSempahore = this->_device.createSemaphore(semaphore_info);
+  this->_renderFinishedSemaphore = this->_device.createSemaphore(semaphore_info);
+  this->inFlightFence = this->_device.createFence(fence_info);
+
+  this->deletionStack.pushFunction([&](){
+    this->_device.destroyFence(this->inFlightFence);
+    this->_device.destroySemaphore(this->_imageAvailableSempahore);
+    this->_device.destroySemaphore(this->_renderFinishedSemaphore);
+  });
+}
+
+mvk::AllocatedBuffer mvk::vkEngine::_allocateBuffer(size_t size, vk::BufferUsageFlagBits usage, vma::MemoryUsage memory_usage){
+  vma::AllocationCreateInfo allocation_info{
+    .flags = vma::AllocationCreateFlagBits::eMapped,
+    .usage = memory_usage,
+  };
+
+  vk::BufferCreateInfo buffer_info{
+    .size = size,
+    .usage = usage
+  };
+
+  vma::Allocator allocator{};
+  
+  AllocatedBuffer alloc_buffer;
+
+  auto vma_allocated_buffer = allocator.createBuffer(buffer_info,allocation_info);
+
+  alloc_buffer.buffer = vma_allocated_buffer.first;
+  alloc_buffer.allocation = vma_allocated_buffer.second;
+
+  return alloc_buffer;
+}
+
+void mvk::vkEngine::_destroyBuffer(vk::Buffer buffer){
+  vma::Allocator allocator{};
+  allocator.destroyBuffer(buffer, );
+}
