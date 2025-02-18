@@ -220,8 +220,8 @@ void mvk::vkEngine::_initSwapchain(uint32_t width, uint32_t height) {
 }
 
 void mvk::vkEngine::_initGraphicPipeline() {
-  auto vertShaderCode = readFile("../resources/shaders/compiled/vert.spv");
-  auto fragShaderCode = readFile("../resources/shaders/compiled/frag.spv");
+  auto vertShaderCode = readFile("resources/shaders/compiled/vert.spv");
+  auto fragShaderCode = readFile("resources/shaders/compiled/frag.spv");
 
   auto vertModule = createShaderModule(vertShaderCode, this->_device);
   auto fragModule = createShaderModule(fragShaderCode, this->_device);
