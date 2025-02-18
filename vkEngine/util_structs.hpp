@@ -34,4 +34,9 @@ struct AllocatedBuffer{
   vma::Allocation allocation;
   vma::AllocationInfo allocationInfo;
 };
+
+struct DescriptorObject {
+    vk::DescriptorSet descriptor;
+    vk::DescriptorSetLayout layout;
+};
 } // namespace mvk

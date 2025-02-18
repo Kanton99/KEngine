@@ -20,10 +20,6 @@ private: // Methods
 
   void _initVulkan();
 
-#ifndef NDEBUG
-  void _initDebugUtils();
-#endif // NDEBUG
-
   void _initSwapchain(uint32_t width, uint32_t height);
   void _initCommandPool(int queueFamilyIndex);
   void _recordCommandBuffer(vk::CommandBuffer commandBuffer, uint32_t imageIndex);
@@ -36,6 +32,9 @@ private: // Methods
   void _initGraphicPipeline();
 
   void _initFrameBuffers();
+
+  void _initDescriptorPool(uint32_t size);
+  void _allocateDescriptorSet(mvk::DescriptorObject& descriptorSet);
 
 private: // Members
   static vkEngine *_engine;
@@ -72,5 +71,9 @@ private: // Members
 
   //Buffer allocation
   vma::Allocator _allocator;
+
+  //Descriptors
+  vk::DescriptorPool _descriptorPool;
+  mvk::DescriptorObject _descriptorSet;
 };
 } // namespace mvk

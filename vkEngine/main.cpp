@@ -1,6 +1,6 @@
 #include <exception>
 #define SDL_MAIN_HANDLED
-#include "vkEngine.h"
+#include "vkEngine.hpp"
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_vulkan.h>
 #include <iostream>

@@ -1,5 +1,5 @@
 #define VMA_IMPLEMENTATION
-#include "vkEngine.h"
+#include "vkEngine.hpp"
 #include "utils.hpp"
 #include "init.hpp"
 #include "pipeline_builder.hpp"
@@ -51,6 +51,9 @@ void mvk::vkEngine::init() {
   this->_initGraphicPipeline();
   this->_initFrameBuffers();
   this->_initSynchronizationObjects();
+
+  this->_initDescriptorPool(1);
+  this->_allocateDescriptorSet(this->_descriptorSet);
 }
 
 void mvk::vkEngine::draw(){
@@ -276,6 +279,56 @@ void mvk::vkEngine::_initFrameBuffers(){
     for(auto frameBuffer : graphicSwapchain.frameBuffers)
       this->_device.destroyFramebuffer(frameBuffer);
   });
+}
+
+void mvk::vkEngine::_initDescriptorPool(uint32_t size)
+{
+    vk::DescriptorPoolSize poolSize{
+        .type = vk::DescriptorType::eUniformBuffer,
+        .descriptorCount = size
+    };
+
+    vk::DescriptorPoolCreateInfo poolInfo{
+        .flags = vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet,
+        .maxSets = 1,
+        .poolSizeCount = 1,
+        .pPoolSizes = &poolSize,
+    };
+
+    this->_descriptorPool = this->_device.createDescriptorPool(poolInfo);
+
+    this->deletionStack.pushFunction([&]() {
+        this->_device.destroyDescriptorPool(this->_descriptorPool);
+        });
+}
+
+void mvk::vkEngine::_allocateDescriptorSet(mvk::DescriptorObject& descriptorSet)
+{
+    vk::DescriptorSetLayoutBinding descriptorBinding{
+        .descriptorType = vk::DescriptorType::eUniformBuffer,
+        .descriptorCount = 1
+    };
+
+    vk::DescriptorSetLayoutCreateInfo descriptorSetLayout{ //TODO make it a parameter
+        .bindingCount = 1,
+        .pBindings = &descriptorBinding
+    };
+
+    vk::DescriptorSetLayout layout = this->_device.createDescriptorSetLayout(descriptorSetLayout);
+    descriptorSet.layout = layout;
+
+    vk::DescriptorSetAllocateInfo allocInfo{
+        .descriptorPool = this->_descriptorPool,
+        .descriptorSetCount = 1,
+        .pSetLayouts = &layout
+    };
+
+    descriptorSet.descriptor = this->_device.allocateDescriptorSets(allocInfo)[0];
+
+    this->deletionStack.pushFunction([&]() {
+        this->_device.destroyDescriptorSetLayout(descriptorSet.layout);
+        this->_device.freeDescriptorSets(this->_descriptorPool, descriptorSet.descriptor);
+    });
 }
 
 void mvk::vkEngine::_recordCommandBuffer(vk::CommandBuffer commandBuffer, uint32_t imageIndex){
