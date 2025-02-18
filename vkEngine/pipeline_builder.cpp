@@ -1,7 +1,6 @@
 #include "pipeline_builder.hpp"
 #include <cstdint>
 #include <vulkan/vulkan.hpp>
-#include <vulkan/vulkan_enums.hpp>
 #include "init.hpp"
 
 void PipelineBuilder::clear()

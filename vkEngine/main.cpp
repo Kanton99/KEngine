@@ -1,6 +1,4 @@
-#include <VkBootstrap.h>
 #include <exception>
-#include <vulkan/vulkan_core.h>
 #define SDL_MAIN_HANDLED
 #include "vkEngine.h"
 #include <SDL3/SDL.h>
@@ -35,7 +33,7 @@ int main() {
       while(SDL_PollEvent(&event)){
         if(event.type == SDL_EVENT_QUIT) running = false;
       }
-
+      engine->draw();
       SDL_Delay(10);
     }
 

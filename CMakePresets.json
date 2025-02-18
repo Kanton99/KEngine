@@ -5,25 +5,34 @@
       "minor": 30,
       "patch": 0
     },
-    "configurePresets": [
-        {
-            "name": "linux-base",
-            "hidden": true,
-            "generator": "Ninja",
-            "binaryDir": "${sourceDir}/out/build/${presetName}",
-            "installDir": "${sourceDir}/out/install/${presetName}",
-          "cacheVariables": {
-            "CMAKE_C_COMPILER": "clang",
-            "CMAKE_CXX_COMPILER": "clang++",
-            "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
-          }
-        },
-        {
-          "name": "linux-debug",
-          "inherits": "linux-base",
-          "cacheVariables":{
-            "CMAKE_BUILD_TYPE":"Debug"
-          }
-        }
-    ]
+  "configurePresets": [
+    {
+      "name": "linux-base",
+      "hidden": true,
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/out/build/${presetName}",
+      "installDir": "${sourceDir}/out/install/${presetName}",
+      "cacheVariables": {
+        "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
+      }
+    },
+    {
+      "name": "linux-debug",
+      "inherits": "linux-base",
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "clang",
+        "CMAKE_CXX_COMPILER": "clang++",
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "name": "windows-debug",
+      "inherits": "linux-base",
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "cl.exe",
+        "CMAKE_CXX_COMPILER": "cl.exe",
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    }
+  ]
 }

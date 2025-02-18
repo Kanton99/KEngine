@@ -1,3 +1,4 @@
+#define VMA_IMPLEMENTATION
 #include "vkEngine.h"
 #include "utils.hpp"
 #include "init.hpp"
@@ -8,7 +9,6 @@
 #include <iostream>
 #include <vector>
 #include <vulkan-memory-allocator-hpp/vk_mem_alloc.hpp>
-#include <vulkan-memory-allocator-hpp/vk_mem_alloc_handles.hpp>
 #include <vulkan/vulkan.hpp>
 
 #if VULKAN_HPP_DISPATCH_LOADER_DYNAMIC == 1
@@ -45,9 +45,12 @@ void mvk::vkEngine::init() {
   SDL_GetWindowSize(this->_window, &width, &height);
 
   this->_initSwapchain(width, height);
+  this->_initCommandPool(this->_graphicsQueueIndex);
+  this->_allocateCommandBuffer(this->_graphicsCommandBuffer);
 
   this->_initGraphicPipeline();
   this->_initFrameBuffers();
+  this->_initSynchronizationObjects();
 }
 
 void mvk::vkEngine::draw(){
@@ -72,13 +75,27 @@ void mvk::vkEngine::draw(){
   };
 
   this->_graphicsQueue.submit(submitInfo, this->inFlightFence);
+
+  vk::SwapchainKHR swapchains[] = {this->graphicSwapchain.swapchain};
+  vk::PresentInfoKHR prensetInfo{
+      .waitSemaphoreCount = 1,
+      .pWaitSemaphores = signalSemaphores,
+      .swapchainCount = 1,
+      .pSwapchains = swapchains,
+      .pImageIndices = &imageIndex
+  };
+  this->_graphicsQueue.presentKHR(prensetInfo);
+
 }
 
-void mvk::vkEngine::cleanup() { this->deletionStack.flush(); }
+void mvk::vkEngine::cleanup() { 
+    this->_device.waitIdle();
+    this->deletionStack.flush(); 
+}
 
 mvk::vkEngine::vkEngine(SDL_Window *window) : _window(window) {}
 
-void mvk::vkEngine::_allocateCommandBuffer(vk::CommandBuffer buffer) {
+void mvk::vkEngine::_allocateCommandBuffer(vk::CommandBuffer& buffer) {
   vk::CommandBufferAllocateInfo bufferAllocationInfo{
       .commandPool = this->_commandPool,
       .level = vk::CommandBufferLevel::ePrimary,
@@ -118,6 +135,7 @@ void mvk::vkEngine::_initVulkan() {
     std::cerr << "Error generating surface\n";
   }
   this->_surface = vk::SurfaceKHR(surface);
+
   this->deletionStack.pushFunction(
       [=, this]() { this->_instance.destroySurfaceKHR(this->_surface); });
 
@@ -136,16 +154,17 @@ void mvk::vkEngine::_initVulkan() {
   this->_physDevice = vk::PhysicalDevice(vkbPhysDevice.physical_device);
   this->_graphicsQueue =
       vk::Queue(vkbDevice.get_queue(vkb::QueueType::graphics).value());
+  this->_graphicsQueueIndex = vkbDevice.get_queue_index(vkb::QueueType::graphics).value();
 
   this->deletionStack.pushFunction([=, this]() { this->_device.destroy(); });
 }
 
-void mvk::vkEngine::_initPommandPool(int queueFamilyIndex) {
+void mvk::vkEngine::_initCommandPool(int queueFamilyIndex) {
   vk::CommandPoolCreateInfo poolInfo{
     .flags = vk::CommandPoolCreateFlagBits::eResetCommandBuffer,
     .queueFamilyIndex = (uint32_t) queueFamilyIndex
   };
-
+   
   this->_commandPool = this->_device.createCommandPool(poolInfo);
 
   this->deletionStack.pushFunction([&](){
@@ -273,8 +292,12 @@ void mvk::vkEngine::_recordCommandBuffer(vk::CommandBuffer commandBuffer, uint32
   vk::RenderPassBeginInfo render_pass_info{
     .renderPass = this->_renderPass,
     .framebuffer = this->graphicSwapchain.frameBuffers[imageIndex],
-    .renderArea.offset = {0,0},
-    .renderArea.extent = this->swapchainExtent,
+    /*.renderArea.offset = {0,0},
+    .renderArea.extent = this->swapchainExtent,*/
+    .renderArea = {
+          .offset = {0,0},
+          .extent = this->swapchainExtent
+    },
     .clearValueCount = 1,
     .pClearValues = &clear_color
   };

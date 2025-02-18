@@ -1,6 +1,5 @@
 #pragma once
 #define VULKAN_HPP_NO_CONSTRUCTORS
-#define VMA_IMPLEMENTATION
 #include "util_structs.hpp"
 #include <vulkan/vulkan.hpp>
 #include <vulkan-memory-allocator-hpp/vk_mem_alloc.hpp>
@@ -26,16 +25,15 @@ private: // Methods
 #endif // NDEBUG
 
   void _initSwapchain(uint32_t width, uint32_t height);
-  void _initPommandPool(int queueFamilyIndex);
+  void _initCommandPool(int queueFamilyIndex);
   void _recordCommandBuffer(vk::CommandBuffer commandBuffer, uint32_t imageIndex);
   void _initSynchronizationObjects();
 
-  void _allocateCommandBuffer(vk::CommandBuffer buffer);
+  void _allocateCommandBuffer(vk::CommandBuffer& buffer);
   AllocatedBuffer _allocateBuffer(size_t size, vk::BufferUsageFlagBits usage, vma::MemoryUsage memoryUsage);
   void _destroyBuffer(const mvk::AllocatedBuffer& buffer);
 
   void _initGraphicPipeline();
-  vk::ShaderModule _createShaderModule();
 
   void _initFrameBuffers();
 
@@ -54,6 +52,7 @@ private: // Members
   vk::PhysicalDevice _physDevice;
 
   vk::Queue _graphicsQueue;
+  uint32_t _graphicsQueueIndex;
 
   vk::CommandPool _commandPool;
 
