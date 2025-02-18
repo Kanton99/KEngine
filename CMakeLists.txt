@@ -15,4 +15,5 @@ add_custom_target(copy_assets
 
 # Include sub-projects.
 add_subdirectory ("vkEngine")
+add_subdirectory ("myECS")
 add_dependencies(vkEngine copy_assets)
