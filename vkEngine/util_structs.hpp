@@ -3,6 +3,7 @@
 #include <vector>
 #include <vulkan-memory-allocator-hpp/vk_mem_alloc.hpp>
 #include <vulkan/vulkan.hpp>
+#include <glm/glm.hpp>
 
 namespace mvk {
 struct SwapChain {
@@ -38,5 +39,13 @@ struct AllocatedBuffer{
 struct DescriptorObject {
     vk::DescriptorSet descriptor;
     vk::DescriptorSetLayout layout;
+    void* mappedMemory;
+    AllocatedBuffer buffer;
+};
+
+struct UniformDescriptorObject {
+    glm::mat4 model;
+    glm::mat4 view;
+    glm::mat4 proj;
 };
 } // namespace mvk

@@ -10,6 +10,8 @@
 #include <vector>
 #include <vulkan-memory-allocator-hpp/vk_mem_alloc.hpp>
 #include <vulkan/vulkan.hpp>
+#include <glm/ext/matrix_clip_space.hpp>
+#include <glm/ext/matrix_transform.hpp>
 
 #if VULKAN_HPP_DISPATCH_LOADER_DYNAMIC == 1
 #ifndef DYNAMIC_LOADER_LOADED
@@ -43,17 +45,36 @@ void mvk::vkEngine::init() {
 #endif // VULKAN_HPP_DEFAULT_DISPATCHER.init(device);
   int width, height;
   SDL_GetWindowSize(this->_window, &width, &height);
+  //VmaVulkanFunctions vulkanFunctions = {};
+  //vulkanFunctions.vkGetInstanceProcAddr = &vkGetInstanceProcAddr;
+  //vulkanFunctions.vkGetDeviceProcAddr = &vkGetDeviceProcAddr;
+
+  vma::VulkanFunctions vulkanFunctions{
+    .vkGetInstanceProcAddr = &vkGetInstanceProcAddr,
+    .vkGetDeviceProcAddr = &vkGetDeviceProcAddr
+  };
+  vma::AllocatorCreateInfo allocatorInfo{
+      .physicalDevice = this->_physDevice,
+      .device = this->_device,
+      .pVulkanFunctions = &vulkanFunctions,
+      .instance = this->_instance,
+      .vulkanApiVersion = vk::ApiVersion13,
+  };
+  this->_allocator = vma::createAllocator(allocatorInfo);
 
   this->_initSwapchain(width, height);
   this->_initCommandPool(this->_graphicsQueueIndex);
   this->_allocateCommandBuffer(this->_graphicsCommandBuffer);
+  this->_initDescriptorPool(1);
+  this->_allocateDescriptorSet<UniformDescriptorObject>(this->_descriptorSet);
 
-  this->_initGraphicPipeline();
+  this->updateDescriptorSet(this->_descriptorSet);
+  this->updateUbos(this->ubo);
+
+  std::vector<vk::DescriptorSetLayout> layouts = { this->_descriptorSet.layout };
+  this->_initGraphicPipeline(layouts);
   this->_initFrameBuffers();
   this->_initSynchronizationObjects();
-
-  this->_initDescriptorPool(1);
-  this->_allocateDescriptorSet(this->_descriptorSet);
 }
 
 void mvk::vkEngine::draw(){
@@ -219,14 +240,14 @@ void mvk::vkEngine::_initSwapchain(uint32_t width, uint32_t height) {
   });
 }
 
-void mvk::vkEngine::_initGraphicPipeline() {
-  auto vertShaderCode = readFile("resources/shaders/compiled/vert.spv");
-  auto fragShaderCode = readFile("resources/shaders/compiled/frag.spv");
+void mvk::vkEngine::_initGraphicPipeline(std::vector<vk::DescriptorSetLayout>& layouts) {
+  auto vertShaderCode = readFile("../resources/shaders/compiled/vert.spv");
+  auto fragShaderCode = readFile("../resources/shaders/compiled/frag.spv");
 
   auto vertModule = createShaderModule(vertShaderCode, this->_device);
   auto fragModule = createShaderModule(fragShaderCode, this->_device);
   
-  auto pipelineLayoutInfo = vkInit::pipeline_layout_create_info(); 
+  auto pipelineLayoutInfo = vkInit::pipeline_layout_create_info(layouts); 
   this->_trianglePipelineLayout = this->_device.createPipelineLayout(pipelineLayoutInfo);
 
   PipelineBuilder pipelineBuilder;
@@ -302,11 +323,45 @@ void mvk::vkEngine::_initDescriptorPool(uint32_t size)
         });
 }
 
+void mvk::vkEngine::updateDescriptorSet(mvk::DescriptorObject& descriptor)
+{
+    vk::DescriptorBufferInfo bufferInfo{
+        .buffer = descriptor.buffer.buffer,
+        .offset = descriptor.buffer.allocationInfo.offset,
+        .range = vk::WholeSize
+    };
+    vk::WriteDescriptorSet writeDS{
+        .dstSet = descriptor.descriptor,
+        .dstBinding = 0,
+        .descriptorCount = 1,
+        .descriptorType = vk::DescriptorType::eUniformBuffer,
+        .pBufferInfo = &bufferInfo
+    };
+
+    this->_device.updateDescriptorSets(writeDS, nullptr);
+}
+
+void mvk::vkEngine::updateUbos(mvk::UniformDescriptorObject ubo)
+{
+    ubo.model = glm::identity<glm::mat4>();
+    ubo.model = glm::translate(ubo.model, glm::vec3(0, 0, 1));
+    ubo.proj = glm::perspective<float>(glm::radians(60.f), 16.f / 9.f, 0, 20);
+    ubo.view = glm::identity<glm::mat4>();
+
+    memcpy(this->_descriptorSet.mappedMemory, &ubo, sizeof(ubo));
+}
+
+template <typename T>
 void mvk::vkEngine::_allocateDescriptorSet(mvk::DescriptorObject& descriptorSet)
 {
+    descriptorSet.buffer = this->_allocateBuffer(sizeof(T), vk::BufferUsageFlagBits::eUniformBuffer, vma::MemoryUsage::eAuto);
+    this->deletionStack.pushFunction([&]() {
+        this->_destroyBuffer(descriptorSet.buffer);
+        });
     vk::DescriptorSetLayoutBinding descriptorBinding{
         .descriptorType = vk::DescriptorType::eUniformBuffer,
-        .descriptorCount = 1
+        .descriptorCount = 1,
+        .stageFlags = vk::ShaderStageFlagBits::eVertex
     };
 
     vk::DescriptorSetLayoutCreateInfo descriptorSetLayout{ //TODO make it a parameter
@@ -324,6 +379,8 @@ void mvk::vkEngine::_allocateDescriptorSet(mvk::DescriptorObject& descriptorSet)
     };
 
     descriptorSet.descriptor = this->_device.allocateDescriptorSets(allocInfo)[0];
+
+    descriptorSet.mappedMemory = this->_device.mapMemory(descriptorSet.buffer.allocationInfo.deviceMemory, descriptorSet.buffer.allocationInfo.offset, vk::WholeSize, vk::MemoryMapFlags());
 
     this->deletionStack.pushFunction([&]() {
         this->_device.destroyDescriptorSetLayout(descriptorSet.layout);
@@ -376,6 +433,9 @@ void mvk::vkEngine::_recordCommandBuffer(vk::CommandBuffer commandBuffer, uint32
 
   commandBuffer.setScissor(0, scissors);
 
+
+     
+  commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, this->_trianglePipelineLayout,0,this->_descriptorSet.descriptor, nullptr);
   commandBuffer.draw(3, 1, 0, 0);
 
   commandBuffer.endRenderPass();
@@ -402,7 +462,7 @@ void mvk::vkEngine::_initSynchronizationObjects(){
 
 mvk::AllocatedBuffer mvk::vkEngine::_allocateBuffer(size_t size, vk::BufferUsageFlagBits usage, vma::MemoryUsage memoryUsage){
   vma::AllocationCreateInfo allocationInfo{
-    .flags = vma::AllocationCreateFlagBits::eMapped,
+    .flags = vma::AllocationCreateFlagBits::eHostAccessSequentialWrite,
     .usage = memoryUsage,
   };
 
@@ -413,7 +473,7 @@ mvk::AllocatedBuffer mvk::vkEngine::_allocateBuffer(size_t size, vk::BufferUsage
   
   AllocatedBuffer allocBuffer;
 
-  auto vmaAllocatedBuffer = this->_allocator.createBuffer(bufferInfo,allocationInfo);
+  auto vmaAllocatedBuffer = this->_allocator.createBuffer(bufferInfo,allocationInfo,&allocBuffer.allocationInfo);
 
   allocBuffer.buffer = vmaAllocatedBuffer.first;
   allocBuffer.allocation = vmaAllocatedBuffer.second;
@@ -422,5 +482,6 @@ mvk::AllocatedBuffer mvk::vkEngine::_allocateBuffer(size_t size, vk::BufferUsage
 }
 
 void mvk::vkEngine::_destroyBuffer(const mvk::AllocatedBuffer& buffer){
+  this->_device.freeMemory(buffer.allocationInfo.deviceMemory);
   this->_allocator.destroyBuffer(buffer.buffer, buffer.allocation); 
 }

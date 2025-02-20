@@ -29,12 +29,16 @@ private: // Methods
   AllocatedBuffer _allocateBuffer(size_t size, vk::BufferUsageFlagBits usage, vma::MemoryUsage memoryUsage);
   void _destroyBuffer(const mvk::AllocatedBuffer& buffer);
 
-  void _initGraphicPipeline();
+  void _initGraphicPipeline(std::vector<vk::DescriptorSetLayout>& layouts);
 
   void _initFrameBuffers();
 
   void _initDescriptorPool(uint32_t size);
+  template <typename T>
   void _allocateDescriptorSet(mvk::DescriptorObject& descriptorSet);
+
+  void updateDescriptorSet(mvk::DescriptorObject& descriptor);
+  void updateUbos(mvk::UniformDescriptorObject ubo);
 
 private: // Members
   static vkEngine *_engine;
@@ -75,5 +79,6 @@ private: // Members
   //Descriptors
   vk::DescriptorPool _descriptorPool;
   mvk::DescriptorObject _descriptorSet;
+  mvk::UniformDescriptorObject ubo;
 };
 } // namespace mvk
