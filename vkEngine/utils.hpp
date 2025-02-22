@@ -8,12 +8,13 @@
 #include <iostream>
 
 static std::vector<char> readFile(const std::string& filename){
-  std::ifstream file(filename, std::ios::ate | std::ios::binary);
+  std::string currentPath = std::filesystem::current_path();
+  std::string absolutePath = currentPath+"/"+filename;
+  std::ifstream file(absolutePath, std::ios::ate | std::ios::binary);
 
   if(!file.is_open()){
-      std::cout << std::filesystem::current_path() << "\n";
       auto error_message = std::strerror(errno);
-      throw std::runtime_error(std::format("failed to open file: {}", error_message));
+      throw std::runtime_error(std::format("failed to open file: {} at {}", error_message, absolutePath));
   }
 
   size_t fileSize = (size_t) file.tellg();

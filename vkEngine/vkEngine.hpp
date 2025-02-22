@@ -38,7 +38,7 @@ private: // Methods
   void _allocateDescriptorSet(mvk::DescriptorObject& descriptorSet);
 
   void updateDescriptorSet(mvk::DescriptorObject& descriptor);
-  void updateUbos(mvk::UniformDescriptorObject ubo);
+  void updateUbos(mvk::UniformDescriptorObject ubo); //TODO temporary for testing
 
 private: // Members
   static vkEngine *_engine;

@@ -1,3 +1,6 @@
+#include <chrono>
+#include <glm/fwd.hpp>
+#include <glm/trigonometric.hpp>
 #define VMA_IMPLEMENTATION
 #include "vkEngine.hpp"
 #include "utils.hpp"
@@ -241,8 +244,8 @@ void mvk::vkEngine::_initSwapchain(uint32_t width, uint32_t height) {
 }
 
 void mvk::vkEngine::_initGraphicPipeline(std::vector<vk::DescriptorSetLayout>& layouts) {
-  auto vertShaderCode = readFile("../resources/shaders/compiled/vert.spv");
-  auto fragShaderCode = readFile("../resources/shaders/compiled/frag.spv");
+  auto vertShaderCode = readFile("resources/shaders/compiled/vert.spv");
+  auto fragShaderCode = readFile("resources/shaders/compiled/frag.spv");
 
   auto vertModule = createShaderModule(vertShaderCode, this->_device);
   auto fragModule = createShaderModule(fragShaderCode, this->_device);
@@ -343,9 +346,11 @@ void mvk::vkEngine::updateDescriptorSet(mvk::DescriptorObject& descriptor)
 
 void mvk::vkEngine::updateUbos(mvk::UniformDescriptorObject ubo)
 {
+    static float rotationAngle;
     ubo.model = glm::identity<glm::mat4>();
-    ubo.model = glm::translate(ubo.model, glm::vec3(0, 0, 1));
-    ubo.proj = glm::perspective<float>(glm::radians(60.f), 16.f / 9.f, 0, 20);
+    ubo.model = glm::translate(ubo.model, glm::vec3(0, 0, -5));
+    ubo.model = glm::rotate(ubo.model, glm::radians(rotationAngle++), glm::vec3(0,1,0));
+    ubo.proj = glm::perspective<float>(glm::radians(60.f), 16.f / 9.f, 2, 20);
     ubo.view = glm::identity<glm::mat4>();
 
     memcpy(this->_descriptorSet.mappedMemory, &ubo, sizeof(ubo));
@@ -433,8 +438,8 @@ void mvk::vkEngine::_recordCommandBuffer(vk::CommandBuffer commandBuffer, uint32
 
   commandBuffer.setScissor(0, scissors);
 
-
-     
+  this->updateDescriptorSet(this->_descriptorSet);
+  this->updateUbos(this->ubo);
   commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, this->_trianglePipelineLayout,0,this->_descriptorSet.descriptor, nullptr);
   commandBuffer.draw(3, 1, 0, 0);
 
