@@ -54,6 +54,7 @@ struct MeshData {
   vk::BufferDeviceAddressInfo vertexBufferAddress;
   AllocatedBuffer indexBuffer;
   vk::BufferDeviceAddressInfo indexBufferAddress;
+  unsigned int indexCount;
   DescriptorObject descriptor;
 };
 } // namespace mvk

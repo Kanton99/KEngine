@@ -7,11 +7,15 @@ layout(binding = 0) uniform UniformBufferObject{
 } ubo;
 layout(location = 0) out vec3 fragColor;
 
-vec3 colors[4] = vec3[](
+vec3 colors[8] = vec3[](
     vec3(1.0, 0.0, 0.0),  //RED
+    vec3(0.0, 0.0, 0.0),  //BLACK
     vec3(0.0, 1.0, 0.0),  //GREEN
+    vec3(1.0, 0.0, 1.0),   //MAGENTA
+    vec3(1.0, 0.0, 1.0),   //YELLOW
     vec3(0.0, 0.0, 1.0),  //BLUE
-    vec3(1.0, 0.0, 1.0)   //YELLOW
+    vec3(0.0, 1.0, 1.0),   //CYAN
+    vec3(1.0, 1.0, 1.0)   //WHITE
 );
 
 layout(location = 0) in vec3 inPosition;

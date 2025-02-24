@@ -272,7 +272,8 @@ void mvk::vkEngine::_initGraphicPipeline(std::vector<vk::DescriptorSetLayout>& l
   pipelineBuilder.setCullMode(vk::CullModeFlagBits::eNone, vk::FrontFace::eClockwise);
   pipelineBuilder.setMultisamplingNone();
   pipelineBuilder.disableBlending();
-  pipelineBuilder.disableDepthtest();
+  //pipelineBuilder.disableDepthtest(); 
+  pipelineBuilder.enableDepthtest(true, vk::CompareOp::eGreaterOrEqual);
 
   pipelineBuilder.setColorAttachmentFormat(this->graphicSwapchain.format);
   pipelineBuilder.setDepthFormat(vk::Format::eUndefined);
@@ -457,7 +458,7 @@ void mvk::vkEngine::_recordCommandBuffer(vk::CommandBuffer commandBuffer, uint32
 
   commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, this->_trianglePipelineLayout,0,this->_descriptorSet.descriptor, nullptr);
   /*commandBuffer.draw(3, 1, 0, 0);*/
-  commandBuffer.drawIndexed(6, 1, 0, 0, 0);
+  commandBuffer.drawIndexed(this->tmpMesh.indexCount, 1, 0, 0, 0);
 
   commandBuffer.endRenderPass();
 
@@ -528,6 +529,7 @@ mvk::MeshData mvk::vkEngine::uploadMesh(std::span<glm::vec3> vertices, std::span
 
   memcpy(data, vertices.data(), vertexDataSize);
   memcpy((char*)data + vertexDataSize, indeces.data(), indecesDataSize);
+  mesh.indexCount = indeces.size();
 
   immediateSubmit([&](vk::CommandBuffer cmd){
     vk::BufferCopy vertexCopy{

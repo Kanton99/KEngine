@@ -31,13 +31,29 @@ int main() {
     mvk::vkEngine *engine = mvk::vkEngine::get(window);
     engine->init();
 
-    std::array<glm::vec3,4> quad{
-      glm::vec3(-1,1,0),
-      glm::vec3(1,1,0),
-      glm::vec3(-1,-1,0),
-      glm::vec3(1,-1,0),
+    std::array<glm::vec3,8> quad{
+      glm::vec3(-1,1,1),
+      glm::vec3(1,1,1),
+      glm::vec3(-1,-1,1),
+      glm::vec3(1,-1,1),
+      glm::vec3(-1,1,-1),
+      glm::vec3(1,1,-1),
+      glm::vec3(-1,-1,-1),
+      glm::vec3(1,-1,-1),
     };
-    std::array<unsigned int, 6> indeces{0,1,2,2,1,3};
+    std::array<unsigned int, 3*2*6> indeces{0,1,2,
+											2,1,3,
+											5,1,7,
+											7,1,3,
+                                            4,5,6,
+                                            6,5,7,
+        0,1,4,
+        4,1,5,
+        0,4,2,
+        2,4,6,
+        6,7,2,
+        2,7,3,
+    };
     engine->tmpMesh = engine->uploadMesh(quad, indeces);
 
     SDL_Event event;
