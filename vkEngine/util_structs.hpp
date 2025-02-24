@@ -48,4 +48,12 @@ struct UniformDescriptorObject {
     glm::mat4 view;
     glm::mat4 proj;
 };
+
+struct MeshData {
+  AllocatedBuffer vertexBuffer;
+  vk::BufferDeviceAddressInfo vertexBufferAddress;
+  AllocatedBuffer indexBuffer;
+  vk::BufferDeviceAddressInfo indexBufferAddress;
+  DescriptorObject descriptor;
+};
 } // namespace mvk

@@ -1,6 +1,4 @@
-#include <chrono>
 #include <glm/fwd.hpp>
-#include <glm/trigonometric.hpp>
 #define VMA_IMPLEMENTATION
 #include "vkEngine.hpp"
 #include "utils.hpp"
@@ -81,7 +79,7 @@ void mvk::vkEngine::init() {
 }
 
 void mvk::vkEngine::draw(){
-  auto ret = this->_device.waitForFences(this->inFlightFence,vk::True,UINT64_MAX);
+  auto ret = this->_device.waitForFences(this->inFlightFence, vk::True, UINT64_MAX);
   this->_device.resetFences(this->inFlightFence);
 
   uint32_t imageIndex = this->_device.acquireNextImageKHR(this->graphicSwapchain.swapchain, UINT64_MAX, this->_imageAvailableSempahore).value;
@@ -124,10 +122,17 @@ mvk::vkEngine::vkEngine(SDL_Window *window) : _window(window) {}
 
 void mvk::vkEngine::_allocateCommandBuffer(vk::CommandBuffer& buffer) {
   vk::CommandBufferAllocateInfo bufferAllocationInfo{
-      .commandPool = this->_commandPool,
+      .commandPool = this->_graphicsCommandPool,
       .level = vk::CommandBufferLevel::ePrimary,
       .commandBufferCount = 1};
   buffer = this->_device.allocateCommandBuffers(bufferAllocationInfo).front();
+
+  vk::CommandBufferAllocateInfo immediateAllocationInfo{
+    .commandPool = this->_immediateCommandPool,
+    .level = vk::CommandBufferLevel::ePrimary,
+    .commandBufferCount = 1,
+  };
+  this->_immediateCommandBuffer = this->_device.allocateCommandBuffers(immediateAllocationInfo).front();
 }
 
 void mvk::vkEngine::_initVulkan() {
@@ -167,9 +172,12 @@ void mvk::vkEngine::_initVulkan() {
       [=, this]() { this->_instance.destroySurfaceKHR(this->_surface); });
 
   vkb::PhysicalDeviceSelector selector{instRet.value()};
+  vk::PhysicalDeviceVulkan13Features features_13{
+    .synchronization2 = true,
+  };
   vkb::PhysicalDevice vkbPhysDevice =
       selector.set_minimum_version(1, 1)
-          .set_surface(static_cast<VkSurfaceKHR>(this->_surface))
+          .set_surface(static_cast<VkSurfaceKHR>(this->_surface)).set_required_features_13(static_cast<VkPhysicalDeviceVulkan13Features>(features_13))
           .select()
           .value();
 
@@ -192,10 +200,12 @@ void mvk::vkEngine::_initCommandPool(int queueFamilyIndex) {
     .queueFamilyIndex = (uint32_t) queueFamilyIndex
   };
    
-  this->_commandPool = this->_device.createCommandPool(poolInfo);
+  this->_graphicsCommandPool = this->_device.createCommandPool(poolInfo);
+  this->_immediateCommandPool = this->_device.createCommandPool(poolInfo);
 
   this->deletionStack.pushFunction([&](){
-    this->_device.destroyCommandPool(this->_commandPool);
+    this->_device.destroyCommandPool(this->_graphicsCommandPool);
+    this->_device.destroyCommandPool(this->_immediateCommandPool);
   });
 }
 
@@ -350,16 +360,17 @@ void mvk::vkEngine::updateUbos(mvk::UniformDescriptorObject ubo)
     ubo.model = glm::identity<glm::mat4>();
     ubo.model = glm::translate(ubo.model, glm::vec3(0, 0, -5));
     ubo.model = glm::rotate(ubo.model, glm::radians(rotationAngle++), glm::vec3(0,1,0));
+
     ubo.proj = glm::perspective<float>(glm::radians(60.f), 16.f / 9.f, 2, 20);
     ubo.view = glm::identity<glm::mat4>();
 
-    memcpy(this->_descriptorSet.mappedMemory, &ubo, sizeof(ubo));
+    memcpy(this->_descriptorSet.buffer.allocationInfo.pMappedData, &ubo, sizeof(ubo));
 }
 
 template <typename T>
 void mvk::vkEngine::_allocateDescriptorSet(mvk::DescriptorObject& descriptorSet)
 {
-    descriptorSet.buffer = this->_allocateBuffer(sizeof(T), vk::BufferUsageFlagBits::eUniformBuffer, vma::MemoryUsage::eAuto);
+    descriptorSet.buffer = this->_allocateBuffer(sizeof(T), vk::BufferUsageFlagBits::eUniformBuffer,vma::AllocationCreateFlagBits::eHostAccessSequentialWrite | vma::AllocationCreateFlagBits::eMapped, vma::MemoryUsage::eAuto);
     this->deletionStack.pushFunction([&]() {
         this->_destroyBuffer(descriptorSet.buffer);
         });
@@ -385,7 +396,7 @@ void mvk::vkEngine::_allocateDescriptorSet(mvk::DescriptorObject& descriptorSet)
 
     descriptorSet.descriptor = this->_device.allocateDescriptorSets(allocInfo)[0];
 
-    descriptorSet.mappedMemory = this->_device.mapMemory(descriptorSet.buffer.allocationInfo.deviceMemory, descriptorSet.buffer.allocationInfo.offset, vk::WholeSize, vk::MemoryMapFlags());
+    /*descriptorSet.mappedMemory = this->_device.mapMemory(descriptorSet.buffer.allocationInfo.deviceMemory, descriptorSet.buffer.allocationInfo.offset, vk::WholeSize, vk::MemoryMapFlags());*/
 
     this->deletionStack.pushFunction([&]() {
         this->_device.destroyDescriptorSetLayout(descriptorSet.layout);
@@ -407,8 +418,6 @@ void mvk::vkEngine::_recordCommandBuffer(vk::CommandBuffer commandBuffer, uint32
   vk::RenderPassBeginInfo render_pass_info{
     .renderPass = this->_renderPass,
     .framebuffer = this->graphicSwapchain.frameBuffers[imageIndex],
-    /*.renderArea.offset = {0,0},
-    .renderArea.extent = this->swapchainExtent,*/
     .renderArea = {
           .offset = {0,0},
           .extent = this->swapchainExtent
@@ -440,8 +449,15 @@ void mvk::vkEngine::_recordCommandBuffer(vk::CommandBuffer commandBuffer, uint32
 
   this->updateDescriptorSet(this->_descriptorSet);
   this->updateUbos(this->ubo);
+
+  vk::DeviceSize offsets[] =  {0};
+  commandBuffer.bindVertexBuffers(0,this->tmpMesh.vertexBuffer.buffer, offsets);
+
+  commandBuffer.bindIndexBuffer(this->tmpMesh.indexBuffer.buffer, offsets[0], vk::IndexType::eUint32);
+
   commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, this->_trianglePipelineLayout,0,this->_descriptorSet.descriptor, nullptr);
-  commandBuffer.draw(3, 1, 0, 0);
+  /*commandBuffer.draw(3, 1, 0, 0);*/
+  commandBuffer.drawIndexed(6, 1, 0, 0, 0);
 
   commandBuffer.endRenderPass();
 
@@ -457,17 +473,19 @@ void mvk::vkEngine::_initSynchronizationObjects(){
   this->_imageAvailableSempahore = this->_device.createSemaphore(semaphore_info);
   this->_renderFinishedSemaphore = this->_device.createSemaphore(semaphore_info);
   this->inFlightFence = this->_device.createFence(fence_info);
+  this->immediateFence = this->_device.createFence(fence_info);
 
   this->deletionStack.pushFunction([&](){
     this->_device.destroyFence(this->inFlightFence);
+    this->_device.destroyFence(this->immediateFence);
     this->_device.destroySemaphore(this->_imageAvailableSempahore);
     this->_device.destroySemaphore(this->_renderFinishedSemaphore);
   });
 }
 
-mvk::AllocatedBuffer mvk::vkEngine::_allocateBuffer(size_t size, vk::BufferUsageFlagBits usage, vma::MemoryUsage memoryUsage){
+mvk::AllocatedBuffer mvk::vkEngine::_allocateBuffer(size_t size, vk::BufferUsageFlags usage, vma::AllocationCreateFlags flags, vma::MemoryUsage memoryUsage){
   vma::AllocationCreateInfo allocationInfo{
-    .flags = vma::AllocationCreateFlagBits::eHostAccessSequentialWrite,
+    .flags = flags,
     .usage = memoryUsage,
   };
 
@@ -487,6 +505,79 @@ mvk::AllocatedBuffer mvk::vkEngine::_allocateBuffer(size_t size, vk::BufferUsage
 }
 
 void mvk::vkEngine::_destroyBuffer(const mvk::AllocatedBuffer& buffer){
-  this->_device.freeMemory(buffer.allocationInfo.deviceMemory);
   this->_allocator.destroyBuffer(buffer.buffer, buffer.allocation); 
+}
+
+mvk::MeshData mvk::vkEngine::uploadMesh(std::span<glm::vec3> vertices, std::span<unsigned int> indeces){
+  const auto vertexDataSize = sizeof(glm::vec3)*vertices.size();
+  const auto indecesDataSize = sizeof(unsigned int)*indeces.size();
+
+  mvk::MeshData mesh;
+  vk::BufferUsageFlags vertexFlags = (vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eVertexBuffer);
+  mesh.vertexBuffer = this->_allocateBuffer(vertexDataSize, vertexFlags, vma::AllocationCreateFlagBits::eMapped, vma::MemoryUsage::eGpuOnly);
+
+  vk::BufferUsageFlags indexFlags = (vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eIndexBuffer);
+  mesh.indexBuffer  = this->_allocateBuffer(indecesDataSize, indexFlags, vma::AllocationCreateFlagBits::eMapped,vma::MemoryUsage::eGpuOnly);
+
+  mvk::AllocatedBuffer staginBuffer = this->_allocateBuffer(vertexDataSize+indecesDataSize, vk::BufferUsageFlagBits::eTransferSrc, vma::AllocationCreateFlagBits::eMapped, vma::MemoryUsage::eCpuOnly);
+
+  void* data = staginBuffer.allocationInfo.pMappedData;
+
+  memcpy(data, vertices.data(), vertexDataSize);
+  memcpy((char*)data + vertexDataSize, indeces.data(), indecesDataSize);
+
+  immediateSubmit([&](vk::CommandBuffer cmd){
+    vk::BufferCopy vertexCopy{
+      .srcOffset = 0,
+      .dstOffset = 0,
+      .size = vertexDataSize
+    };
+
+    cmd.copyBuffer(staginBuffer.buffer,mesh.vertexBuffer.buffer,vertexCopy);
+    vk::BufferCopy indexCopy{
+      .srcOffset = vertexDataSize,
+      .dstOffset = 0,
+      .size = indecesDataSize
+    };
+
+    cmd.copyBuffer(staginBuffer.buffer,mesh.indexBuffer.buffer,indexCopy);
+  });
+
+  this->_destroyBuffer(staginBuffer);
+
+  this->deletionStack.pushFunction([&](){
+    this->_destroyBuffer(mesh.vertexBuffer);
+    this->_destroyBuffer(mesh.indexBuffer);
+  });
+
+  return mesh;
+}
+
+void mvk::vkEngine::immediateSubmit(std::function<void(vk::CommandBuffer cmd)>&& function){
+  this->_device.resetFences(1,&this->immediateFence);
+  this->_immediateCommandBuffer.reset();
+  
+  vk::CommandBuffer cmd = this->_immediateCommandBuffer;
+
+  vk::CommandBufferBeginInfo cmdBeginInfo{
+    .flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit,
+  };
+
+  cmd.begin(cmdBeginInfo);
+
+  function(cmd);
+
+  cmd.end();
+
+  vk::CommandBufferSubmitInfo commandSubmitInfo{
+    .commandBuffer = cmd,
+  };
+
+  vk::SubmitInfo2 submitInfo{
+    .commandBufferInfoCount = 1,
+    .pCommandBufferInfos = &commandSubmitInfo
+  };
+  this->_graphicsQueue.submit2(submitInfo, this->immediateFence);
+
+  this->_device.waitForFences(this->immediateFence, true, 9999999);
 }

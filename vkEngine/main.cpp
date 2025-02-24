@@ -1,5 +1,7 @@
 #include <SDL3/SDL_system.h>
+#include <array>
 #include <exception>
+#include <glm/fwd.hpp>
 #define SDL_MAIN_HANDLED
 #include "vkEngine.hpp"
 #include <SDL3/SDL.h>
@@ -28,6 +30,16 @@ int main() {
 
     mvk::vkEngine *engine = mvk::vkEngine::get(window);
     engine->init();
+
+    std::array<glm::vec3,4*3> quad{
+      glm::vec3(-1,1,0),
+      glm::vec3(1,1,0),
+      glm::vec3(-1,-1,0),
+      glm::vec3(1,-1,0),
+      glm::vec3(),
+    };
+    std::array<unsigned int, 6> indeces{0,1,2,2,1,3};
+    engine->tmpMesh = engine->uploadMesh(quad, indeces);
 
     SDL_Event event;
     bool running = true;

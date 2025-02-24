@@ -1,5 +1,9 @@
 #include "pipeline_builder.hpp"
+#include <array>
+#include <cstddef>
 #include <cstdint>
+#include <glm/common.hpp>
+#include <glm/fwd.hpp>
 #include <vulkan/vulkan.hpp>
 #include "init.hpp"
 
@@ -35,8 +39,25 @@ vk::Pipeline PipelineBuilder::buildPipeline(vk::Device device)
     .pAttachments = &_colorBlendAttachment
   };
 
+  vk::VertexInputBindingDescription bindingDescriptor{
+    .binding = 0,
+    .stride = sizeof(glm::vec3),
+    .inputRate = vk::VertexInputRate::eVertex,
+  };
+
+  vk::VertexInputAttributeDescription attributeDescriptions{
+    .location = 0,
+    .binding = 0,
+    .format = vk::Format::eR32G32B32Sfloat,
+    .offset = sizeof(glm::vec3),
+  };
   //clear vertexInputStateCreateInfo
-  vk::PipelineVertexInputStateCreateInfo _vertexInputInfo{};
+  vk::PipelineVertexInputStateCreateInfo _vertexInputInfo{
+    .vertexBindingDescriptionCount = 1,
+    .pVertexBindingDescriptions = &bindingDescriptor,
+    .vertexAttributeDescriptionCount = 1,
+    .pVertexAttributeDescriptions = &attributeDescriptions,
+  };
   
   //build actual pipeline_builder
   vk::GraphicsPipelineCreateInfo pipeline_info{

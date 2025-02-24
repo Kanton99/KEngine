@@ -15,6 +15,7 @@ public:
 
   void cleanup();
 
+  mvk::MeshData uploadMesh(std::span<glm::vec3> vertices, std::span<unsigned int> indeces);
 private: // Methods
   vkEngine(SDL_Window *window);
 
@@ -22,11 +23,13 @@ private: // Methods
 
   void _initSwapchain(uint32_t width, uint32_t height);
   void _initCommandPool(int queueFamilyIndex);
+  void _allocateCommandBuffer(vk::CommandBuffer& buffer);
+  void immediateSubmit(std::function<void(vk::CommandBuffer cmd)>&& function);
   void _recordCommandBuffer(vk::CommandBuffer commandBuffer, uint32_t imageIndex);
+
   void _initSynchronizationObjects();
 
-  void _allocateCommandBuffer(vk::CommandBuffer& buffer);
-  AllocatedBuffer _allocateBuffer(size_t size, vk::BufferUsageFlagBits usage, vma::MemoryUsage memoryUsage);
+  AllocatedBuffer _allocateBuffer(size_t size, vk::BufferUsageFlags usage, vma::AllocationCreateFlags flags,  vma::MemoryUsage memoryUsage);
   void _destroyBuffer(const mvk::AllocatedBuffer& buffer);
 
   void _initGraphicPipeline(std::vector<vk::DescriptorSetLayout>& layouts);
@@ -40,6 +43,8 @@ private: // Methods
   void updateDescriptorSet(mvk::DescriptorObject& descriptor);
   void updateUbos(mvk::UniformDescriptorObject ubo); //TODO temporary for testing
 
+public:
+  mvk::MeshData tmpMesh;
 private: // Members
   static vkEngine *_engine;
   mvk::DeletionStack deletionStack;
@@ -57,9 +62,11 @@ private: // Members
   vk::Queue _graphicsQueue;
   uint32_t _graphicsQueueIndex;
 
-  vk::CommandPool _commandPool;
-
+  vk::CommandPool _graphicsCommandPool;
   vk::CommandBuffer _graphicsCommandBuffer;
+  vk::CommandPool _immediateCommandPool;
+  vk::CommandBuffer _immediateCommandBuffer;
+  vk::Fence immediateFence;
 
   mvk::SwapChain graphicSwapchain;
   vk::Extent2D swapchainExtent;
