@@ -11,7 +11,7 @@
 
 int main() {
   try {
-    setenv("SDL_VIDEODRIVER", "x11", 1);
+    //setenv("SDL_VIDEODRIVER", "x11", 1);
     if (!SDL_Init(SDL_INIT_VIDEO)) {
       std::cerr << "Failed to init video, Error: " << SDL_GetError()
                 << std::endl;
@@ -31,12 +31,11 @@ int main() {
     mvk::vkEngine *engine = mvk::vkEngine::get(window);
     engine->init();
 
-    std::array<glm::vec3,4*3> quad{
+    std::array<glm::vec3,4> quad{
       glm::vec3(-1,1,0),
       glm::vec3(1,1,0),
       glm::vec3(-1,-1,0),
       glm::vec3(1,-1,0),
-      glm::vec3(),
     };
     std::array<unsigned int, 6> indeces{0,1,2,2,1,3};
     engine->tmpMesh = engine->uploadMesh(quad, indeces);

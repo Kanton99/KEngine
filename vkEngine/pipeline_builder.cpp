@@ -49,7 +49,7 @@ vk::Pipeline PipelineBuilder::buildPipeline(vk::Device device)
     .location = 0,
     .binding = 0,
     .format = vk::Format::eR32G32B32Sfloat,
-    .offset = sizeof(glm::vec3),
+    .offset = 0,
   };
   //clear vertexInputStateCreateInfo
   vk::PipelineVertexInputStateCreateInfo _vertexInputInfo{

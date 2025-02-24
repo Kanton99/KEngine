@@ -8,8 +8,8 @@
 #include <iostream>
 
 static std::vector<char> readFile(const std::string& filename){
-  std::string currentPath = std::filesystem::current_path();
-  std::string absolutePath = currentPath+"/"+filename;
+  std::string currentPath = std::filesystem::current_path().generic_string();
+  std::string absolutePath = currentPath+"/"+filename; 
   std::ifstream file(absolutePath, std::ios::ate | std::ios::binary);
 
   if(!file.is_open()){

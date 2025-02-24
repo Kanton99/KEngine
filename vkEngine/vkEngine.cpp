@@ -513,11 +513,14 @@ mvk::MeshData mvk::vkEngine::uploadMesh(std::span<glm::vec3> vertices, std::span
   const auto indecesDataSize = sizeof(unsigned int)*indeces.size();
 
   mvk::MeshData mesh;
-  vk::BufferUsageFlags vertexFlags = (vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eVertexBuffer);
-  mesh.vertexBuffer = this->_allocateBuffer(vertexDataSize, vertexFlags, vma::AllocationCreateFlagBits::eMapped, vma::MemoryUsage::eGpuOnly);
-
-  vk::BufferUsageFlags indexFlags = (vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eIndexBuffer);
-  mesh.indexBuffer  = this->_allocateBuffer(indecesDataSize, indexFlags, vma::AllocationCreateFlagBits::eMapped,vma::MemoryUsage::eGpuOnly);
+  mesh.vertexBuffer = this->_allocateBuffer(vertexDataSize, 
+      vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eVertexBuffer, 
+      vma::AllocationCreateFlagBits::eMapped, 
+      vma::MemoryUsage::eGpuOnly);
+  mesh.indexBuffer  = this->_allocateBuffer(indecesDataSize, 
+      vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eIndexBuffer,
+      vma::AllocationCreateFlagBits::eMapped,
+      vma::MemoryUsage::eGpuOnly);
 
   mvk::AllocatedBuffer staginBuffer = this->_allocateBuffer(vertexDataSize+indecesDataSize, vk::BufferUsageFlagBits::eTransferSrc, vma::AllocationCreateFlagBits::eMapped, vma::MemoryUsage::eCpuOnly);
 

@@ -7,7 +7,7 @@
     },
   "configurePresets": [
     {
-      "name": "linux-base",
+      "name": "base",
       "hidden": true,
       "generator": "Ninja",
       "binaryDir": "${sourceDir}/out/build/${presetName}",
@@ -18,7 +18,7 @@
     },
     {
       "name": "linux-debug",
-      "inherits": "linux-base",
+      "inherits": "base",
       "cacheVariables": {
         "CMAKE_C_COMPILER": "clang",
         "CMAKE_CXX_COMPILER": "clang++",
@@ -27,11 +27,13 @@
     },
     {
       "name": "windows-debug",
-      "inherits": "linux-base",
+      "inherits": "base",
       "cacheVariables": {
         "CMAKE_C_COMPILER": "cl.exe",
         "CMAKE_CXX_COMPILER": "cl.exe",
-        "CMAKE_BUILD_TYPE": "Debug"
+        "CMAKE_BUILD_TYPE": "Debug"      },
+      "environment": {
+        "PWD": "${sourceDir}/.."
       }
     }
   ]
