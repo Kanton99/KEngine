@@ -11,7 +11,7 @@
 #include <iostream>
 
 int main() {
-  try {
+  /*try {*/
     //setenv("SDL_VIDEODRIVER", "x11", 1);
     if (!SDL_Init(SDL_INIT_VIDEO)) {
       std::cerr << "Failed to init video, Error: " << SDL_GetError()
@@ -73,8 +73,10 @@ int main() {
 
     SDL_DestroyWindow(window);
     SDL_Quit();
-  } catch (const std::exception &e) {
-    std::cerr << e.what() << std::endl;
-  }
+
+  /*} catch (const std::exception &e) {*/
+  /*  std::cerr << e.what() << std::endl;*/
+  /*}*/
+
   return 0;
 }

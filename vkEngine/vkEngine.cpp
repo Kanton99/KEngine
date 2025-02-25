@@ -250,13 +250,13 @@ void mvk::vkEngine::_initSwapchain(uint32_t width, uint32_t height) {
   this->_depthImage.format = vk::Format::eD32Sfloat;
   this->_depthImage.extent.width = width;
   this->_depthImage.extent.height = height;
+  this->_depthImage.extent.depth = 1;
   vk::ImageUsageFlags depthImageUsageFlags = vk::ImageUsageFlagBits::eDepthStencilAttachment;
 
   vk::ImageCreateInfo imageInfo = mvk::imageCreateInfo(this->_depthImage.format, depthImageUsageFlags, this->_depthImage.extent);
   
   vma::AllocationCreateInfo allocCreateInfo{
     .usage = vma::MemoryUsage::eAuto,
-    .requiredFlags = vk::MemoryPropertyFlagBits::eDeviceLocal
   };
 
   auto allocatedImage = this->_allocator.createImage(imageInfo, allocCreateInfo);
