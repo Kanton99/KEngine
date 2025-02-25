@@ -46,11 +46,9 @@ void mvk::vkEngine::init() {
 #if VULKAN_HPP_DISPATCH_LOADER_DYNAMIC == 1
   VULKAN_HPP_DEFAULT_DISPATCHER.init(this->_device);
 #endif // VULKAN_HPP_DEFAULT_DISPATCHER.init(device);
+  //
   int width, height;
   SDL_GetWindowSize(this->_window, &width, &height);
-  //VmaVulkanFunctions vulkanFunctions = {};
-  //vulkanFunctions.vkGetInstanceProcAddr = &vkGetInstanceProcAddr;
-  //vulkanFunctions.vkGetDeviceProcAddr = &vkGetDeviceProcAddr;
 
   vma::VulkanFunctions vulkanFunctions{
     .vkGetInstanceProcAddr = &vkGetInstanceProcAddr,
@@ -278,6 +276,7 @@ void mvk::vkEngine::_initSwapchain(uint32_t width, uint32_t height) {
 
   this->_depthImage.imageView = this->_device.createImageView(viewInfo);
 
+  transitionImage(this->_graphicsCommandBuffer, this->_depthImage.image, vk::ImageLayout::eUndefined , vk::ImageLayout::eDepthAttachmentOptimal);
   this->deletionStack.pushFunction([=, this]() {
     this->_device.destroySwapchainKHR(this->graphicSwapchain.swapchain);
 
@@ -314,7 +313,7 @@ void mvk::vkEngine::_initGraphicPipeline(std::vector<vk::DescriptorSetLayout>& l
   pipelineBuilder.enableDepthtest(true, vk::CompareOp::eGreaterOrEqual);
 
   pipelineBuilder.setColorAttachmentFormat(this->graphicSwapchain.format);
-  pipelineBuilder.setDepthFormat(vk::Format::eUndefined);
+  pipelineBuilder.setDepthFormat(_depthImage.format);
 
   pipelineBuilder.setRenderPass(this->_device);
   _trianglePipeline = pipelineBuilder.buildPipeline(this->_device);
@@ -454,7 +453,7 @@ void mvk::vkEngine::_recordCommandBuffer(vk::CommandBuffer commandBuffer, uint32
     .color = color_value
   };
 
-  vk::RenderPassBeginInfo render_pass_info{
+  vk::RenderPassBeginInfo renderPassBeginInfo{
     .renderPass = this->_renderPass,
     .framebuffer = this->graphicSwapchain.frameBuffers[imageIndex],
     .renderArea = {
@@ -465,7 +464,7 @@ void mvk::vkEngine::_recordCommandBuffer(vk::CommandBuffer commandBuffer, uint32
     .pClearValues = &clear_color
   };
 
-  commandBuffer.beginRenderPass(render_pass_info, vk::SubpassContents::eInline);
+  commandBuffer.beginRenderPass(renderPassBeginInfo, vk::SubpassContents::eInline);
 
   commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, this->_trianglePipeline);
 
@@ -545,6 +544,7 @@ mvk::AllocatedBuffer mvk::vkEngine::_allocateBuffer(size_t size, vk::BufferUsage
 
 void mvk::vkEngine::_destroyBuffer(const mvk::AllocatedBuffer& buffer){
   this->_allocator.destroyBuffer(buffer.buffer, buffer.allocation); 
+  this->_allocator.freeMemory(buffer.allocation);
 }
 
 mvk::MeshData mvk::vkEngine::uploadMesh(std::span<glm::vec3> vertices, std::span<unsigned int> indeces){

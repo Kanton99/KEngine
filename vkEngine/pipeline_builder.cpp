@@ -1,9 +1,8 @@
 #include "pipeline_builder.hpp"
-#include <array>
-#include <cstddef>
 #include <cstdint>
 #include <glm/common.hpp>
 #include <glm/fwd.hpp>
+#include <vector>
 #include <vulkan/vulkan.hpp>
 #include "init.hpp"
 
@@ -163,7 +162,7 @@ void PipelineBuilder::enableDepthtest(bool depthWriteEnable, vk::CompareOp op)
 
 
 void PipelineBuilder::setRenderPass(vk::Device device){
-  vk::AttachmentDescription color_attachment{
+  vk::AttachmentDescription colorAttachment{
     .format = _colorAttachmentFormat,
     .samples = vk::SampleCountFlagBits::e1,
 
@@ -182,17 +181,34 @@ void PipelineBuilder::setRenderPass(vk::Device device){
     .layout = vk::ImageLayout::eColorAttachmentOptimal
   };
 
+  vk::AttachmentDescription depthAttachment{
+    .format = _renderingInfo.depthAttachmentFormat,
+    .samples = vk::SampleCountFlagBits::e1,
+    .loadOp = vk::AttachmentLoadOp::eClear,
+    .storeOp = vk::AttachmentStoreOp::eDontCare,
+    .stencilLoadOp = vk::AttachmentLoadOp::eDontCare,
+    .stencilStoreOp = vk::AttachmentStoreOp::eDontCare,
+    .initialLayout = vk::ImageLayout::eUndefined,
+    .finalLayout = vk::ImageLayout::eDepthAttachmentOptimal,
+  };
+
+  vk::AttachmentReference depthAttachmentRef{
+    .attachment = 0,
+    .layout = vk::ImageLayout::eDepthAttachmentOptimal
+  };
+
   vk::SubpassDescription subpass{
     .pipelineBindPoint = vk::PipelineBindPoint::eGraphics,
     .colorAttachmentCount = 1,
-    .pColorAttachments = &colorAttachmentRef
+    .pColorAttachments = &colorAttachmentRef,
+    .pDepthStencilAttachment = &depthAttachmentRef
   };
 
+  std::vector<vk::AttachmentDescription> attachments = {colorAttachment, depthAttachment};
   vk::RenderPassCreateInfo renderPassInfo{
-    .attachmentCount = 1,
-    .pAttachments = &color_attachment,
+    .pAttachments = attachments.data(),
     .subpassCount = 1,
-    .pSubpasses = &subpass
+    .pSubpasses = &subpass,
   };
 
   _renderPass = device.createRenderPass(renderPassInfo);
