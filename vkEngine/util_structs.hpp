@@ -36,6 +36,14 @@ struct AllocatedBuffer{
   vma::AllocationInfo allocationInfo;
 };
 
+struct AllocatedImage{
+  vk::Image image;
+  vk::ImageView imageView;
+  vk::Extent3D extent;
+  vk::Format format;
+  vma::Allocation allocation;
+};
+
 struct DescriptorObject {
     vk::DescriptorSet descriptor;
     vk::DescriptorSetLayout layout;

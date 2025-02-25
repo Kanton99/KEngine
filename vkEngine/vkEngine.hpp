@@ -22,7 +22,7 @@ private: // Methods
   void _initVulkan();
 
   void _initSwapchain(uint32_t width, uint32_t height);
-  void _initCommandPool(int queueFamilyIndex);
+  void _initCommandPool(uint32_t queueFamilyIndex);
   void _allocateCommandBuffer(vk::CommandBuffer& buffer);
   void immediateSubmit(std::function<void(vk::CommandBuffer cmd)>&& function);
   void _recordCommandBuffer(vk::CommandBuffer commandBuffer, uint32_t imageIndex);
@@ -70,6 +70,9 @@ private: // Members
 
   mvk::SwapChain graphicSwapchain;
   vk::Extent2D swapchainExtent;
+
+  //Depth testing
+  mvk::AllocatedImage _depthImage;
 
   vk::RenderPass _renderPass;
   //temporary

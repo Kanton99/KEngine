@@ -1,9 +1,11 @@
 #include <glm/fwd.hpp>
+#include <stdexcept>
 #define VMA_IMPLEMENTATION
 #include "vkEngine.hpp"
 #include "utils.hpp"
 #include "init.hpp"
 #include "pipeline_builder.hpp"
+#include "infoCreator.hpp"
 #include <SDL3/SDL_vulkan.h>
 #include <VkBootstrap.h>
 #include <cstdint>
@@ -63,7 +65,7 @@ void mvk::vkEngine::init() {
   };
   this->_allocator = vma::createAllocator(allocatorInfo);
 
-  this->_initSwapchain(width, height);
+  this->_initSwapchain(static_cast<uint32_t>(width), static_cast<uint32_t>(height));
   this->_initCommandPool(this->_graphicsQueueIndex);
   this->_allocateCommandBuffer(this->_graphicsCommandBuffer);
   this->_initDescriptorPool(1);
@@ -79,7 +81,7 @@ void mvk::vkEngine::init() {
 }
 
 void mvk::vkEngine::draw(){
-  auto ret = this->_device.waitForFences(this->inFlightFence, vk::True, UINT64_MAX);
+  this->_device.waitForFences(this->inFlightFence, vk::True, UINT64_MAX);
   this->_device.resetFences(this->inFlightFence);
 
   uint32_t imageIndex = this->_device.acquireNextImageKHR(this->graphicSwapchain.swapchain, UINT64_MAX, this->_imageAvailableSempahore).value;
@@ -177,7 +179,8 @@ void mvk::vkEngine::_initVulkan() {
   };
   vkb::PhysicalDevice vkbPhysDevice =
       selector.set_minimum_version(1, 1)
-          .set_surface(static_cast<VkSurfaceKHR>(this->_surface)).set_required_features_13(static_cast<VkPhysicalDeviceVulkan13Features>(features_13))
+          .set_surface(static_cast<VkSurfaceKHR>(this->_surface))
+          .set_required_features_13(static_cast<VkPhysicalDeviceVulkan13Features>(features_13))
           .select()
           .value();
 
@@ -194,7 +197,7 @@ void mvk::vkEngine::_initVulkan() {
   this->deletionStack.pushFunction([=, this]() { this->_device.destroy(); });
 }
 
-void mvk::vkEngine::_initCommandPool(int queueFamilyIndex) {
+void mvk::vkEngine::_initCommandPool(uint32_t queueFamilyIndex) {
   vk::CommandPoolCreateInfo poolInfo{
     .flags = vk::CommandPoolCreateFlagBits::eResetCommandBuffer,
     .queueFamilyIndex = (uint32_t) queueFamilyIndex
@@ -243,6 +246,38 @@ void mvk::vkEngine::_initSwapchain(uint32_t width, uint32_t height) {
   
   this->swapchainExtent = vkbSwapchain.extent;
 
+  //Creating Depth testing image
+  this->_depthImage.format = vk::Format::eD32Sfloat;
+  this->_depthImage.extent.width = width;
+  this->_depthImage.extent.height = height;
+  vk::ImageUsageFlags depthImageUsageFlags = vk::ImageUsageFlagBits::eDepthStencilAttachment;
+
+  vk::ImageCreateInfo imageInfo = mvk::imageCreateInfo(this->_depthImage.format, depthImageUsageFlags, this->_depthImage.extent);
+  
+  vma::AllocationCreateInfo allocCreateInfo{
+    .usage = vma::MemoryUsage::eAuto,
+    .requiredFlags = vk::MemoryPropertyFlagBits::eDeviceLocal
+  };
+
+  auto allocatedImage = this->_allocator.createImage(imageInfo, allocCreateInfo);
+  this->_depthImage.image = allocatedImage.first;
+  this->_depthImage.allocation = allocatedImage.second;
+
+  vk::ImageViewCreateInfo viewInfo{
+    .image = this->_depthImage.image,
+    .viewType = vk::ImageViewType::e2D,
+    .format = this->_depthImage.format,
+    .subresourceRange = {
+      .aspectMask = vk::ImageAspectFlagBits::eDepth,
+      .baseMipLevel = 0,
+      .levelCount = 1,
+      .baseArrayLayer = 0,
+      .layerCount = 1,
+    }
+  };
+
+  this->_depthImage.imageView = this->_device.createImageView(viewInfo);
+
   this->deletionStack.pushFunction([=, this]() {
     this->_device.destroySwapchainKHR(this->graphicSwapchain.swapchain);
 
@@ -250,6 +285,9 @@ void mvk::vkEngine::_initSwapchain(uint32_t width, uint32_t height) {
          i++) {
       this->_device.destroyImageView(this->graphicSwapchain.imageViews[i]);
     }
+
+    this->_device.destroyImageView(this->_depthImage.imageView);
+    this->_allocator.destroyImage(this->_depthImage.image, this->_depthImage.allocation);
   });
 }
 
@@ -529,7 +567,7 @@ mvk::MeshData mvk::vkEngine::uploadMesh(std::span<glm::vec3> vertices, std::span
 
   memcpy(data, vertices.data(), vertexDataSize);
   memcpy((char*)data + vertexDataSize, indeces.data(), indecesDataSize);
-  mesh.indexCount = indeces.size();
+  mesh.indexCount = static_cast<uint32_t>(indeces.size());
 
   immediateSubmit([&](vk::CommandBuffer cmd){
     vk::BufferCopy vertexCopy{

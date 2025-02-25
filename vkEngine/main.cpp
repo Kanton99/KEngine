@@ -1,5 +1,6 @@
 #include <SDL3/SDL_system.h>
 #include <array>
+#include <cstdint>
 #include <exception>
 #include <glm/fwd.hpp>
 #define SDL_MAIN_HANDLED
@@ -41,18 +42,19 @@ int main() {
       glm::vec3(-1,-1,-1),
       glm::vec3(1,-1,-1),
     };
-    std::array<unsigned int, 3*2*6> indeces{0,1,2,
-											2,1,3,
-											5,1,7,
-											7,1,3,
-                                            4,5,6,
-                                            6,5,7,
-        0,1,4,
-        4,1,5,
-        0,4,2,
-        2,4,6,
-        6,7,2,
-        2,7,3,
+    std::array<unsigned int, 3*2*6> indeces{
+      0,1,2,
+      2,1,3,
+      5,1,7,
+      7,1,3,
+      4,5,6,
+      6,5,7,
+      0,1,4,
+      4,1,5,
+      0,4,2,
+      2,4,6,
+      6,7,2,
+      2,7,3
     };
     engine->tmpMesh = engine->uploadMesh(quad, indeces);
 
@@ -64,7 +66,7 @@ int main() {
         if(event.type == SDL_EVENT_QUIT) running = false;
       }
       engine->draw();
-      SDL_Delay((1.f/60.f)*1000);
+      SDL_Delay(static_cast<uint32_t>(1.f/60.f)*1000);
     }
 
     engine->cleanup();

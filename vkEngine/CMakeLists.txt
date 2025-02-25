@@ -11,7 +11,7 @@ find_package(unofficial-vulkan-memory-allocator-hpp CONFIG REQUIRED)
 find_package(VulkanHeaders CONFIG)
 find_package(vk-bootstrap CONFIG REQUIRED)
 
-add_executable(${PROJECT_NAME} main.cpp "vkEngine.hpp" "vkEngine.cpp" "util_structs.hpp" "utils.hpp" "pipeline_builder.hpp" "pipeline_builder.cpp" "init.hpp" "init.cpp")
+add_executable(${PROJECT_NAME} main.cpp "vkEngine.hpp" "vkEngine.cpp" "util_structs.hpp" "utils.hpp" "pipeline_builder.hpp" "pipeline_builder.cpp" "init.hpp" "init.cpp" "infoCreator.hpp" "infoCreator.cpp")
 
 target_link_libraries(${PROJECT_NAME} PRIVATE SDL3::SDL3)
 target_link_libraries(${PROJECT_NAME} PRIVATE glm::glm)
