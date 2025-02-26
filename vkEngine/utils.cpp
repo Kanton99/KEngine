@@ -1,11 +1,12 @@
 #include "utils.hpp"
+#include <array>
 #include <filesystem>
 #include <iostream>
 #include <cstdint>
 #include <fstream>
 #include <stdexcept>
 
-vk::ShaderModule createShaderModule(const std::vector<char> shader,
+vk::ShaderModule mvk::utils::createShaderModule(const std::vector<char> shader,
                                     const vk::Device device) {
   vk::ShaderModuleCreateInfo shaderModCreateInfo;
   shaderModCreateInfo.setCodeSize(shader.size());
@@ -16,8 +17,8 @@ vk::ShaderModule createShaderModule(const std::vector<char> shader,
   return module;
 }
 
-void transitionImage(vk::CommandBuffer cmd, vk::Image image, vk::ImageLayout src,
-                     vk::ImageLayout dst) {
+void mvk::utils::transitionImage(vk::CommandBuffer cmd, vk::Image image, vk::ImageLayout oldLayout,
+                     vk::ImageLayout newLayout) {
   vk::ImageMemoryBarrier2 imageBarrier{
     .srcStageMask = vk::PipelineStageFlagBits2::eAllCommands,
     .srcAccessMask = vk::AccessFlagBits2::eMemoryWrite,
@@ -25,30 +26,31 @@ void transitionImage(vk::CommandBuffer cmd, vk::Image image, vk::ImageLayout src
     .dstAccessMask =
         vk::AccessFlagBits2::eMemoryWrite | vk::AccessFlagBits2::eMemoryRead,
 
-    .oldLayout = src,
-    .newLayout = dst,
+    .oldLayout = oldLayout,
+    .newLayout = newLayout,
     .image = image,
   };
 
-  vk::ImageAspectFlags aspectMask = (dst == vk::ImageLayout::eDepthAttachmentOptimal) ? vk::ImageAspectFlagBits::eDepth : vk::ImageAspectFlagBits::eColor;
+  vk::ImageAspectFlags aspectMask = (newLayout == vk::ImageLayout::eDepthAttachmentOptimal) ? vk::ImageAspectFlagBits::eDepth : vk::ImageAspectFlagBits::eColor;
 
-  vk::ImageSubresourceRange subResourceRange{
+  imageBarrier.subresourceRange = {
     .aspectMask = aspectMask,
     .baseMipLevel = 0,
     .levelCount = vk::RemainingMipLevels,
     .baseArrayLayer = 0,
     .layerCount = vk::RemainingArrayLayers
   };
-  imageBarrier.subresourceRange = subResourceRange;
 
-  vk::DependencyInfo depInfo{
-    .pImageMemoryBarriers = &imageBarrier
+  std::array<vk::ImageMemoryBarrier2, 1> memoryBarriers = {imageBarrier};
+  vk::DependencyInfoKHR depInfo{
+    .imageMemoryBarrierCount = static_cast<uint32_t>(memoryBarriers.size()),
+    .pImageMemoryBarriers = memoryBarriers.data(),
   };
 
   cmd.pipelineBarrier2(depInfo);
 }
 
-std::vector<char> readFile(const std::string &filename) {
+std::vector<char> mvk::utils::readFile(const std::string &filename) {
   std::string currentPath = std::filesystem::current_path().generic_string();
   std::string absolutePath = currentPath + "/" + filename;
   std::ifstream file(absolutePath, std::ios::ate | std::ios::binary);
@@ -69,3 +71,35 @@ std::vector<char> readFile(const std::string &filename) {
   return buffer;
 }
 
+void mvk::utils::copyImageToImage(vk::CommandBuffer cmd, vk::Image source, vk::Image destination, vk::Extent2D srcSize, vk::Extent2D dstSize){
+  vk::ImageBlit2 blitRegion{
+    .srcSubresource = {
+      .aspectMask = vk::ImageAspectFlagBits::eColor,
+      .layerCount = 1,
+    },
+    .dstSubresource = {
+      .aspectMask = vk::ImageAspectFlagBits::eColor,
+      .layerCount = 1,
+    }
+  };
+
+  blitRegion.srcOffsets[1].x = srcSize.width;
+  blitRegion.srcOffsets[1].y = srcSize.height;
+  blitRegion.srcOffsets[1].z = 1;
+
+  blitRegion.dstOffsets[1].x = dstSize.width;
+  blitRegion.dstOffsets[1].y = dstSize.height;
+  blitRegion.dstOffsets[1].z = 1;
+
+  vk::BlitImageInfo2 blitInfo{
+    .srcImage = source,
+    .srcImageLayout = vk::ImageLayout::eTransferSrcOptimal,
+    .dstImage = destination,
+    .dstImageLayout = vk::ImageLayout::eTransferDstOptimal,
+    .regionCount = 1,
+    .pRegions = &blitRegion,
+    .filter = vk::Filter::eLinear,
+  };
+
+  cmd.blitImage2(blitInfo);
+}

@@ -22,6 +22,8 @@ private: // Methods
   void _initVulkan();
 
   void _initSwapchain(uint32_t width, uint32_t height);
+  void _createDrawImage();
+
   void _initCommandPool(uint32_t queueFamilyIndex);
   void _allocateCommandBuffer(vk::CommandBuffer& buffer);
   void immediateSubmit(std::function<void(vk::CommandBuffer cmd)>&& function);
@@ -68,8 +70,9 @@ private: // Members
   vk::CommandBuffer _immediateCommandBuffer;
   vk::Fence immediateFence;
 
-  mvk::SwapChain graphicSwapchain;
+  mvk::SwapChain _graphicSwapchain;
   vk::Extent2D swapchainExtent;
+  mvk::AllocatedImage _drawImage;
 
   //Depth testing
   mvk::AllocatedImage _depthImage;

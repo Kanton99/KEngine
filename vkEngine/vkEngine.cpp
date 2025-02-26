@@ -1,5 +1,5 @@
+#include <array>
 #include <glm/fwd.hpp>
-#include <stdexcept>
 #define VMA_IMPLEMENTATION
 #include "vkEngine.hpp"
 #include "utils.hpp"
@@ -82,10 +82,9 @@ void mvk::vkEngine::draw(){
   this->_device.waitForFences(this->inFlightFence, vk::True, UINT64_MAX);
   this->_device.resetFences(this->inFlightFence);
 
-  uint32_t imageIndex = this->_device.acquireNextImageKHR(this->graphicSwapchain.swapchain, UINT64_MAX, this->_imageAvailableSempahore).value;
+  uint32_t imageIndex = this->_device.acquireNextImageKHR(this->_graphicSwapchain.swapchain, UINT64_MAX, this->_imageAvailableSempahore).value;
 
   this->_graphicsCommandBuffer.reset();
-  transitionImage(this->_graphicsCommandBuffer, this->_depthImage.image, vk::ImageLayout::eUndefined, vk::ImageLayout::eDepthAttachmentOptimal);
 
   this->_recordCommandBuffer(this->_graphicsCommandBuffer, imageIndex);
 
@@ -107,7 +106,7 @@ void mvk::vkEngine::draw(){
       .waitSemaphoreCount = 1,
       .pWaitSemaphores = signalSemaphores,
       .swapchainCount = 1,
-      .pSwapchains = &this->graphicSwapchain.swapchain,
+      .pSwapchains = &this->_graphicSwapchain.swapchain,
       .pImageIndices = &imageIndex
   };
   this->_graphicsQueue.presentKHR(prensetInfo);
@@ -178,7 +177,7 @@ void mvk::vkEngine::_initVulkan() {
     .dynamicRendering = true,
   };
   vkb::PhysicalDevice vkbPhysDevice =
-      selector.set_minimum_version(1, 1)
+      selector.set_minimum_version(1, 3)
           .set_surface(static_cast<VkSurfaceKHR>(this->_surface))
           .set_required_features_13(static_cast<VkPhysicalDeviceVulkan13Features>(features_13))
           .select()
@@ -218,31 +217,35 @@ void mvk::vkEngine::_initSwapchain(uint32_t width, uint32_t height) {
       static_cast<VkDevice>(this->_device),
       static_cast<VkSurfaceKHR>(this->_surface)};
 
+
+  vk::ImageUsageFlags swapchainUsageFlags = vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eTransferDst;
+
   vkb::Swapchain vkbSwapchain =
       swapchainBuilder
           .use_default_format_selection()
           // use vsync present mode
           .set_desired_present_mode(VK_PRESENT_MODE_FIFO_KHR)
           .set_desired_extent(width, height)
+          .set_image_usage_flags(static_cast<VkImageUsageFlags>(swapchainUsageFlags))
           .build()
           .value();
 
   // store swapchain and its related images
-  this->graphicSwapchain.swapchain = vkbSwapchain.swapchain;
+  this->_graphicSwapchain.swapchain = vkbSwapchain.swapchain;
   auto _swapchainImages = vkbSwapchain.get_images().value();
   auto _swapchainImageViews = vkbSwapchain.get_image_views().value();
 
-  this->graphicSwapchain.images.reserve(_swapchainImages.size());
+  this->_graphicSwapchain.images.reserve(_swapchainImages.size());
   for (auto image : _swapchainImages) {
-    this->graphicSwapchain.images.emplace_back(vk::Image(image));
+    this->_graphicSwapchain.images.emplace_back(vk::Image(image));
   }
 
-  this->graphicSwapchain.imageViews.reserve(_swapchainImageViews.size());
+  this->_graphicSwapchain.imageViews.reserve(_swapchainImageViews.size());
   for (auto image : _swapchainImageViews) {
-    this->graphicSwapchain.imageViews.emplace_back(vk::ImageView(image));
+    this->_graphicSwapchain.imageViews.emplace_back(vk::ImageView(image));
   }
 
-  this->graphicSwapchain.format = vk::Format(vkbSwapchain.image_format);
+  this->_graphicSwapchain.format = vk::Format(vkbSwapchain.image_format);
   
   this->swapchainExtent = vkbSwapchain.extent;
 
@@ -253,7 +256,7 @@ void mvk::vkEngine::_initSwapchain(uint32_t width, uint32_t height) {
   this->_depthImage.extent.depth = 1;
   vk::ImageUsageFlags depthImageUsageFlags = vk::ImageUsageFlagBits::eDepthStencilAttachment;
 
-  vk::ImageCreateInfo imageInfo = mvk::imageCreateInfo(this->_depthImage.format, depthImageUsageFlags, this->_depthImage.extent);
+  vk::ImageCreateInfo imageInfo = mvk::utils::imageCreateInfo(this->_depthImage.format, depthImageUsageFlags, this->_depthImage.extent);
   
   vma::AllocationCreateInfo allocCreateInfo{
     .usage = vma::MemoryUsage::eAuto,
@@ -263,27 +266,18 @@ void mvk::vkEngine::_initSwapchain(uint32_t width, uint32_t height) {
   this->_depthImage.image = allocatedImage.first;
   this->_depthImage.allocation = allocatedImage.second;
 
-  vk::ImageViewCreateInfo viewInfo{
-    .image = this->_depthImage.image,
-    .viewType = vk::ImageViewType::e2D,
-    .format = this->_depthImage.format,
-    .subresourceRange = {
-      .aspectMask = vk::ImageAspectFlagBits::eDepth,
-      .baseMipLevel = 0,
-      .levelCount = 1,
-      .baseArrayLayer = 0,
-      .layerCount = 1,
-    }
-  };
+  vk::ImageViewCreateInfo viewInfo = mvk::utils::imageViewCreateInfo(this->_depthImage.format, this->_depthImage.image, vk::ImageAspectFlagBits::eDepth);
 
   this->_depthImage.imageView = this->_device.createImageView(viewInfo);
+
+  this->_createDrawImage();
   
   this->deletionStack.pushFunction([=, this]() {
-    this->_device.destroySwapchainKHR(this->graphicSwapchain.swapchain);
+    this->_device.destroySwapchainKHR(this->_graphicSwapchain.swapchain);
 
-    for (unsigned long i = 0; i < this->graphicSwapchain.imageViews.size();
+    for (unsigned long i = 0; i < this->_graphicSwapchain.imageViews.size();
          i++) {
-      this->_device.destroyImageView(this->graphicSwapchain.imageViews[i]);
+      this->_device.destroyImageView(this->_graphicSwapchain.imageViews[i]);
     }
 
     this->_device.destroyImageView(this->_depthImage.imageView);
@@ -291,12 +285,45 @@ void mvk::vkEngine::_initSwapchain(uint32_t width, uint32_t height) {
   });
 }
 
-void mvk::vkEngine::_initGraphicPipeline(std::vector<vk::DescriptorSetLayout>& layouts) {
-  auto vertShaderCode = readFile("resources/shaders/compiled/vert.spv");
-  auto fragShaderCode = readFile("resources/shaders/compiled/frag.spv");
+void mvk::vkEngine::_createDrawImage(){
+  _drawImage.extent  = {
+    this->swapchainExtent.width,
+    this->swapchainExtent.height,
+    1,
+  };
+  
+  _drawImage.format = vk::Format::eR16G16B16A16Sfloat;
+ 
+  vk::ImageUsageFlags drawImageFlags = vk::ImageUsageFlagBits::eTransferSrc |
+                                       vk::ImageUsageFlagBits::eTransferSrc |
+    vk::ImageUsageFlagBits::eStorage | vk::ImageUsageFlagBits::eColorAttachment;
 
-  auto vertModule = createShaderModule(vertShaderCode, this->_device);
-  auto fragModule = createShaderModule(fragShaderCode, this->_device);
+  vk::ImageCreateInfo drawImageInfo = mvk::utils::imageCreateInfo(this->_drawImage.format, drawImageFlags, _drawImage.extent);
+
+  vma::AllocationCreateInfo imageAllocInfo{
+    .usage = vma::MemoryUsage::eGpuOnly,
+    .requiredFlags = vk::MemoryPropertyFlagBits::eDeviceLocal
+  };
+
+  auto imageAllocation = this->_allocator.createImage(drawImageInfo, imageAllocInfo);
+  _drawImage.image = imageAllocation.first;
+  _drawImage.allocation = imageAllocation.second;
+
+  auto imageViewInfo = mvk::utils::imageViewCreateInfo(_drawImage.format, _drawImage.image, vk::ImageAspectFlagBits::eColor);
+  this->_drawImage.imageView = this->_device.createImageView(imageViewInfo);
+
+  this->deletionStack.pushFunction([&](){
+    this->_device.destroyImageView(this->_drawImage.imageView);
+    this->_allocator.destroyImage(this->_drawImage.image,this->_drawImage.allocation);
+  });
+}
+
+void mvk::vkEngine::_initGraphicPipeline(std::vector<vk::DescriptorSetLayout>& layouts) {
+  auto vertShaderCode = utils::readFile("resources/shaders/compiled/vert.spv");
+  auto fragShaderCode = utils::readFile("resources/shaders/compiled/frag.spv");
+
+  auto vertModule = utils::createShaderModule(vertShaderCode, this->_device);
+  auto fragModule = utils::createShaderModule(fragShaderCode, this->_device);
   
   auto pipelineLayoutInfo = vkInit::pipeline_layout_create_info(layouts); 
   this->_trianglePipelineLayout = this->_device.createPipelineLayout(pipelineLayoutInfo);
@@ -313,7 +340,8 @@ void mvk::vkEngine::_initGraphicPipeline(std::vector<vk::DescriptorSetLayout>& l
   //pipelineBuilder.disableDepthtest(); 
   pipelineBuilder.enableDepthtest(true, vk::CompareOp::eGreaterOrEqual);
 
-  pipelineBuilder.setColorAttachmentFormat(this->graphicSwapchain.format);
+  pipelineBuilder.setColorAttachmentFormat(this->_graphicSwapchain.format);
+  pipelineBuilder.setColorAttachmentFormat(this->_drawImage.format);
   pipelineBuilder.setDepthFormat(_depthImage.format);
 
   //pipelineBuilder.setRenderPass(this->_device); 
@@ -331,10 +359,10 @@ void mvk::vkEngine::_initGraphicPipeline(std::vector<vk::DescriptorSetLayout>& l
 }
 
 void mvk::vkEngine::_initFrameBuffers(){
-  this->graphicSwapchain.frameBuffers.resize(this->graphicSwapchain.imageViews.size());
+  this->_graphicSwapchain.frameBuffers.resize(this->_graphicSwapchain.imageViews.size());
 
-  for(size_t i = 0; i < graphicSwapchain.imageViews.size(); i++){
-    vk::ImageView attachments[] = {graphicSwapchain.imageViews[i]};
+  for(size_t i = 0; i < _graphicSwapchain.imageViews.size(); i++){
+    vk::ImageView attachments[] = {_graphicSwapchain.imageViews[i]};
 
     vk::FramebufferCreateInfo framebufferInfo{
       .renderPass = this->_renderPass,
@@ -345,11 +373,11 @@ void mvk::vkEngine::_initFrameBuffers(){
       .layers = 1
     };
 
-    graphicSwapchain.frameBuffers[i] = this->_device.createFramebuffer(framebufferInfo);
+    _graphicSwapchain.frameBuffers[i] = this->_device.createFramebuffer(framebufferInfo);
 
   }
   this->deletionStack.pushFunction([&](){
-    for(auto frameBuffer : graphicSwapchain.frameBuffers)
+    for(auto frameBuffer : _graphicSwapchain.frameBuffers)
       this->_device.destroyFramebuffer(frameBuffer);
   });
 }
@@ -444,10 +472,11 @@ void mvk::vkEngine::_allocateDescriptorSet(mvk::DescriptorObject& descriptorSet)
 }
 
 void mvk::vkEngine::_recordCommandBuffer(vk::CommandBuffer commandBuffer, uint32_t imageIndex){
-  vk::CommandBufferBeginInfo beginInfo{
-    .flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit
-  };
+  vk::CommandBufferBeginInfo beginInfo{};
   commandBuffer.begin(beginInfo);
+
+  mvk::utils::transitionImage(this->_graphicsCommandBuffer, this->_depthImage.image, vk::ImageLayout::eUndefined, vk::ImageLayout::eDepthAttachmentOptimal);
+  mvk::utils::transitionImage(this->_graphicsCommandBuffer, this->_drawImage.image, vk::ImageLayout::eGeneral, vk::ImageLayout::eColorAttachmentOptimal);
 
   vk::RenderingAttachmentInfo depthAttachment{
     .imageView = _depthImage.imageView,
@@ -457,39 +486,35 @@ void mvk::vkEngine::_recordCommandBuffer(vk::CommandBuffer commandBuffer, uint32
     .clearValue = {
       .depthStencil = {
       .depth = 0.f
-}
-}
+      }
+    }
   };
-  vk::RenderingInfoKHR renderInfo{
+
+  std::array<float, 4>clearColor = {0.f};
+  vk::RenderingAttachmentInfo colorAttachment{
+    .imageView = this->_drawImage.imageView,
+    .imageLayout = vk::ImageLayout::eColorAttachmentOptimal,
+    .loadOp = vk::AttachmentLoadOp::eClear,
+    .storeOp = vk::AttachmentStoreOp::eStore,
+    .clearValue = {
+      .color = {clearColor}
+    }
+  };
+
+  vk::RenderingInfo renderInfo{
     .renderArea = {
       .extent = {
       .width = 1600,
       .height = 900
-}
-},
+      }
+    },
     .layerCount = 1,
+    .colorAttachmentCount = 1,
+    .pColorAttachments = &colorAttachment,
     .pDepthAttachment = &depthAttachment,
   };
 
-  commandBuffer.beginRenderingKHR(renderInfo);
-  vk::ClearColorValue color_value{};
-  color_value.setFloat32({0.f,0.f,0.f,0.f});
-  vk::ClearValue clear_color{
-    .color = color_value
-  };
-
-  vk::RenderPassBeginInfo renderPassBeginInfo{
-    .renderPass = this->_renderPass,
-    .framebuffer = this->graphicSwapchain.frameBuffers[imageIndex],
-    .renderArea = {
-          .offset = {0,0},
-          .extent = this->swapchainExtent
-    },
-    .clearValueCount = 1,
-    .pClearValues = &clear_color
-  };
-
-  commandBuffer.beginRenderPass(renderPassBeginInfo, vk::SubpassContents::eInline);
+  commandBuffer.beginRendering(renderInfo);
 
   commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, this->_trianglePipeline);
 
@@ -522,10 +547,15 @@ void mvk::vkEngine::_recordCommandBuffer(vk::CommandBuffer commandBuffer, uint32
   /*commandBuffer.draw(3, 1, 0, 0);*/
   commandBuffer.drawIndexed(this->tmpMesh.indexCount, 1, 0, 0, 0);
 
-  commandBuffer.endRenderPass();
+  commandBuffer.endRendering();
+  
+  mvk::utils::transitionImage(this->_graphicsCommandBuffer, this->_drawImage.image, vk::ImageLayout::eColorAttachmentOptimal, vk::ImageLayout::eTransferSrcOptimal);
+  mvk::utils::transitionImage(this->_graphicsCommandBuffer, this->_graphicSwapchain.images[imageIndex], vk::ImageLayout::eGeneral, vk::ImageLayout::eTransferDstOptimal);
 
-  commandBuffer.endRenderingKHR();
+  vk::Extent2D drawImageExtent{this->_drawImage.extent.width, this->_drawImage.extent.height};
+  utils::copyImageToImage(commandBuffer, this->_drawImage.image, this->_graphicSwapchain.images[imageIndex], drawImageExtent, this->swapchainExtent);
 
+  utils::transitionImage(commandBuffer, this->_graphicSwapchain.images[imageIndex],vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout::ePresentSrcKHR);
   commandBuffer.end();
 }
 
