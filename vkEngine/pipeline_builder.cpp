@@ -147,6 +147,7 @@ void PipelineBuilder::disableDepthtest(){
   _depthStencil.minDepthBounds = 0.f;
   _depthStencil.maxDepthBounds = 1.f;
 }
+
 void PipelineBuilder::enableDepthtest(bool depthWriteEnable, vk::CompareOp op)
 {
     _depthStencil.depthTestEnable = VK_TRUE;
@@ -181,30 +182,13 @@ void PipelineBuilder::setRenderPass(vk::Device device){
     .layout = vk::ImageLayout::eColorAttachmentOptimal
   };
 
-  vk::AttachmentDescription depthAttachment{
-    .format = _renderingInfo.depthAttachmentFormat,
-    .samples = vk::SampleCountFlagBits::e1,
-    .loadOp = vk::AttachmentLoadOp::eClear,
-    .storeOp = vk::AttachmentStoreOp::eDontCare,
-    .stencilLoadOp = vk::AttachmentLoadOp::eDontCare,
-    .stencilStoreOp = vk::AttachmentStoreOp::eDontCare,
-    .initialLayout = vk::ImageLayout::eUndefined,
-    .finalLayout = vk::ImageLayout::eDepthAttachmentOptimal,
-  };
-
-  vk::AttachmentReference depthAttachmentRef{
-    .attachment = 0,
-    .layout = vk::ImageLayout::eDepthAttachmentOptimal
-  };
-
   vk::SubpassDescription subpass{
     .pipelineBindPoint = vk::PipelineBindPoint::eGraphics,
     .colorAttachmentCount = 1,
-    .pColorAttachments = &colorAttachmentRef,
-    .pDepthStencilAttachment = &depthAttachmentRef
+    .pColorAttachments = &colorAttachmentRef
   };
 
-  std::vector<vk::AttachmentDescription> attachments = {colorAttachment, depthAttachment};
+  std::vector<vk::AttachmentDescription> attachments = {colorAttachment};
   vk::RenderPassCreateInfo renderPassInfo{
     .pAttachments = attachments.data(),
     .subpassCount = 1,

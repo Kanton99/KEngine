@@ -74,7 +74,7 @@ void mvk::vkEngine::init() {
 
   std::vector<vk::DescriptorSetLayout> layouts = { this->_descriptorSet.layout };
   this->_initGraphicPipeline(layouts);
-  this->_initFrameBuffers();
+  //this->_initFrameBuffers();
   this->_initSynchronizationObjects();
 }
 
@@ -85,6 +85,8 @@ void mvk::vkEngine::draw(){
   uint32_t imageIndex = this->_device.acquireNextImageKHR(this->graphicSwapchain.swapchain, UINT64_MAX, this->_imageAvailableSempahore).value;
 
   this->_graphicsCommandBuffer.reset();
+  transitionImage(this->_graphicsCommandBuffer, this->_depthImage.image, vk::ImageLayout::eUndefined, vk::ImageLayout::eDepthAttachmentOptimal);
+
   this->_recordCommandBuffer(this->_graphicsCommandBuffer, imageIndex);
 
   vk::PipelineStageFlags waitStages[] = {vk::PipelineStageFlagBits::eColorAttachmentOutput};
@@ -96,17 +98,16 @@ void mvk::vkEngine::draw(){
     .commandBufferCount = 1,
     .pCommandBuffers = &this->_graphicsCommandBuffer,
     .signalSemaphoreCount = 1,
-    .pSignalSemaphores = signalSemaphores
+    .pSignalSemaphores = &this->_renderFinishedSemaphore
   };
 
   this->_graphicsQueue.submit(submitInfo, this->inFlightFence);
 
-  vk::SwapchainKHR swapchains[] = {this->graphicSwapchain.swapchain};
   vk::PresentInfoKHR prensetInfo{
       .waitSemaphoreCount = 1,
       .pWaitSemaphores = signalSemaphores,
       .swapchainCount = 1,
-      .pSwapchains = swapchains,
+      .pSwapchains = &this->graphicSwapchain.swapchain,
       .pImageIndices = &imageIndex
   };
   this->_graphicsQueue.presentKHR(prensetInfo);
@@ -174,6 +175,7 @@ void mvk::vkEngine::_initVulkan() {
   vkb::PhysicalDeviceSelector selector{instRet.value()};
   vk::PhysicalDeviceVulkan13Features features_13{
     .synchronization2 = true,
+    .dynamicRendering = true,
   };
   vkb::PhysicalDevice vkbPhysDevice =
       selector.set_minimum_version(1, 1)
@@ -275,8 +277,7 @@ void mvk::vkEngine::_initSwapchain(uint32_t width, uint32_t height) {
   };
 
   this->_depthImage.imageView = this->_device.createImageView(viewInfo);
-
-  transitionImage(this->_graphicsCommandBuffer, this->_depthImage.image, vk::ImageLayout::eUndefined , vk::ImageLayout::eDepthAttachmentOptimal);
+  
   this->deletionStack.pushFunction([=, this]() {
     this->_device.destroySwapchainKHR(this->graphicSwapchain.swapchain);
 
@@ -315,16 +316,16 @@ void mvk::vkEngine::_initGraphicPipeline(std::vector<vk::DescriptorSetLayout>& l
   pipelineBuilder.setColorAttachmentFormat(this->graphicSwapchain.format);
   pipelineBuilder.setDepthFormat(_depthImage.format);
 
-  pipelineBuilder.setRenderPass(this->_device);
+  //pipelineBuilder.setRenderPass(this->_device); 
   _trianglePipeline = pipelineBuilder.buildPipeline(this->_device);
-  this->_renderPass = pipelineBuilder._renderPass;
+  //this->_renderPass = pipelineBuilder._renderPass; 
 
   this->_device.destroyShaderModule(vertModule);
   this->_device.destroyShaderModule(fragModule);
 
   this->deletionStack.pushFunction([&](){
     this->_device.destroyPipelineLayout(this->_trianglePipelineLayout);
-    this->_device.destroyRenderPass(this->_renderPass);
+    //this->_device.destroyRenderPass(this->_renderPass);
     this->_device.destroyPipeline(this->_trianglePipeline);
   });
 }
@@ -444,9 +445,33 @@ void mvk::vkEngine::_allocateDescriptorSet(mvk::DescriptorObject& descriptorSet)
 
 void mvk::vkEngine::_recordCommandBuffer(vk::CommandBuffer commandBuffer, uint32_t imageIndex){
   vk::CommandBufferBeginInfo beginInfo{
-    
+    .flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit
   };
   commandBuffer.begin(beginInfo);
+
+  vk::RenderingAttachmentInfo depthAttachment{
+    .imageView = _depthImage.imageView,
+    .imageLayout = vk::ImageLayout::eDepthAttachmentOptimal,
+    .loadOp = vk::AttachmentLoadOp::eClear,
+    .storeOp = vk::AttachmentStoreOp::eStore,
+    .clearValue = {
+      .depthStencil = {
+      .depth = 0.f
+}
+}
+  };
+  vk::RenderingInfoKHR renderInfo{
+    .renderArea = {
+      .extent = {
+      .width = 1600,
+      .height = 900
+}
+},
+    .layerCount = 1,
+    .pDepthAttachment = &depthAttachment,
+  };
+
+  commandBuffer.beginRenderingKHR(renderInfo);
   vk::ClearColorValue color_value{};
   color_value.setFloat32({0.f,0.f,0.f,0.f});
   vk::ClearValue clear_color{
@@ -499,6 +524,8 @@ void mvk::vkEngine::_recordCommandBuffer(vk::CommandBuffer commandBuffer, uint32
 
   commandBuffer.endRenderPass();
 
+  commandBuffer.endRenderingKHR();
+
   commandBuffer.end();
 }
 
@@ -544,7 +571,7 @@ mvk::AllocatedBuffer mvk::vkEngine::_allocateBuffer(size_t size, vk::BufferUsage
 
 void mvk::vkEngine::_destroyBuffer(const mvk::AllocatedBuffer& buffer){
   this->_allocator.destroyBuffer(buffer.buffer, buffer.allocation); 
-  this->_allocator.freeMemory(buffer.allocation);
+  //this->_allocator.freeMemory(buffer.allocation);
 }
 
 mvk::MeshData mvk::vkEngine::uploadMesh(std::span<glm::vec3> vertices, std::span<unsigned int> indeces){
