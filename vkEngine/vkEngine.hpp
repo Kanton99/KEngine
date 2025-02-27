@@ -79,8 +79,8 @@ private: // Members
 
   vk::RenderPass _renderPass;
   //temporary
-  vk::PipelineLayout _trianglePipelineLayout;
-  vk::Pipeline _trianglePipeline;
+  vk::PipelineLayout _graphicsPipelineLayout;
+  vk::Pipeline _graphicsPipeline;
 
   //Synchro primitives
   vk::Semaphore _imageAvailableSempahore, _renderFinishedSemaphore;

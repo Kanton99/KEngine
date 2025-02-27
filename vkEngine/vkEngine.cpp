@@ -89,7 +89,6 @@ void mvk::vkEngine::draw(){
   this->_recordCommandBuffer(this->_graphicsCommandBuffer, imageIndex);
 
   vk::PipelineStageFlags waitStages[] = {vk::PipelineStageFlagBits::eColorAttachmentOutput};
-  vk::Semaphore signalSemaphores[] = {this->_renderFinishedSemaphore};
   vk::SubmitInfo submitInfo{
     .waitSemaphoreCount = 1,
     .pWaitSemaphores = &this->_imageAvailableSempahore,
@@ -104,7 +103,7 @@ void mvk::vkEngine::draw(){
 
   vk::PresentInfoKHR prensetInfo{
       .waitSemaphoreCount = 1,
-      .pWaitSemaphores = signalSemaphores,
+      .pWaitSemaphores = &this->_renderFinishedSemaphore,
       .swapchainCount = 1,
       .pSwapchains = &this->_graphicSwapchain.swapchain,
       .pImageIndices = &imageIndex
@@ -254,9 +253,8 @@ void mvk::vkEngine::_initSwapchain(uint32_t width, uint32_t height) {
   this->_depthImage.extent.width = width;
   this->_depthImage.extent.height = height;
   this->_depthImage.extent.depth = 1;
-  vk::ImageUsageFlags depthImageUsageFlags = vk::ImageUsageFlagBits::eDepthStencilAttachment;
 
-  vk::ImageCreateInfo imageInfo = mvk::utils::imageCreateInfo(this->_depthImage.format, depthImageUsageFlags, this->_depthImage.extent);
+  vk::ImageCreateInfo imageInfo = mvk::utils::imageCreateInfo(this->_depthImage.format, vk::ImageUsageFlagBits::eDepthStencilAttachment, this->_depthImage.extent);
   
   vma::AllocationCreateInfo allocCreateInfo{
     .usage = vma::MemoryUsage::eAuto,
@@ -326,11 +324,11 @@ void mvk::vkEngine::_initGraphicPipeline(std::vector<vk::DescriptorSetLayout>& l
   auto fragModule = utils::createShaderModule(fragShaderCode, this->_device);
   
   auto pipelineLayoutInfo = vkInit::pipeline_layout_create_info(layouts); 
-  this->_trianglePipelineLayout = this->_device.createPipelineLayout(pipelineLayoutInfo);
+  this->_graphicsPipelineLayout = this->_device.createPipelineLayout(pipelineLayoutInfo);
 
   PipelineBuilder pipelineBuilder;
 
-  pipelineBuilder._pipelineLayout = _trianglePipelineLayout;
+  pipelineBuilder._pipelineLayout = _graphicsPipelineLayout;
   pipelineBuilder.setShaders(vertModule, fragModule);
   pipelineBuilder.setInputTopology(vk::PrimitiveTopology::eTriangleList);
   pipelineBuilder.setPolygonMode(vk::PolygonMode::eFill);
@@ -339,22 +337,20 @@ void mvk::vkEngine::_initGraphicPipeline(std::vector<vk::DescriptorSetLayout>& l
   pipelineBuilder.disableBlending();
   //pipelineBuilder.disableDepthtest(); 
   pipelineBuilder.enableDepthtest(true, vk::CompareOp::eGreaterOrEqual);
-
-  pipelineBuilder.setColorAttachmentFormat(this->_graphicSwapchain.format);
   pipelineBuilder.setColorAttachmentFormat(this->_drawImage.format);
   pipelineBuilder.setDepthFormat(_depthImage.format);
 
   //pipelineBuilder.setRenderPass(this->_device); 
-  _trianglePipeline = pipelineBuilder.buildPipeline(this->_device);
+  _graphicsPipeline = pipelineBuilder.buildPipeline(this->_device);
   //this->_renderPass = pipelineBuilder._renderPass; 
 
   this->_device.destroyShaderModule(vertModule);
   this->_device.destroyShaderModule(fragModule);
 
   this->deletionStack.pushFunction([&](){
-    this->_device.destroyPipelineLayout(this->_trianglePipelineLayout);
+    this->_device.destroyPipelineLayout(this->_graphicsPipelineLayout);
     //this->_device.destroyRenderPass(this->_renderPass);
-    this->_device.destroyPipeline(this->_trianglePipeline);
+    this->_device.destroyPipeline(this->_graphicsPipeline);
   });
 }
 
@@ -428,7 +424,9 @@ void mvk::vkEngine::updateUbos(mvk::UniformDescriptorObject ubo)
     ubo.model = glm::translate(ubo.model, glm::vec3(0, 0, -5));
     ubo.model = glm::rotate(ubo.model, glm::radians(rotationAngle++), glm::vec3(0,1,0));
 
-    ubo.proj = glm::perspective<float>(glm::radians(60.f), 16.f / 9.f, 2, 20);
+    ubo.proj = glm::perspectiveRH_ZO(glm::radians(45.f), (float)this->_drawImage.extent.width / (float)this->_drawImage.extent.height, 1000.f, 0.1f);
+    ubo.proj[1][1] *= -1;
+
     ubo.view = glm::identity<glm::mat4>();
 
     memcpy(this->_descriptorSet.buffer.allocationInfo.pMappedData, &ubo, sizeof(ubo));
@@ -476,7 +474,7 @@ void mvk::vkEngine::_recordCommandBuffer(vk::CommandBuffer commandBuffer, uint32
   commandBuffer.begin(beginInfo);
 
   mvk::utils::transitionImage(this->_graphicsCommandBuffer, this->_depthImage.image, vk::ImageLayout::eUndefined, vk::ImageLayout::eDepthAttachmentOptimal);
-  mvk::utils::transitionImage(this->_graphicsCommandBuffer, this->_drawImage.image, vk::ImageLayout::eGeneral, vk::ImageLayout::eColorAttachmentOptimal);
+  mvk::utils::transitionImage(this->_graphicsCommandBuffer, this->_drawImage.image, vk::ImageLayout::eUndefined, vk::ImageLayout::eColorAttachmentOptimal);
 
   vk::RenderingAttachmentInfo depthAttachment{
     .imageView = _depthImage.imageView,
@@ -504,8 +502,8 @@ void mvk::vkEngine::_recordCommandBuffer(vk::CommandBuffer commandBuffer, uint32
   vk::RenderingInfo renderInfo{
     .renderArea = {
       .extent = {
-      .width = 1600,
-      .height = 900
+      .width = this->_drawImage.extent.width,
+      .height = this->_drawImage.extent.height
       }
     },
     .layerCount = 1,
@@ -516,13 +514,13 @@ void mvk::vkEngine::_recordCommandBuffer(vk::CommandBuffer commandBuffer, uint32
 
   commandBuffer.beginRendering(renderInfo);
 
-  commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, this->_trianglePipeline);
+  commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, this->_graphicsPipeline);
 
   vk::Viewport viewport{
     .x = 0.f,
     .y = 0.f,
-    .width = static_cast<float>(this->swapchainExtent.width),
-    .height = static_cast<float>(this->swapchainExtent.height),
+    .width = (float)this->_drawImage.extent.width,
+    .height = (float)this->_drawImage.extent.height,
     .minDepth = 0.f,
     .maxDepth = 1.f
   };
@@ -530,7 +528,7 @@ void mvk::vkEngine::_recordCommandBuffer(vk::CommandBuffer commandBuffer, uint32
 
   vk::Rect2D scissors{
     .offset = {0, 0},
-    .extent = swapchainExtent
+    .extent = this->swapchainExtent
   };
 
   commandBuffer.setScissor(0, scissors);
@@ -543,7 +541,7 @@ void mvk::vkEngine::_recordCommandBuffer(vk::CommandBuffer commandBuffer, uint32
 
   commandBuffer.bindIndexBuffer(this->tmpMesh.indexBuffer.buffer, offsets[0], vk::IndexType::eUint32);
 
-  commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, this->_trianglePipelineLayout,0,this->_descriptorSet.descriptor, nullptr);
+  commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, this->_graphicsPipelineLayout,0,this->_descriptorSet.descriptor, nullptr);
   /*commandBuffer.draw(3, 1, 0, 0);*/
   commandBuffer.drawIndexed(this->tmpMesh.indexCount, 1, 0, 0, 0);
 
