@@ -51,7 +51,7 @@ vk::Pipeline PipelineBuilder::buildPipeline(vk::Device device)
     .offset = 0,
   };
   //clear vertexInputStateCreateInfo
-  vk::PipelineVertexInputStateCreateInfo _vertexInputInfo{
+  vk::PipelineVertexInputStateCreateInfo vertexInputInfo{
     .vertexBindingDescriptionCount = 1,
     .pVertexBindingDescriptions = &bindingDescriptor,
     .vertexAttributeDescriptionCount = 1,
@@ -59,12 +59,12 @@ vk::Pipeline PipelineBuilder::buildPipeline(vk::Device device)
   };
   
   //build actual pipeline_builder
-  vk::GraphicsPipelineCreateInfo pipeline_info{
+  vk::GraphicsPipelineCreateInfo pipelineInfo{
     .pNext = &_renderingInfo,
 
     .stageCount = (uint32_t)_shaderStages.size(),
     .pStages = _shaderStages.data(),
-    .pVertexInputState = &_vertexInputInfo,
+    .pVertexInputState = &vertexInputInfo,
     .pInputAssemblyState = &_inputAssembly,
     .pViewportState = &viewportState,
     .pRasterizationState = &_rasterizer,
@@ -72,7 +72,6 @@ vk::Pipeline PipelineBuilder::buildPipeline(vk::Device device)
     .pDepthStencilState = &_depthStencil,
     .pColorBlendState = &colorBlending,
     .layout = _pipelineLayout,
-    .renderPass = _renderPass,
     .subpass = 0
   };
 
@@ -83,9 +82,9 @@ vk::Pipeline PipelineBuilder::buildPipeline(vk::Device device)
     .pDynamicStates = &state[0]
   };
 
-  pipeline_info.pDynamicState = &dynamic_info;
+  pipelineInfo.pDynamicState = &dynamic_info;
 
-  vk::Pipeline pipeline = device.createGraphicsPipeline(VK_NULL_HANDLE, pipeline_info).value;
+  vk::Pipeline pipeline = device.createGraphicsPipeline(VK_NULL_HANDLE, pipelineInfo).value;
 
   return pipeline;
 }

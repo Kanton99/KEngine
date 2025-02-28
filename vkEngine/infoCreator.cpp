@@ -31,3 +31,26 @@ vk::ImageViewCreateInfo mvk::utils::imageViewCreateInfo(vk::Format format, vk::I
 
   return viewInfo;
 }
+
+vk::SemaphoreSubmitInfo mvk::utils::semaphoreSubmitInfo(vk::PipelineStageFlags2 stageMask, vk::Semaphore semaphore){
+  return {
+    .semaphore = semaphore,
+    .value = 1,
+    .stageMask = stageMask,
+  };
+}
+
+vk::SubmitInfo2 mvk::utils::submitInfo(vk::CommandBufferSubmitInfo* cmd, vk::SemaphoreSubmitInfo* signalSemaphore, vk::SemaphoreSubmitInfo* waitSemaphore){
+  vk::SubmitInfo2 info{};
+  info.setCommandBufferInfos(*cmd);
+  if(waitSemaphore != nullptr) info.setWaitSemaphoreInfos(*waitSemaphore);
+  if(signalSemaphore != nullptr) info.setSignalSemaphoreInfos(*signalSemaphore);
+  return info;
+}
+
+vk::CommandBufferSubmitInfo mvk::utils::commandBufferSubmitInfo(vk::CommandBuffer cmd){
+  return {
+    .commandBuffer = cmd,
+    .deviceMask = 0,
+  };
+}

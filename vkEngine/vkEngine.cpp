@@ -62,6 +62,9 @@ void mvk::vkEngine::init() {
       .vulkanApiVersion = vk::ApiVersion13,
   };
   this->_allocator = vma::createAllocator(allocatorInfo);
+  this->deletionStack.pushFunction([&](){
+    this->_allocator.destroy();
+  });
 
   this->_initSwapchain(static_cast<uint32_t>(width), static_cast<uint32_t>(height));
   this->_initCommandPool(this->_graphicsQueueIndex);
@@ -74,7 +77,6 @@ void mvk::vkEngine::init() {
 
   std::vector<vk::DescriptorSetLayout> layouts = { this->_descriptorSet.layout };
   this->_initGraphicPipeline(layouts);
-  //this->_initFrameBuffers();
   this->_initSynchronizationObjects();
 }
 
@@ -88,18 +90,13 @@ void mvk::vkEngine::draw(){
 
   this->_recordCommandBuffer(this->_graphicsCommandBuffer, imageIndex);
 
-  vk::PipelineStageFlags waitStages[] = {vk::PipelineStageFlagBits::eColorAttachmentOutput};
-  vk::SubmitInfo submitInfo{
-    .waitSemaphoreCount = 1,
-    .pWaitSemaphores = &this->_imageAvailableSempahore,
-    .pWaitDstStageMask = waitStages,
-    .commandBufferCount = 1,
-    .pCommandBuffers = &this->_graphicsCommandBuffer,
-    .signalSemaphoreCount = 1,
-    .pSignalSemaphores = &this->_renderFinishedSemaphore
-  };
+  auto cmdSubmitInfo = utils::commandBufferSubmitInfo(this->_graphicsCommandBuffer);
 
-  this->_graphicsQueue.submit(submitInfo, this->inFlightFence);
+  auto signalInfo = utils::semaphoreSubmitInfo(vk::PipelineStageFlagBits2::eColorAttachmentOutput, this->_renderFinishedSemaphore); 
+  auto waitInfo = utils::semaphoreSubmitInfo(vk::PipelineStageFlagBits2::eAllGraphics, this->_imageAvailableSempahore);
+
+  auto submitInfo2 = utils::submitInfo(&cmdSubmitInfo, &signalInfo, &waitInfo);
+  this->_graphicsQueue.submit2(submitInfo2, this->inFlightFence);
 
   vk::PresentInfoKHR prensetInfo{
       .waitSemaphoreCount = 1,
@@ -335,14 +332,11 @@ void mvk::vkEngine::_initGraphicPipeline(std::vector<vk::DescriptorSetLayout>& l
   pipelineBuilder.setCullMode(vk::CullModeFlagBits::eNone, vk::FrontFace::eClockwise);
   pipelineBuilder.setMultisamplingNone();
   pipelineBuilder.disableBlending();
-  //pipelineBuilder.disableDepthtest(); 
   pipelineBuilder.enableDepthtest(true, vk::CompareOp::eGreaterOrEqual);
   pipelineBuilder.setColorAttachmentFormat(this->_drawImage.format);
   pipelineBuilder.setDepthFormat(_depthImage.format);
 
-  //pipelineBuilder.setRenderPass(this->_device); 
   _graphicsPipeline = pipelineBuilder.buildPipeline(this->_device);
-  //this->_renderPass = pipelineBuilder._renderPass; 
 
   this->_device.destroyShaderModule(vertModule);
   this->_device.destroyShaderModule(fragModule);
@@ -461,8 +455,6 @@ void mvk::vkEngine::_allocateDescriptorSet(mvk::DescriptorObject& descriptorSet)
 
     descriptorSet.descriptor = this->_device.allocateDescriptorSets(allocInfo)[0];
 
-    /*descriptorSet.mappedMemory = this->_device.mapMemory(descriptorSet.buffer.allocationInfo.deviceMemory, descriptorSet.buffer.allocationInfo.offset, vk::WholeSize, vk::MemoryMapFlags());*/
-
     this->deletionStack.pushFunction([&]() {
         this->_device.destroyDescriptorSetLayout(descriptorSet.layout);
         this->_device.freeDescriptorSets(this->_descriptorPool, descriptorSet.descriptor);
@@ -473,9 +465,9 @@ void mvk::vkEngine::_recordCommandBuffer(vk::CommandBuffer commandBuffer, uint32
   vk::CommandBufferBeginInfo beginInfo{};
   commandBuffer.begin(beginInfo);
 
-  mvk::utils::transitionImage(this->_graphicsCommandBuffer, this->_depthImage.image, vk::ImageLayout::eUndefined, vk::ImageLayout::eDepthAttachmentOptimal);
-  mvk::utils::transitionImage(this->_graphicsCommandBuffer, this->_drawImage.image, vk::ImageLayout::eUndefined, vk::ImageLayout::eColorAttachmentOptimal);
-
+  utils::transitionImage(commandBuffer, this->_depthImage.image, vk::ImageLayout::eUndefined, vk::ImageLayout::eDepthAttachmentOptimal);
+  utils::transitionImage(commandBuffer, this->_drawImage.image, vk::ImageLayout::eUndefined, vk::ImageLayout::eColorAttachmentOptimal);
+  utils::transitionImage(commandBuffer, this->_graphicSwapchain.images[imageIndex], vk::ImageLayout::eUndefined, vk::ImageLayout::eGeneral);
   vk::RenderingAttachmentInfo depthAttachment{
     .imageView = _depthImage.imageView,
     .imageLayout = vk::ImageLayout::eDepthAttachmentOptimal,
@@ -599,7 +591,6 @@ mvk::AllocatedBuffer mvk::vkEngine::_allocateBuffer(size_t size, vk::BufferUsage
 
 void mvk::vkEngine::_destroyBuffer(const mvk::AllocatedBuffer& buffer){
   this->_allocator.destroyBuffer(buffer.buffer, buffer.allocation); 
-  //this->_allocator.freeMemory(buffer.allocation);
 }
 
 mvk::MeshData mvk::vkEngine::uploadMesh(std::span<glm::vec3> vertices, std::span<unsigned int> indeces){
