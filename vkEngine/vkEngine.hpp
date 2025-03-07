@@ -34,7 +34,7 @@ private: // Methods
   AllocatedBuffer _allocateBuffer(size_t size, vk::BufferUsageFlags usage, vma::AllocationCreateFlags flags,  vma::MemoryUsage memoryUsage);
   void _destroyBuffer(const mvk::AllocatedBuffer& buffer);
 
-  void _initGraphicPipeline(std::vector<vk::DescriptorSetLayout>& layouts);
+  void _initGraphicPipeline(std::span<vk::DescriptorSetLayout> layouts);
 
   void _initFrameBuffers();
 

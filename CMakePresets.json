@@ -29,10 +29,9 @@
       "name": "windows-debug",
       "inherits": "base",
       "cacheVariables": {
-        "CMAKE_C_COMPILER":   "clang",
-        "CMAKE_CXX_COMPILER": "clang++",
-        "CMAKE_BUILD_TYPE": "Debug",
-        "VCPKG_TARGET_TRIPLET": "x64-mingw-dynamic"
+        "CMAKE_C_COMPILER":   "clang-cl.exe",
+        "CMAKE_CXX_COMPILER": "clang-cl.exe",
+        "CMAKE_BUILD_TYPE": "Debug"
       }    
     }
   ]

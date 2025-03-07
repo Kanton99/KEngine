@@ -10,7 +10,7 @@ vk::PipelineShaderStageCreateInfo vkInit::pipeline_shader_stage_create_info(vk::
   return info;
 }
 
-vk::PipelineLayoutCreateInfo vkInit::pipeline_layout_create_info(const std::vector<vk::DescriptorSetLayout>& descritorLayouts){
+vk::PipelineLayoutCreateInfo vkInit::pipeline_layout_create_info(const std::span<vk::DescriptorSetLayout>& descritorLayouts){
     vk::PipelineLayoutCreateInfo info{
       .setLayoutCount = static_cast<uint32_t>(descritorLayouts.size()),
     .pSetLayouts = descritorLayouts.data(),

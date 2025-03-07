@@ -135,7 +135,7 @@ void mvk::vkEngine::_initVulkan() {
   vkb::InstanceBuilder instanceBuilder;
 
   auto instRet = instanceBuilder.set_app_name("My Vulkan App")
-                      .require_api_version(1, 3, 0)
+                      .require_api_version(1, 4, 0)
 #ifndef NDEBUG
                       .request_validation_layers(true)
                       .use_default_debug_messenger()
@@ -320,9 +320,10 @@ void mvk::vkEngine::_initGraphicPipeline(std::span<vk::DescriptorSetLayout> layo
   auto vertModule = utils::createShaderModule(vertShaderCode, this->_device);
   auto fragModule = utils::createShaderModule(fragShaderCode, this->_device);
   
-  vk::PipelineLayoutCreateInfo pipelineLayoutCreateInfo{};
-  pipelineLayoutCreateInfo.setSetLayouts(layouts);
-  this->_graphicsPipelineLayout = this->_device.createPipelineLayout(pipelineLayoutCreateInfo);
+  auto pipelineLayoutInfo = vkInit::pipeline_layout_create_info(layouts); 
+  vk::PipelineLayoutCreateInfo pipelineLayoutInfo2{};
+  pipelineLayoutInfo2.setSetLayouts(layouts);
+  this->_graphicsPipelineLayout = this->_device.createPipelineLayout(pipelineLayoutInfo2);
 
   PipelineBuilder pipelineBuilder;
 
