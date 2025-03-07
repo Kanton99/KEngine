@@ -3,26 +3,27 @@
 #include <vulkan/vulkan.hpp>
 class PipelineBuilder {
 public:
-	std::vector<vk::PipelineShaderStageCreateInfo> _shaderStages;
+  std::vector<vk::PipelineShaderStageCreateInfo> _shaderStages;
 
-	vk::PipelineInputAssemblyStateCreateInfo _inputAssembly;
-	vk::PipelineRasterizationStateCreateInfo _rasterizer;
-	vk::PipelineColorBlendAttachmentState _colorBlendAttachment;
-	vk::PipelineMultisampleStateCreateInfo _multisampling;
-	vk::PipelineLayout _pipelineLayout;
-	vk::PipelineDepthStencilStateCreateInfo _depthStencil;
-	vk::PipelineRenderingCreateInfo _renderingInfo;
-	vk::Format _colorAttachmentFormat;
+  vk::PipelineInputAssemblyStateCreateInfo _inputAssembly;
+  vk::PipelineRasterizationStateCreateInfo _rasterizer;
+  vk::PipelineColorBlendAttachmentState _colorBlendAttachment;
+  vk::PipelineMultisampleStateCreateInfo _multisampling;
+  vk::PipelineLayout _pipelineLayout;
+  vk::PipelineDepthStencilStateCreateInfo _depthStencil;
+  vk::PipelineRenderingCreateInfo _renderingInfo;
+  vk::Format _colorAttachmentFormat;
   vk::RenderPass _renderPass;
-  //TODO Add vertex input
+  // TODO Add vertex input
 
-	PipelineBuilder() { clear(); }
+  PipelineBuilder() { clear(); }
 
-	void clear();
+  void clear();
 
-	vk::Pipeline buildPipeline(vk::Device device);
+  vk::Pipeline buildPipeline(vk::Device device);
 
-  void setShaders(vk::ShaderModule vertexShader, vk::ShaderModule fragmentShader);
+  void setShaders(vk::ShaderModule vertexShader,
+                  vk::ShaderModule fragmentShader);
   void setInputTopology(vk::PrimitiveTopology topology);
   void setPolygonMode(vk::PolygonMode mode);
   void setCullMode(vk::CullModeFlags cullMode, vk::FrontFace frontFace);

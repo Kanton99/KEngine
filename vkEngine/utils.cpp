@@ -1,13 +1,13 @@
 #include "utils.hpp"
 #include <array>
-#include <filesystem>
-#include <iostream>
 #include <cstdint>
+#include <filesystem>
 #include <fstream>
+#include <iostream>
 #include <stdexcept>
 
 vk::ShaderModule mvk::utils::createShaderModule(const std::vector<char> shader,
-                                    const vk::Device device) {
+                                                const vk::Device device) {
   vk::ShaderModuleCreateInfo shaderModCreateInfo;
   shaderModCreateInfo.setCodeSize(shader.size());
   shaderModCreateInfo.setPCode(
@@ -17,34 +17,36 @@ vk::ShaderModule mvk::utils::createShaderModule(const std::vector<char> shader,
   return module;
 }
 
-void mvk::utils::transitionImage(vk::CommandBuffer cmd, vk::Image image, vk::ImageLayout oldLayout,
-                     vk::ImageLayout newLayout) {
+void mvk::utils::transitionImage(vk::CommandBuffer cmd, vk::Image image,
+                                 vk::ImageLayout oldLayout,
+                                 vk::ImageLayout newLayout) {
   vk::ImageMemoryBarrier2 imageBarrier{
-    .srcStageMask = vk::PipelineStageFlagBits2::eAllCommands,
-    .srcAccessMask = vk::AccessFlagBits2::eMemoryWrite,
-    .dstStageMask = vk::PipelineStageFlagBits2::eAllCommands,
-    .dstAccessMask =
-        vk::AccessFlagBits2::eMemoryWrite | vk::AccessFlagBits2::eMemoryRead,
+      .srcStageMask = vk::PipelineStageFlagBits2::eAllCommands,
+      .srcAccessMask = vk::AccessFlagBits2::eMemoryWrite,
+      .dstStageMask = vk::PipelineStageFlagBits2::eAllCommands,
+      .dstAccessMask =
+          vk::AccessFlagBits2::eMemoryWrite | vk::AccessFlagBits2::eMemoryRead,
 
-    .oldLayout = oldLayout,
-    .newLayout = newLayout,
-    .image = image,
+      .oldLayout = oldLayout,
+      .newLayout = newLayout,
+      .image = image,
   };
 
-  vk::ImageAspectFlags aspectMask = (newLayout == vk::ImageLayout::eDepthAttachmentOptimal) ? vk::ImageAspectFlagBits::eDepth : vk::ImageAspectFlagBits::eColor;
+  vk::ImageAspectFlags aspectMask =
+      (newLayout == vk::ImageLayout::eDepthAttachmentOptimal)
+          ? vk::ImageAspectFlagBits::eDepth
+          : vk::ImageAspectFlagBits::eColor;
 
-  imageBarrier.subresourceRange = {
-    .aspectMask = aspectMask,
-    .baseMipLevel = 0,
-    .levelCount = vk::RemainingMipLevels,
-    .baseArrayLayer = 0,
-    .layerCount = vk::RemainingArrayLayers
-  };
+  imageBarrier.subresourceRange = {.aspectMask = aspectMask,
+                                   .baseMipLevel = 0,
+                                   .levelCount = vk::RemainingMipLevels,
+                                   .baseArrayLayer = 0,
+                                   .layerCount = vk::RemainingArrayLayers};
 
   std::array<vk::ImageMemoryBarrier2, 1> memoryBarriers = {imageBarrier};
   vk::DependencyInfoKHR depInfo{
-    .imageMemoryBarrierCount = static_cast<uint32_t>(memoryBarriers.size()),
-    .pImageMemoryBarriers = memoryBarriers.data(),
+      .imageMemoryBarrierCount = static_cast<uint32_t>(memoryBarriers.size()),
+      .pImageMemoryBarriers = memoryBarriers.data(),
   };
 
   cmd.pipelineBarrier2(depInfo);
@@ -71,17 +73,19 @@ std::vector<char> mvk::utils::readFile(const std::string &filename) {
   return buffer;
 }
 
-void mvk::utils::copyImageToImage(vk::CommandBuffer cmd, vk::Image source, vk::Image destination, vk::Extent2D srcSize, vk::Extent2D dstSize){
+void mvk::utils::copyImageToImage(vk::CommandBuffer cmd, vk::Image source,
+                                  vk::Image destination, vk::Extent2D srcSize,
+                                  vk::Extent2D dstSize) {
   vk::ImageBlit2 blitRegion{
-    .srcSubresource = {
-      .aspectMask = vk::ImageAspectFlagBits::eColor,
-      .layerCount = 1,
-    },
-    .dstSubresource = {
-      .aspectMask = vk::ImageAspectFlagBits::eColor,
-      .layerCount = 1,
-    }
-  };
+      .srcSubresource =
+          {
+              .aspectMask = vk::ImageAspectFlagBits::eColor,
+              .layerCount = 1,
+          },
+      .dstSubresource = {
+          .aspectMask = vk::ImageAspectFlagBits::eColor,
+          .layerCount = 1,
+      }};
 
   blitRegion.srcOffsets[1].x = srcSize.width;
   blitRegion.srcOffsets[1].y = srcSize.height;
@@ -92,13 +96,13 @@ void mvk::utils::copyImageToImage(vk::CommandBuffer cmd, vk::Image source, vk::I
   blitRegion.dstOffsets[1].z = 1;
 
   vk::BlitImageInfo2 blitInfo{
-    .srcImage = source,
-    .srcImageLayout = vk::ImageLayout::eTransferSrcOptimal,
-    .dstImage = destination,
-    .dstImageLayout = vk::ImageLayout::eTransferDstOptimal,
-    .regionCount = 1,
-    .pRegions = &blitRegion,
-    .filter = vk::Filter::eLinear,
+      .srcImage = source,
+      .srcImageLayout = vk::ImageLayout::eTransferSrcOptimal,
+      .dstImage = destination,
+      .dstImageLayout = vk::ImageLayout::eTransferDstOptimal,
+      .regionCount = 1,
+      .pRegions = &blitRegion,
+      .filter = vk::Filter::eLinear,
   };
 
   cmd.blitImage2(blitInfo);

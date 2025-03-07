@@ -2,7 +2,7 @@
 #include <glm/glm.hpp>
 #include <vulkan/vulkan.hpp>
 
-struct VectorData{
+struct VectorData {
   glm::vec3 position;
   uint32_t uv_x;
   glm::vec3 normals;
@@ -10,7 +10,7 @@ struct VectorData{
   glm::vec4 colour;
 };
 
-struct GPUBufferDate{
+struct GPUBufferDate {
   mvk::AllocatedBuffer vectorBuffer;
   mvk::AllocatedBuffer indexBuffer;
   vk::DeviceMemory vectorBufferAddress;

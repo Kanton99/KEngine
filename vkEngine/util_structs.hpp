@@ -1,9 +1,9 @@
 #include <functional>
+#include <glm/glm.hpp>
 #include <stack>
 #include <vector>
 #include <vulkan-memory-allocator-hpp/vk_mem_alloc.hpp>
 #include <vulkan/vulkan.hpp>
-#include <glm/glm.hpp>
 
 namespace mvk {
 struct SwapChain {
@@ -30,13 +30,13 @@ struct DeletionStack {
   }
 };
 
-struct AllocatedBuffer{
+struct AllocatedBuffer {
   vk::Buffer buffer;
   vma::Allocation allocation;
   vma::AllocationInfo allocationInfo;
 };
 
-struct AllocatedImage{
+struct AllocatedImage {
   vk::Image image;
   vk::ImageView imageView;
   vk::Extent3D extent;
@@ -45,16 +45,16 @@ struct AllocatedImage{
 };
 
 struct DescriptorObject {
-    vk::DescriptorSet descriptor;
-    vk::DescriptorSetLayout layout;
-    void* mappedMemory;
-    AllocatedBuffer buffer;
+  vk::DescriptorSet descriptor;
+  vk::DescriptorSetLayout layout;
+  void *mappedMemory;
+  AllocatedBuffer buffer;
 };
 
 struct UniformDescriptorObject {
-    glm::mat4 model;
-    glm::mat4 view;
-    glm::mat4 proj;
+  glm::mat4 model;
+  glm::mat4 view;
+  glm::mat4 proj;
 };
 
 struct MeshData {

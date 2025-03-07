@@ -1,9 +1,9 @@
 #pragma once
 #define VULKAN_HPP_NO_CONSTRUCTORS
 #include "util_structs.hpp"
-#include <vulkan/vulkan.hpp>
-#include <vulkan-memory-allocator-hpp/vk_mem_alloc.hpp>
 #include <SDL3/SDL.h>
+#include <vulkan-memory-allocator-hpp/vk_mem_alloc.hpp>
+#include <vulkan/vulkan.hpp>
 
 namespace mvk {
 class vkEngine {
@@ -15,7 +15,9 @@ public:
 
   void cleanup();
 
-  mvk::MeshData uploadMesh(std::span<glm::vec3> vertices, std::span<unsigned int> indeces);
+  mvk::MeshData uploadMesh(std::span<glm::vec3> vertices,
+                           std::span<unsigned int> indeces);
+
 private: // Methods
   vkEngine(SDL_Window *window);
 
@@ -25,14 +27,17 @@ private: // Methods
   void _createDrawImage();
 
   void _initCommandPool(uint32_t queueFamilyIndex);
-  void _allocateCommandBuffer(vk::CommandBuffer& buffer);
-  void immediateSubmit(std::function<void(vk::CommandBuffer cmd)>&& function);
-  void _recordCommandBuffer(vk::CommandBuffer commandBuffer, uint32_t imageIndex);
+  void _allocateCommandBuffer(vk::CommandBuffer &buffer);
+  void immediateSubmit(std::function<void(vk::CommandBuffer cmd)> &&function);
+  void _recordCommandBuffer(vk::CommandBuffer commandBuffer,
+                            uint32_t imageIndex);
 
   void _initSynchronizationObjects();
 
-  AllocatedBuffer _allocateBuffer(size_t size, vk::BufferUsageFlags usage, vma::AllocationCreateFlags flags,  vma::MemoryUsage memoryUsage);
-  void _destroyBuffer(const mvk::AllocatedBuffer& buffer);
+  AllocatedBuffer _allocateBuffer(size_t size, vk::BufferUsageFlags usage,
+                                  vma::AllocationCreateFlags flags,
+                                  vma::MemoryUsage memoryUsage);
+  void _destroyBuffer(const mvk::AllocatedBuffer &buffer);
 
   void _initGraphicPipeline(std::span<vk::DescriptorSetLayout> layouts);
 
@@ -40,13 +45,15 @@ private: // Methods
 
   void _initDescriptorPool(uint32_t size);
   template <typename T>
-  void _allocateDescriptorSet(mvk::DescriptorObject& descriptorSet);
+  void _allocateDescriptorSet(mvk::DescriptorObject &descriptorSet);
 
-  void updateDescriptorSet(mvk::DescriptorObject& descriptor);
-  void updateUbos(mvk::UniformDescriptorObject ubo); //TODO temporary for testing
+  void updateDescriptorSet(mvk::DescriptorObject &descriptor);
+  void
+  updateUbos(mvk::UniformDescriptorObject ubo); // TODO temporary for testing
 
 public:
   mvk::MeshData tmpMesh;
+
 private: // Members
   static vkEngine *_engine;
   mvk::DeletionStack deletionStack;
@@ -74,22 +81,22 @@ private: // Members
   vk::Extent2D swapchainExtent;
   mvk::AllocatedImage _drawImage;
 
-  //Depth testing
+  // Depth testing
   mvk::AllocatedImage _depthImage;
 
   vk::RenderPass _renderPass;
-  //temporary
+  // temporary
   vk::PipelineLayout _graphicsPipelineLayout;
   vk::Pipeline _graphicsPipeline;
 
-  //Synchro primitives
+  // Synchro primitives
   vk::Semaphore _imageAvailableSempahore, _renderFinishedSemaphore;
   vk::Fence inFlightFence;
 
-  //Buffer allocation
+  // Buffer allocation
   vma::Allocator _allocator;
 
-  //Descriptors
+  // Descriptors
   vk::DescriptorPool _descriptorPool;
   mvk::DescriptorObject _descriptorSet;
   mvk::UniformDescriptorObject ubo;
