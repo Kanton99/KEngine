@@ -1,3 +1,6 @@
+#ifndef PIPELINE_BUILDER_HPP
+#define PIPELINE_BUILDER_HPP
+
 #include <vector>
 #define VULKAN_HPP_NO_CONSTRUCTORS
 #include <vulkan/vulkan.hpp>
@@ -35,3 +38,5 @@ public:
   void enableDepthtest(bool depthWriteEnable, vk::CompareOp op);
   void setRenderPass(vk::Device device);
 };
+
+#endif

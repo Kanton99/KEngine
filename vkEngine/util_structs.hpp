@@ -1,7 +1,11 @@
+#ifndef UTIL_STRUCTS_HPP
+#define UTIL_STRUCTS_HPP
+
 #include <functional>
 #include <glm/glm.hpp>
 #include <stack>
 #include <vector>
+#define VMA_IMPLEMENTATION
 #include <vulkan-memory-allocator-hpp/vk_mem_alloc.hpp>
 #include <vulkan/vulkan.hpp>
 
@@ -66,3 +70,5 @@ struct MeshData {
   DescriptorObject descriptor;
 };
 } // namespace mvk
+
+#endif

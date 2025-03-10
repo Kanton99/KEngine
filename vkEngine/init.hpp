@@ -1,3 +1,6 @@
+#ifndef INIT_HPP
+#define INIT_HPP
+
 #define VULKAN_HPP_NO_CONSTRUCTORS
 #include <vulkan/vulkan.hpp>
 
@@ -9,3 +12,5 @@ pipeline_shader_stage_create_info(vk::ShaderStageFlagBits stage,
 vk::PipelineLayoutCreateInfo pipeline_layout_create_info(
     const std::span<vk::DescriptorSetLayout> &descritorLayouts);
 } // namespace vkInit
+//
+#endif

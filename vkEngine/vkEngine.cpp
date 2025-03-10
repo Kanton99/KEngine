@@ -1,8 +1,9 @@
+#define VMA_IMPLEMENTATION
 #include "vkEngine.hpp"
 #include "infoCreator.hpp"
-#include "init.hpp"
 #include "pipeline_builder.hpp"
 #include "utils.hpp"
+#include "meshData.hpp"
 #include <SDL3/SDL_vulkan.h>
 #include <VkBootstrap.h>
 #include <array>
@@ -12,9 +13,6 @@
 #include <glm/fwd.hpp>
 #include <iostream>
 #include <vector>
-#define VMA_IMPLEMENTATION
-#include <vulkan-memory-allocator-hpp/vk_mem_alloc.hpp>
-#include <vulkan/vulkan.hpp>
 
 #if VULKAN_HPP_DISPATCH_LOADER_DYNAMIC == 1
 #ifndef DYNAMIC_LOADER_LOADED
@@ -336,6 +334,11 @@ void mvk::vkEngine::_initGraphicPipeline(
   auto vertModule = utils::createShaderModule(vertShaderCode, this->_device);
   auto fragModule = utils::createShaderModule(fragShaderCode, this->_device);
 
+  vk::PushConstantRange pushRange{
+      .stageFlags = vk::ShaderStageFlagBits::eVertex,
+  };
+  pushRange.setSize(sizeof(GPUDrawPushConstants));
+
   vk::PipelineLayoutCreateInfo pipelineLayoutCreateInfo{};
   pipelineLayoutCreateInfo.setSetLayouts(layouts);
   this->_graphicsPipelineLayout =
@@ -549,6 +552,10 @@ void mvk::vkEngine::_recordCommandBuffer(vk::CommandBuffer commandBuffer,
                                    this->_graphicsPipelineLayout, 0,
                                    this->_descriptorSet.descriptor, nullptr);
   /*commandBuffer.draw(3, 1, 0, 0);*/
+
+  std::vector<mvk::GPUDrawPushConstants> constants = {this->samplePushConstants};
+  commandBuffer.pushConstants<GPUDrawPushConstants>(this->_graphicsPipelineLayout, vk::ShaderStageFlagBits::eVertex, 0, this->samplePushConstants);
+
   commandBuffer.drawIndexed(this->tmpMesh.indexCount, 1, 0, 0, 0);
 
   commandBuffer.endRendering();
@@ -634,6 +641,11 @@ mvk::MeshData mvk::vkEngine::uploadMesh(std::span<glm::vec3> vertices,
       vk::BufferUsageFlagBits::eTransferDst |
           vk::BufferUsageFlagBits::eIndexBuffer,
       vma::AllocationCreateFlagBits::eMapped, vma::MemoryUsage::eGpuOnly);
+
+  vk::BufferDeviceAddressInfo bufferDeviceAddressInfo{
+    .buffer = mesh.vertexBuffer.buffer
+  };
+  samplePushConstants.vertexBuffer = this->_device.getBufferAddress(bufferDeviceAddressInfo);
 
   mvk::AllocatedBuffer staginBuffer = this->_allocateBuffer(
       vertexDataSize + indecesDataSize, vk::BufferUsageFlagBits::eTransferSrc,

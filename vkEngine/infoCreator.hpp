@@ -1,3 +1,6 @@
+#ifndef INFO_CREATOR_HPP
+#define INFO_CREATOR_HPP
+
 #include <vulkan/vulkan.hpp>
 
 namespace mvk {
@@ -15,3 +18,5 @@ vk::SubmitInfo2 submitInfo(vk::CommandBufferSubmitInfo *cmd,
 vk::CommandBufferSubmitInfo commandBufferSubmitInfo(vk::CommandBuffer cmd);
 } // namespace utils
 } // namespace mvk
+
+#endif

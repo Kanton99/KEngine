@@ -1,3 +1,6 @@
+#ifndef UTILS_HPP
+#define UTILS_HPP
+
 #include <string>
 #include <vector>
 #define VULKAN_HPP_NO_CONSTRUCTORS
@@ -18,3 +21,5 @@ void copyImageToImage(vk::CommandBuffer cmd, vk::Image source,
                       vk::Extent2D dstSize);
 } // namespace utils
 } // namespace mvk
+
+#endif

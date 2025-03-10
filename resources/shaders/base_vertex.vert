@@ -1,25 +1,39 @@
 #version 450
+#extension GL_EXT_buffer_reference : require
+
+struct Vertex {
+  vec3 position;
+  float uv_x;
+  vec3 normal;
+  float uv_y;
+  vec4 color;
+}
 
 layout(binding = 0) uniform UniformBufferObject{
     mat4 model;
     mat4 view;
     mat4 proj;
 } ubo;
-layout(location = 0) out vec3 fragColor;
 
-vec3 colors[8] = vec3[](
-    vec3(1.0, 1.0, 0.0),  //YELLOW
-    vec3(1.0, 0.0, 0.0),  //RED
-    vec3(1.0, 1.0, 1.0),  //WHITE
-    vec3(1.0, 0.0, 1.0),  //MAGENTA
-    vec3(0.0, 1.0, 0.0),  //GREEN
-    vec3(0.0, 0.0, 0.0),  //BLACK
-    vec3(0.0, 1.0, 1.0),  //CYAN
-    vec3(0.0, 0.0, 1.0)   //BLUE
-);
+layout(buffer_referece, std430) readonly buffer VertexBuffer {
+  Vertex vertices[];
+};
+
+layout(push_constant) uniform constants{
+  mat4 model_matrix;
+  VertexBuffer vertexBuffer;
+} PushConstants;
 
 layout(location = 0) in vec3 inPosition;
+
+layout(location = 0) out vec3 fragColor;
+layout(location = 1) out vec2 outUV;
+
 void main() {
-    gl_Position = ubo.proj * ubo.view * ubo.model * vec4(inPosition, 1.0);
-    fragColor = colors[gl_VertexIndex];
+  Vertex v = PushConstants.vertexBuffer.vertices[gl_VertexIndex];
+
+  gl_Position = ubo.proj * ubo.view * ubo.model * vec4(inPosition, 1.0);
+  fragColor = v.color.xyz;
+  outUV.x = v.uv_x;
+  outUV.y = v.uv_y;
 }

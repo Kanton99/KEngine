@@ -1,6 +1,9 @@
-#pragma once
+#ifndef VK_ENGINE_HPP
+#define VK_ENGINE_HPP
+
 #define VULKAN_HPP_NO_CONSTRUCTORS
 #include "util_structs.hpp"
+#include "meshData.hpp"
 #include <SDL3/SDL.h>
 #include <vulkan-memory-allocator-hpp/vk_mem_alloc.hpp>
 #include <vulkan/vulkan.hpp>
@@ -100,5 +103,10 @@ private: // Members
   vk::DescriptorPool _descriptorPool;
   mvk::DescriptorObject _descriptorSet;
   mvk::UniformDescriptorObject ubo;
+
+  //Push constants
+  mvk::GPUDrawPushConstants samplePushConstants;
 };
 } // namespace mvk
+
+#endif
