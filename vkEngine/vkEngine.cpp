@@ -3,7 +3,6 @@
 #include "infoCreator.hpp"
 #include "pipeline_builder.hpp"
 #include "utils.hpp"
-#include "meshData.hpp"
 #include <SDL3/SDL_vulkan.h>
 #include <VkBootstrap.h>
 #include <array>
@@ -52,6 +51,7 @@ void mvk::vkEngine::init() {
       .vkGetInstanceProcAddr = &vkGetInstanceProcAddr,
       .vkGetDeviceProcAddr = &vkGetDeviceProcAddr};
   vma::AllocatorCreateInfo allocatorInfo{
+      .flags = vma::AllocatorCreateFlagBits::eBufferDeviceAddress,
       .physicalDevice = this->_physDevice,
       .device = this->_device,
       .pVulkanFunctions = &vulkanFunctions,
@@ -172,9 +172,14 @@ void mvk::vkEngine::_initVulkan() {
       .synchronization2 = true,
       .dynamicRendering = true,
   };
+  vk::PhysicalDeviceVulkan12Features features_12{
+      .bufferDeviceAddress = true,
+  };
   vkb::PhysicalDevice vkbPhysDevice =
       selector.set_minimum_version(1, 3)
           .set_surface(static_cast<VkSurfaceKHR>(this->_surface))
+          .set_required_features_12(
+              static_cast<VkPhysicalDeviceVulkan12Features>(features_12))
           .set_required_features_13(
               static_cast<VkPhysicalDeviceVulkan13Features>(features_13))
           .select()
@@ -328,19 +333,22 @@ void mvk::vkEngine::_createDrawImage() {
 
 void mvk::vkEngine::_initGraphicPipeline(
     std::span<vk::DescriptorSetLayout> layouts) {
-  auto vertShaderCode = utils::readFile("resources/shaders/compiled/vert.spv");
-  auto fragShaderCode = utils::readFile("resources/shaders/compiled/frag.spv");
+  auto vertShaderCode =
+      utils::readFile("resources/shaders/compiled/base_vertex.vert.spv");
+  auto fragShaderCode =
+      utils::readFile("resources/shaders/compiled/base_frag.frag.spv");
 
   auto vertModule = utils::createShaderModule(vertShaderCode, this->_device);
   auto fragModule = utils::createShaderModule(fragShaderCode, this->_device);
 
-  vk::PushConstantRange pushRange{
-      .stageFlags = vk::ShaderStageFlagBits::eVertex,
-  };
-  pushRange.setSize(sizeof(GPUDrawPushConstants));
+  vk::PushConstantRange pushConstantRanges{};
+  pushConstantRanges.setOffset(0);
+  pushConstantRanges.setSize(sizeof(GPUDrawPushConstants));
+  pushConstantRanges.setStageFlags(vk::ShaderStageFlagBits::eVertex);
 
   vk::PipelineLayoutCreateInfo pipelineLayoutCreateInfo{};
   pipelineLayoutCreateInfo.setSetLayouts(layouts);
+  pipelineLayoutCreateInfo.setPushConstantRanges(pushConstantRanges);
   this->_graphicsPipelineLayout =
       this->_device.createPipelineLayout(pipelineLayoutCreateInfo);
 
@@ -542,8 +550,8 @@ void mvk::vkEngine::_recordCommandBuffer(vk::CommandBuffer commandBuffer,
   this->updateUbos(this->ubo);
 
   vk::DeviceSize offsets[] = {0};
-  commandBuffer.bindVertexBuffers(0, this->tmpMesh.vertexBuffer.buffer,
-                                  offsets);
+  /*commandBuffer.bindVertexBuffers(0, this->tmpMesh.vertexBuffer.buffer,*/
+  /*                                offsets);*/
 
   commandBuffer.bindIndexBuffer(this->tmpMesh.indexBuffer.buffer, offsets[0],
                                 vk::IndexType::eUint32);
@@ -553,9 +561,10 @@ void mvk::vkEngine::_recordCommandBuffer(vk::CommandBuffer commandBuffer,
                                    this->_descriptorSet.descriptor, nullptr);
   /*commandBuffer.draw(3, 1, 0, 0);*/
 
-  std::vector<mvk::GPUDrawPushConstants> constants = {this->samplePushConstants};
-  commandBuffer.pushConstants<GPUDrawPushConstants>(this->_graphicsPipelineLayout, vk::ShaderStageFlagBits::eVertex, 0, this->samplePushConstants);
-
+  this->samplePushConstants.vertexBuffer = this->tmpMesh.vertexBufferAddress;
+  commandBuffer.pushConstants<GPUDrawPushConstants>(
+      this->_graphicsPipelineLayout, vk::ShaderStageFlagBits::eVertex, 0,
+      this->samplePushConstants);
   commandBuffer.drawIndexed(this->tmpMesh.indexCount, 1, 0, 0, 0);
 
   commandBuffer.endRendering();
@@ -625,16 +634,17 @@ void mvk::vkEngine::_destroyBuffer(const mvk::AllocatedBuffer &buffer) {
   this->_allocator.destroyBuffer(buffer.buffer, buffer.allocation);
 }
 
-mvk::MeshData mvk::vkEngine::uploadMesh(std::span<glm::vec3> vertices,
+mvk::MeshData mvk::vkEngine::uploadMesh(std::span<mvk::VectorData> vertices,
                                         std::span<unsigned int> indeces) {
-  const auto vertexDataSize = sizeof(glm::vec3) * vertices.size();
+  const auto vertexDataSize = sizeof(mvk::VectorData) * vertices.size();
   const auto indecesDataSize = sizeof(unsigned int) * indeces.size();
 
   mvk::MeshData mesh;
   mesh.vertexBuffer = this->_allocateBuffer(
       vertexDataSize,
       vk::BufferUsageFlagBits::eTransferDst |
-          vk::BufferUsageFlagBits::eVertexBuffer,
+          vk::BufferUsageFlagBits::eStorageBuffer |
+          vk::BufferUsageFlagBits::eShaderDeviceAddress,
       vma::AllocationCreateFlagBits::eMapped, vma::MemoryUsage::eGpuOnly);
   mesh.indexBuffer = this->_allocateBuffer(
       indecesDataSize,
@@ -642,10 +652,9 @@ mvk::MeshData mvk::vkEngine::uploadMesh(std::span<glm::vec3> vertices,
           vk::BufferUsageFlagBits::eIndexBuffer,
       vma::AllocationCreateFlagBits::eMapped, vma::MemoryUsage::eGpuOnly);
 
-  vk::BufferDeviceAddressInfo bufferDeviceAddressInfo{
-    .buffer = mesh.vertexBuffer.buffer
-  };
-  samplePushConstants.vertexBuffer = this->_device.getBufferAddress(bufferDeviceAddressInfo);
+  vk::BufferDeviceAddressInfo addressInfo;
+  addressInfo.setBuffer(mesh.vertexBuffer.buffer);
+  mesh.vertexBufferAddress = this->_device.getBufferAddress(addressInfo);
 
   mvk::AllocatedBuffer staginBuffer = this->_allocateBuffer(
       vertexDataSize + indecesDataSize, vk::BufferUsageFlagBits::eTransferSrc,

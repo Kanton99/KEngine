@@ -5,7 +5,6 @@
 #include <glm/glm.hpp>
 #include <stack>
 #include <vector>
-#define VMA_IMPLEMENTATION
 #include <vulkan-memory-allocator-hpp/vk_mem_alloc.hpp>
 #include <vulkan/vulkan.hpp>
 
@@ -63,9 +62,8 @@ struct UniformDescriptorObject {
 
 struct MeshData {
   AllocatedBuffer vertexBuffer;
-  vk::BufferDeviceAddressInfo vertexBufferAddress;
+  vk::DeviceAddress vertexBufferAddress;
   AllocatedBuffer indexBuffer;
-  vk::BufferDeviceAddressInfo indexBufferAddress;
   unsigned int indexCount;
   DescriptorObject descriptor;
 };

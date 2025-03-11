@@ -11,7 +11,7 @@ namespace mvk{
     uint32_t uv_x;
     glm::vec3 normals;
     uint32_t uv_y;
-    glm::vec4 colour;
+    glm::vec4 colour = glm::vec4(1,1,1,1);
   };
 
   struct GPUBufferDate {

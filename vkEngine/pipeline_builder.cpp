@@ -32,26 +32,8 @@ vk::Pipeline PipelineBuilder::buildPipeline(vk::Device device) {
       .logicOp = vk::LogicOp::eCopy,
       .attachmentCount = 1,
       .pAttachments = &_colorBlendAttachment};
-
-  vk::VertexInputBindingDescription bindingDescriptor{
-      .binding = 0,
-      .stride = sizeof(glm::vec3),
-      .inputRate = vk::VertexInputRate::eVertex,
-  };
-
-  vk::VertexInputAttributeDescription attributeDescriptions{
-      .location = 0,
-      .binding = 0,
-      .format = vk::Format::eR32G32B32Sfloat,
-      .offset = 0,
-  };
   // clear vertexInputStateCreateInfo
-  vk::PipelineVertexInputStateCreateInfo vertexInputInfo{
-      .vertexBindingDescriptionCount = 1,
-      .pVertexBindingDescriptions = &bindingDescriptor,
-      .vertexAttributeDescriptionCount = 1,
-      .pVertexAttributeDescriptions = &attributeDescriptions,
-  };
+  vk::PipelineVertexInputStateCreateInfo vertexInputInfo{};
 
   // build actual pipeline_builder
   vk::GraphicsPipelineCreateInfo pipelineInfo{

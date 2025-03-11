@@ -2,8 +2,8 @@
 #define VK_ENGINE_HPP
 
 #define VULKAN_HPP_NO_CONSTRUCTORS
-#include "util_structs.hpp"
 #include "meshData.hpp"
+#include "util_structs.hpp"
 #include <SDL3/SDL.h>
 #include <vulkan-memory-allocator-hpp/vk_mem_alloc.hpp>
 #include <vulkan/vulkan.hpp>
@@ -18,7 +18,7 @@ public:
 
   void cleanup();
 
-  mvk::MeshData uploadMesh(std::span<glm::vec3> vertices,
+  mvk::MeshData uploadMesh(std::span<mvk::VectorData> vertices,
                            std::span<unsigned int> indeces);
 
 private: // Methods
@@ -104,7 +104,7 @@ private: // Members
   mvk::DescriptorObject _descriptorSet;
   mvk::UniformDescriptorObject ubo;
 
-  //Push constants
+  // Push constants
   mvk::GPUDrawPushConstants samplePushConstants;
 };
 } // namespace mvk
