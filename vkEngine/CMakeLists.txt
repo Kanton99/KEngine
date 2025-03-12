@@ -9,6 +9,7 @@ find_package(VulkanMemoryAllocator CONFIG REQUIRED)
 find_package(unofficial-vulkan-memory-allocator-hpp CONFIG REQUIRED)
 find_package(VulkanHeaders CONFIG)
 find_package(vk-bootstrap CONFIG REQUIRED)
+find_package(fastgltf CONFIG REQUIRED)
 
 add_executable(
     ${PROJECT_NAME}
@@ -25,6 +26,8 @@ add_executable(
     "infoCreator.hpp"
     "infoCreator.cpp"
     "infoCreator.hpp"
+    "gltfLoader.hpp"
+    "gltfLoader.cpp"
 )
 
 target_link_libraries(${PROJECT_NAME} PRIVATE SDL3::SDL3)
@@ -48,6 +51,8 @@ target_link_libraries(
         GPUOpen::VulkanMemoryAllocator
         unofficial::VulkanMemoryAllocator-Hpp::VulkanMemoryAllocator-Hpp
 )
+
+target_link_libraries(${PROJECT_NAME} PRIVATE fastgltf::fastgltf)
 # Set paths for shaders
 set(SHADER_DIR ${CMAKE_SOURCE_DIR}/resources/shaders)
 set(SHADER_BINARY_DIR ${CMAKE_SOURCE_DIR}/resources/shaders/compiled)

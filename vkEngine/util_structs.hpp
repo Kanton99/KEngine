@@ -60,12 +60,25 @@ struct UniformDescriptorObject {
   glm::mat4 proj;
 };
 
+//Mesh Data
 struct MeshData {
   AllocatedBuffer vertexBuffer;
   vk::DeviceAddress vertexBufferAddress;
   AllocatedBuffer indexBuffer;
   unsigned int indexCount;
   DescriptorObject descriptor;
+};
+
+struct GeoSurface{
+  uint32_t startIndex;
+  uint32_t count;
+};
+
+struct MeshAsset {
+  std::string name;
+
+  std::vector<GeoSurface> surfaces;
+  MeshData buffers;
 };
 } // namespace mvk
 

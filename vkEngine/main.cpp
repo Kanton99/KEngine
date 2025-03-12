@@ -1,3 +1,4 @@
+#include "gltfLoader.hpp"
 #include <SDL3/SDL_system.h>
 #include <array>
 #include <cstdint>
@@ -57,7 +58,7 @@ int main() {
       vectors[i].uv_y = uvs[i].y;
     }
 
-    engine->tmpMesh = engine->uploadMesh(vectors, indeces);
+    engine->testMeshes = mvk::loadGltfMesh(engine, "resources/Meshes/basicmesh.glb").value();
 
     SDL_Event event;
     bool running = true;

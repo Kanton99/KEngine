@@ -1,6 +1,8 @@
 #ifndef VK_ENGINE_HPP
 #define VK_ENGINE_HPP
 
+#include <memory>
+#include <vector>
 #define VULKAN_HPP_NO_CONSTRUCTORS
 #include "meshData.hpp"
 #include "util_structs.hpp"
@@ -55,7 +57,7 @@ private: // Methods
   updateUbos(mvk::UniformDescriptorObject ubo); // TODO temporary for testing
 
 public:
-  mvk::MeshData tmpMesh;
+  std::vector<std::shared_ptr<MeshAsset>> testMeshes;
 
 private: // Members
   static vkEngine *_engine;
