@@ -634,9 +634,9 @@ void mvk::vkEngine::_destroyBuffer(const mvk::AllocatedBuffer &buffer) {
   this->_allocator.destroyBuffer(buffer.buffer, buffer.allocation);
 }
 
-mvk::MeshData mvk::vkEngine::uploadMesh(std::span<mvk::VectorData> vertices,
+mvk::MeshData mvk::vkEngine::uploadMesh(std::span<mvk::VertexData> vertices,
                                         std::span<unsigned int> indeces) {
-  const auto vertexDataSize = sizeof(mvk::VectorData) * vertices.size();
+  const auto vertexDataSize = sizeof(mvk::VertexData) * vertices.size();
   const auto indecesDataSize = sizeof(unsigned int) * indeces.size();
 
   mvk::MeshData mesh;

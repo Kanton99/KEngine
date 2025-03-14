@@ -1,4 +1,6 @@
+/*#include "gltfLoader.hpp"*/
 #include "gltfLoader.hpp"
+#include "objLoader.hpp"
 #include <SDL3/SDL_system.h>
 #include <array>
 #include <cstdint>
@@ -48,7 +50,7 @@ int main() {
         glm::vec4(1, 1, 1, 1), glm::vec4(1, 1, 1, 1),
     };
 
-    std::array<mvk::VectorData, 8> vectors;
+    std::array<mvk::VertexData, 8> vectors;
 
     for (int i = 0; i < 8; i++) {
       vectors[i].normals = normals[i];
@@ -58,7 +60,8 @@ int main() {
       vectors[i].uv_y = uvs[i].y;
     }
 
-    engine->testMeshes = mvk::loadGltfMesh(engine, "resources/Meshes/basicmesh.glb").value();
+    /*engine->testMeshes = mvk::loadGltfMesh(engine, "resources/Meshes/basicmesh.glb").value();*/
+    engine->testMeshes = mvk::loadObj(engine, "resources/Meshes/teapot.obj").value();
 
     SDL_Event event;
     bool running = true;
