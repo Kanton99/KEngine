@@ -68,7 +68,7 @@ foreach(SHADER ${SHADERS})
 
     add_custom_command(
         OUTPUT ${COMPILED_SHADER}
-        COMMAND $ENV{VULKAN_SDK}/bin/glslangValidator.exe -V ${SHADER} -o ${COMPILED_SHADER}
+        COMMAND $ENV{VULKAN_SDK}/bin/glslangValidator -V ${SHADER} -o ${COMPILED_SHADER}
         DEPENDS ${SHADER}
         COMMENT "Compiling GLSL shader: ${SHADER_NAME}"
         VERBATIM
