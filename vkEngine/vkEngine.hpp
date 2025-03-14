@@ -20,7 +20,7 @@ public:
 
   void cleanup();
 
-  mvk::MeshData uploadMesh(std::span<mvk::VectorData> vertices,
+  mvk::MeshData uploadMesh(std::span<mvk::VertexData> vertices,
                            std::span<unsigned int> indeces);
 
 private: // Methods

@@ -20,7 +20,7 @@ std::optional<std::vector<std::shared_ptr<mvk::MeshAsset>>> mvk::loadGltfMesh(mv
   fastgltf::Asset gltf;
   fastgltf::Parser parser;
 
-  auto load = parser.loadGltf(dataBuffer.get(), filePath.parent_path(), options);
+  auto load = parser.loadGltfBinary(dataBuffer.get(), filePath.parent_path(), options);
   if(load) gltf = std::move(load.get());
   else {
     std::cout << std::format("Failed to load glTF: {} \n", fastgltf::to_underlying(load.error()));
@@ -30,7 +30,7 @@ std::optional<std::vector<std::shared_ptr<mvk::MeshAsset>>> mvk::loadGltfMesh(mv
   std::vector<std::shared_ptr<MeshAsset>> meshes;
 
   std::vector<uint32_t> indeces;
-  std::vector<VectorData> vertices;
+  std::vector<VertexData> vertices;
 
   for(fastgltf::Mesh& mesh : gltf.meshes){
     MeshAsset newMesh;
@@ -65,7 +65,7 @@ std::optional<std::vector<std::shared_ptr<mvk::MeshAsset>>> mvk::loadGltfMesh(mv
 
       fastgltf::iterateAccessorWithIndex<glm::vec3>(gltf, posAccessor,
           [&](glm::vec3 v, size_t index) {
-              mvk::VectorData newvtx;
+              mvk::VertexData newvtx;
               newvtx.position = v;
               newvtx.normals = { 1, 0, 0 };
               newvtx.colour = glm::vec4 { 1.f };
@@ -106,7 +106,7 @@ std::optional<std::vector<std::shared_ptr<mvk::MeshAsset>>> mvk::loadGltfMesh(mv
     }
     constexpr bool showNormals = true;
     if(showNormals){
-      for(VectorData& vtx : vertices){
+      for(VertexData& vtx : vertices){
         vtx.colour = glm::vec4(vtx.normals, 1.f);
       }
     }

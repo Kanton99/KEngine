@@ -1,5 +1,6 @@
 {
   "dependencies": [
+    "fastgltf",
     "glm",
     "sdl2-image",
     {
@@ -22,6 +23,6 @@
     "volk",
     "vulkan-memory-allocator",
     "vulkan-memory-allocator-hpp",
-    "fastgltf"
+    "tinyobjloader"
   ]
 }
