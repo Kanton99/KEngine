@@ -1,12 +1,14 @@
 #include "util_structs.hpp"
 #include <cstddef>
-#include <exception>
 #include <format>
 #include <glm/fwd.hpp>
+#include <glm/geometric.hpp>
 #include <iostream>
 #include <memory>
+#include <stdexcept>
 #include <vector>
 #define TINYOBJLOADER_IMPLEMENTATION
+/*#define TINYOBJLOADER_USE_MAPBOX_EARCUT*/
 #include <tiny_obj_loader.h>
 #include "objLoader.hpp"
 namespace mvk {
@@ -19,7 +21,7 @@ std::optional<std::vector<std::shared_ptr<MeshAsset>>> loadObj(vkEngine* engine,
       std::cerr << "TinyObjReader: " << reader.Error();
     }
     auto errorMessage = std::format("Failed to open .obj file: {}", filePath.string());
-    throw std::exception("Failed to open obj file");
+    throw std::runtime_error("Failed to open obj file");
   }
 
   if(!reader.Warning().empty()) std::cout << reader.Warning();
@@ -39,36 +41,46 @@ std::optional<std::vector<std::shared_ptr<MeshAsset>>> loadObj(vkEngine* engine,
     vertices.clear();
     indeces.clear();
     GeoSurface surface;
-    surface.startIndex = indeces.size();
-    surface.count = shape.mesh.indices.size();
+    surface.startIndex = (uint32_t)indeces.size();
+    surface.count = (uint32_t)shape.mesh.indices.size();
     asset.surfaces.push_back(surface);
-    for(size_t i = 0; i < shape.mesh.indices.size();i++){
-      uint32_t vIdx = shape.mesh.indices[i].vertex_index;
-      uint32_t nIdx = shape.mesh.indices[i].normal_index;
-      uint32_t tIdx = shape.mesh.indices[i].texcoord_index;
-      indeces.push_back(vIdx);
-      VertexData vertex{};
 
-      vertex.position.x = attrib.vertices[vIdx+0];
-      vertex.position.y = attrib.vertices[vIdx+1];
-      vertex.position.z = attrib.vertices[vIdx+2];
+    for(auto i : shape.mesh.indices) indeces.push_back((uint32_t)i.vertex_index);  
 
-      if(nIdx >= 0){
-        vertex.normals.x = attrib.normals[nIdx+0];
-        vertex.normals.y = attrib.normals[nIdx+1];
-        vertex.normals.z = attrib.normals[nIdx+2];
-      }
+    for(size_t v = 0; v < attrib.vertices.size(); v+=3) {
+      VertexData vertex;
 
-      if(tIdx >= 0){
-        vertex.uv_x = attrib.texcoords[tIdx+0];
-        vertex.uv_y = attrib.texcoords[tIdx+1];
-      }
+      vertex.position.x = attrib.vertices[v+0];
+      vertex.position.y = attrib.vertices[v+1];
+      vertex.position.z = attrib.vertices[v+2];
 
-      vertex.colour.x = attrib.colors[vIdx+0];
-      vertex.colour.y = attrib.colors[vIdx+1];
-      vertex.colour.z = attrib.colors[vIdx+2];
       vertices.push_back(vertex);
     }
+
+    if(shape.mesh.indices[0].normal_index >= 0){
+      for(size_t n = 0; n < attrib.normals.size(); n+=3){
+        vertices[n/3].normals.x = attrib.normals[n+0];
+        vertices[n/3].normals.y = attrib.normals[n+1];
+        vertices[n/3].normals.z = attrib.normals[n+2];
+      }
+    }else{
+      //CALCULATE NORMALS 
+      for(size_t i = 0; i < indeces.size(); i+=3){
+        VertexData A = vertices[indeces[i]+0];
+        VertexData B = vertices[indeces[i]+1];
+        VertexData C = vertices[indeces[i]+2];
+
+        auto ab = B.position - A.position;
+        auto ac = C.position - A.position;
+
+        auto normal = glm::normalize(glm::cross(ab, ac));
+
+        vertices[indeces[i]+0].normals = normal;
+        vertices[indeces[i]+1].normals = normal;
+        vertices[indeces[i]+2].normals = normal;
+      }
+    }
+
     constexpr bool showNormals = true;
     if(showNormals){
       for(VertexData& vertex : vertices){

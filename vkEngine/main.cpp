@@ -52,7 +52,7 @@ int main() {
 
     std::array<mvk::VertexData, 8> vectors;
 
-    for (int i = 0; i < 8; i++) {
+    for (size_t i = 0; i < 8; i++) {
       vectors[i].normals = normals[i];
       vectors[i].colour = colors[i];
       vectors[i].position = quad[i];

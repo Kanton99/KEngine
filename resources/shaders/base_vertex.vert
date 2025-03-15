@@ -31,7 +31,7 @@ void main() {
   Vertex v = PushConstants.vertexBuffer.vertices[gl_VertexIndex];
 
   gl_Position = ubo.proj * ubo.view * ubo.model * vec4(v.position, 1.0);
-  fragColor = v.color.xyz;
+  fragColor = (v.normal.rgb);
   outUV.x = v.uv_x;
   outUV.y = v.uv_y;
 }

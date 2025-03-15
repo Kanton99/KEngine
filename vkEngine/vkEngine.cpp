@@ -448,6 +448,7 @@ void mvk::vkEngine::updateUbos(mvk::UniformDescriptorObject ubo) {
   ubo.proj[1][1] *= -1;
 
   ubo.view = glm::identity<glm::mat4>();
+  ubo.view = glm::translate(ubo.view, glm::vec3(0,0,-5));
 
   memcpy(this->_descriptorSet.buffer.allocationInfo.pMappedData, &ubo,
          sizeof(ubo));
@@ -553,7 +554,7 @@ void mvk::vkEngine::_recordCommandBuffer(vk::CommandBuffer commandBuffer,
   /*commandBuffer.bindVertexBuffers(0, this->tmpMesh.vertexBuffer.buffer,*/
   /*                                offsets);*/
 
-  commandBuffer.bindIndexBuffer(this->testMeshes[2]->buffers.indexBuffer.buffer, offsets[0],
+  commandBuffer.bindIndexBuffer(this->testMeshes[0]->buffers.indexBuffer.buffer, offsets[0],
                                 vk::IndexType::eUint32);
 
   commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics,
@@ -561,11 +562,11 @@ void mvk::vkEngine::_recordCommandBuffer(vk::CommandBuffer commandBuffer,
                                    this->_descriptorSet.descriptor, nullptr);
   /*commandBuffer.draw(3, 1, 0, 0);*/
 
-  this->samplePushConstants.vertexBuffer = this->testMeshes[2]->buffers.vertexBufferAddress;
+  this->samplePushConstants.vertexBuffer = this->testMeshes[0]->buffers.vertexBufferAddress;
   commandBuffer.pushConstants<GPUDrawPushConstants>(
       this->_graphicsPipelineLayout, vk::ShaderStageFlagBits::eVertex, 0,
       this->samplePushConstants);
-  commandBuffer.drawIndexed(this->testMeshes[2]->buffers.indexCount, 1, 0, 0, 0);
+  commandBuffer.drawIndexed(this->testMeshes[0]->buffers.indexCount, 1, 0, 0, 0);
 
   commandBuffer.endRendering();
 
@@ -678,11 +679,6 @@ mvk::MeshData mvk::vkEngine::uploadMesh(std::span<mvk::VertexData> vertices,
   });
 
   this->_destroyBuffer(staginBuffer);
-
-  this->deletionStack.pushFunction([&]() {
-    this->_destroyBuffer(mesh.vertexBuffer);
-    this->_destroyBuffer(mesh.indexBuffer);
-  });
 
   return mesh;
 }

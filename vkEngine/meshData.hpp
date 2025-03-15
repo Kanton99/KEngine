@@ -9,9 +9,9 @@
 namespace mvk{
   struct VertexData {
     glm::vec3 position;
-    uint32_t uv_x;
+    float uv_x;
     glm::vec3 normals = glm::vec3(0,1,0);
-    uint32_t uv_y;
+    float uv_y;
     glm::vec4 colour = glm::vec4(1,1,1,1);
   };
 
