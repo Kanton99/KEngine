@@ -618,7 +618,9 @@ mvk::vkEngine::_allocateBuffer(size_t size, vk::BufferUsageFlags usage,
       .usage = memoryUsage,
   };
 
-  vk::BufferCreateInfo bufferInfo{.size = size, .usage = usage};
+  vk::BufferCreateInfo bufferInfo{};
+  bufferInfo.setSize(size);
+  bufferInfo.setUsage(usage);
 
   AllocatedBuffer allocBuffer;
 
