@@ -1,8 +1,6 @@
-/*#include "gltfLoader.hpp"*/
 #include "gltfLoader.hpp"
 #include "objLoader.hpp"
 #include <SDL3/SDL_system.h>
-#include <array>
 #include <cstdint>
 #include <exception>
 #include <glm/fwd.hpp>

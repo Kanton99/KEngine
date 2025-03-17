@@ -10,7 +10,6 @@
 #include <vector>
 #include <unordered_map>
 #define TINYOBJLOADER_IMPLEMENTATION
-/*#define TINYOBJLOADER_USE_MAPBOX_EARCUT*/
 #include <tiny_obj_loader.h>
 #include "objLoader.hpp"
 
@@ -31,7 +30,7 @@ std::optional<std::vector<std::shared_ptr<MeshAsset>>> loadObj(vkEngine* engine,
 
   auto& attrib = reader.GetAttrib();
   auto& shapes = reader.GetShapes();
-  auto& materials = reader.GetMaterials();
+  /*auto& materials = reader.GetMaterials();*/
   
   std::vector<std::shared_ptr<MeshAsset>> assets;
 

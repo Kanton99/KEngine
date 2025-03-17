@@ -74,6 +74,12 @@ void mvk::vkEngine::init() {
   std::vector<vk::DescriptorSetLayout> layouts = {this->_descriptorSet.layout};
   this->_initGraphicPipeline(layouts);
   this->_initSynchronizationObjects();
+  this->deletionStack.pushFunction([&]() {
+    for (const auto &buffer : testMeshes) {
+      this->_destroyBuffer(buffer->buffers.vertexBuffer);
+      this->_destroyBuffer(buffer->buffers.indexBuffer);
+    }
+  });
 }
 
 void mvk::vkEngine::draw() {
@@ -196,6 +202,12 @@ void mvk::vkEngine::_initVulkan() {
   this->_graphicsQueueIndex =
       vkbDevice.get_queue_index(vkb::QueueType::graphics).value();
 
+  this->deletionStack.pushFunction([&]() {
+    for (const auto &buffer : testMeshes) {
+      this->_destroyBuffer(buffer->buffers.vertexBuffer);
+      this->_destroyBuffer(buffer->buffers.indexBuffer);
+    }
+  });
   this->deletionStack.pushFunction([=, this]() { this->_device.destroy(); });
 }
 
@@ -437,9 +449,6 @@ void mvk::vkEngine::updateDescriptorSet(mvk::DescriptorObject &descriptor) {
 void mvk::vkEngine::updateUbos(mvk::UniformDescriptorObject ubo) {
   static float rotationAngle;
   ubo.model = glm::identity<glm::mat4>();
-  ubo.model = glm::translate(ubo.model, glm::vec3(0, 0, -5));
-  ubo.model =
-      glm::rotate(ubo.model, glm::radians(rotationAngle++), glm::vec3(0, 1, 0));
 
   ubo.proj = glm::perspectiveRH_ZO(glm::radians(45.f),
                                    (float)this->_drawImage.extent.width /
@@ -448,7 +457,17 @@ void mvk::vkEngine::updateUbos(mvk::UniformDescriptorObject ubo) {
   ubo.proj[1][1] *= -1;
 
   ubo.view = glm::identity<glm::mat4>();
-  ubo.view = glm::translate(ubo.view, glm::vec3(0,0,-5));
+  ubo.view = glm::translate(ubo.view, glm::vec3(0, 1, -2));
+  glm::vec3 cameraPos(ubo.view[3][0], ubo.view[3][1], ubo.view[3][2]);
+
+  auto lookAtMat = glm::lookAtRH(cameraPos, glm::vec3(), glm::vec3(0, 1, 0));
+  ubo.view = lookAtMat;
+  { // ROTATE AROUND
+    ubo.view = glm::translate(ubo.view, glm::vec3(0, 0, 1));
+    ubo.view = glm::rotate(ubo.view, glm::radians(rotationAngle++),
+                           glm::vec3(0, 1, 0));
+    ubo.view = glm::translate(ubo.view, glm::vec3(0, 0, -1));
+  }
 
   memcpy(this->_descriptorSet.buffer.allocationInfo.pMappedData, &ubo,
          sizeof(ubo));
@@ -554,19 +573,21 @@ void mvk::vkEngine::_recordCommandBuffer(vk::CommandBuffer commandBuffer,
   /*commandBuffer.bindVertexBuffers(0, this->tmpMesh.vertexBuffer.buffer,*/
   /*                                offsets);*/
 
-  commandBuffer.bindIndexBuffer(this->testMeshes[0]->buffers.indexBuffer.buffer, offsets[0],
-                                vk::IndexType::eUint32);
+  commandBuffer.bindIndexBuffer(this->testMeshes[0]->buffers.indexBuffer.buffer,
+                                offsets[0], vk::IndexType::eUint32);
 
   commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics,
                                    this->_graphicsPipelineLayout, 0,
                                    this->_descriptorSet.descriptor, nullptr);
   /*commandBuffer.draw(3, 1, 0, 0);*/
 
-  this->samplePushConstants.vertexBuffer = this->testMeshes[0]->buffers.vertexBufferAddress;
+  this->samplePushConstants.vertexBuffer =
+      this->testMeshes[0]->buffers.vertexBufferAddress;
   commandBuffer.pushConstants<GPUDrawPushConstants>(
       this->_graphicsPipelineLayout, vk::ShaderStageFlagBits::eVertex, 0,
       this->samplePushConstants);
-  commandBuffer.drawIndexed(this->testMeshes[0]->buffers.indexCount, 1, 0, 0, 0);
+  commandBuffer.drawIndexed(this->testMeshes[0]->buffers.indexCount, 1, 0, 0,
+                            0);
 
   commandBuffer.endRendering();
 

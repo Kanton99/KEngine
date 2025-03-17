@@ -67,7 +67,7 @@ std::optional<std::vector<std::shared_ptr<mvk::MeshAsset>>> mvk::loadGltfMesh(mv
           [&](glm::vec3 v, size_t index) {
               mvk::VertexData newvtx;
               newvtx.position = v;
-              newvtx.normals = { 1, 0, 0 };
+              newvtx.normal = { 1, 0, 0 };
               newvtx.colour = glm::vec4 { 1.f };
               newvtx.uv_x = 0;
               newvtx.uv_y = 0;
@@ -79,7 +79,7 @@ std::optional<std::vector<std::shared_ptr<mvk::MeshAsset>>> mvk::loadGltfMesh(mv
       if(normals != p.attributes.end()){
         fastgltf::iterateAccessorWithIndex<glm::vec3>(gltf, gltf.accessors[(*normals).accessorIndex],
           [&](glm::vec3 v, size_t index) {
-            vertices[initial_vtx + index].normals = v;
+            vertices[initial_vtx + index].normal = v;
           });
       }
 
@@ -107,7 +107,7 @@ std::optional<std::vector<std::shared_ptr<mvk::MeshAsset>>> mvk::loadGltfMesh(mv
     constexpr bool showNormals = true;
     if(showNormals){
       for(VertexData& vtx : vertices){
-        vtx.colour = glm::vec4(vtx.normals, 1.f);
+        vtx.colour = glm::vec4(vtx.normal, 1.f);
       }
     }
     newMesh.buffers = engine->uploadMesh(vertices, indeces);
