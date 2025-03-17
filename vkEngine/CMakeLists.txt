@@ -2,8 +2,6 @@ cmake_minimum_required(VERSION 3.30)
 set(CMAKE_CXX_STANDARD 20)
 project("vkEngine")
 
-find_package(SDL3 CONFIG REQUIRED)
-find_package(glm CONFIG REQUIRED)
 find_package(Vulkan REQUIRED)
 find_package(VulkanMemoryAllocator CONFIG REQUIRED)
 find_package(unofficial-vulkan-memory-allocator-hpp CONFIG REQUIRED)
@@ -11,29 +9,20 @@ find_package(VulkanHeaders CONFIG)
 find_package(vk-bootstrap CONFIG REQUIRED)
 find_package(fastgltf CONFIG REQUIRED)
 
-add_executable(
-    ${PROJECT_NAME}
-    main.cpp
-    "vkEngine.hpp"
-    "vkEngine.cpp"
-    "util_structs.hpp"
-    "utils.hpp"
-    "utils.cpp"
-    "pipeline_builder.hpp"
-    "pipeline_builder.cpp"
-    "init.hpp"
-    "init.cpp"
-    "infoCreator.hpp"
-    "infoCreator.cpp"
-    "infoCreator.hpp"
-    "gltfLoader.hpp"
-    "gltfLoader.cpp"
-    "objLoader.hpp"
-    "objLoader.cpp"
+add_library(${PROJECT_NAME} STATIC 
+    "src/vkEngine.cpp"
+    "src/utils.cpp"
+    "src/pipeline_builder.cpp"
+    "src/init.cpp"
+    "src/infoCreator.cpp"
+    "src/gltfLoader.cpp"
+    "src/objLoader.cpp"
 )
+add_library(lib::vkEngine ALIAS ${PROJECT_NAME})
 
-target_link_libraries(${PROJECT_NAME} PRIVATE SDL3::SDL3)
-target_link_libraries(${PROJECT_NAME} PRIVATE glm::glm)
+target_include_directories(${PROJECT_NAME} PUBLIC
+  ${PROJECT_SOURCE_DIR}/include
+)
 
 target_compile_definitions(
     Vulkan::Headers
@@ -55,6 +44,7 @@ target_link_libraries(
 )
 
 target_link_libraries(${PROJECT_NAME} PRIVATE fastgltf::fastgltf)
+
 # Set paths for shaders
 set(SHADER_DIR ${CMAKE_SOURCE_DIR}/resources/shaders)
 set(SHADER_BINARY_DIR ${CMAKE_SOURCE_DIR}/resources/shaders/compiled)

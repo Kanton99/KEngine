@@ -1,5 +1,5 @@
 #define VULKAN_HPP_NO_CONSTRUCTORS
-#include "infoCreator.hpp"
+#include "vkEngine/infoCreator.hpp"
 
 vk::ImageCreateInfo mvk::utils::imageCreateInfo(vk::Format format,
                                                 vk::ImageUsageFlags usage,

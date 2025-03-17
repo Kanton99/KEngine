@@ -1,4 +1,4 @@
-#include "util_structs.hpp"
+#include "vkEngine/util_structs.hpp"
 #include <cstddef>
 #include <cstdint>
 #include <format>
@@ -11,7 +11,7 @@
 #include <unordered_map>
 #define TINYOBJLOADER_IMPLEMENTATION
 #include <tiny_obj_loader.h>
-#include "objLoader.hpp"
+#include "vkEngine/objLoader.hpp"
 
 namespace mvk {
 std::optional<std::vector<std::shared_ptr<MeshAsset>>> loadObj(vkEngine* engine, std::filesystem::path filePath){

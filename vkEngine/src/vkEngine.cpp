@@ -1,8 +1,8 @@
 #define VMA_IMPLEMENTATION
-#include "vkEngine.hpp"
-#include "infoCreator.hpp"
-#include "pipeline_builder.hpp"
-#include "utils.hpp"
+#include "vkEngine/vkEngine.hpp"
+#include "vkEngine/infoCreator.hpp"
+#include "vkEngine/pipeline_builder.hpp"
+#include "vkEngine/utils.hpp"
 #include <SDL3/SDL_vulkan.h>
 #include <VkBootstrap.h>
 #include <array>
