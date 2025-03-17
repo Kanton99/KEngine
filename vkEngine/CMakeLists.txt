@@ -26,8 +26,8 @@ add_executable(
     "infoCreator.hpp"
     "infoCreator.cpp"
     "infoCreator.hpp"
-    # "gltfLoader.hpp"
-    # "gltfLoader.cpp"
+    "gltfLoader.hpp"
+    "gltfLoader.cpp"
     "objLoader.hpp"
     "objLoader.cpp"
 )

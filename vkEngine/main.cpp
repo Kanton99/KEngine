@@ -32,8 +32,10 @@ int main() {
     mvk::vkEngine *engine = mvk::vkEngine::get(window);
     engine->init();
 
-    /*engine->testMeshes = mvk::loadGltfMesh(engine, "resources/Meshes/basicmesh.glb").value();*/
-    engine->testMeshes = mvk::loadObj(engine, "resources/Meshes/viking_room.obj").value();
+    engine->testMeshes =
+        mvk::loadGltfMesh(engine, "resources/Meshes/basicmesh.glb").value();
+    /*engine->testMeshes = mvk::loadObj(engine,
+     * "resources/Meshes/viking_room.obj").value();*/
 
     SDL_Event event;
     bool running = true;
