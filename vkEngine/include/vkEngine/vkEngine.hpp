@@ -4,11 +4,12 @@
 #include <memory>
 #include <vector>
 #define VULKAN_HPP_NO_CONSTRUCTORS
-#include "meshData.hpp"
-#include "util_structs.hpp"
 #include <SDL3/SDL.h>
 #include <vulkan-memory-allocator-hpp/vk_mem_alloc.hpp>
 #include <vulkan/vulkan.hpp>
+#include "meshData.hpp"
+#include "util_structs.hpp"
+#include "DescriptorAllocator.hpp"
 
 namespace mvk {
 class vkEngine {
@@ -47,10 +48,6 @@ private: // Methods
   void _initGraphicPipeline(std::span<vk::DescriptorSetLayout> layouts);
 
   void _initFrameBuffers();
-
-  void _initDescriptorPool(uint32_t size);
-  template <typename T>
-  void _allocateDescriptorSet(mvk::DescriptorObject &descriptorSet);
 
   void updateDescriptorSet(mvk::DescriptorObject &descriptor);
   void
@@ -102,7 +99,8 @@ private: // Members
   vma::Allocator _allocator;
 
   // Descriptors
-  vk::DescriptorPool _descriptorPool;
+  /*vk::DescriptorPool _descriptorPool;*/
+  mvk::DescriptoAllocatorGrowable descriptorAllocator;
   mvk::DescriptorObject _descriptorSet;
   mvk::UniformDescriptorObject ubo;
 

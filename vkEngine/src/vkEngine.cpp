@@ -1,3 +1,4 @@
+#include "vkEngine/DescriptorWriter.hpp"
 #define VMA_IMPLEMENTATION
 #include "vkEngine/vkEngine.hpp"
 #include "vkEngine/infoCreator.hpp"
@@ -65,8 +66,9 @@ void mvk::vkEngine::init() {
                        static_cast<uint32_t>(height));
   this->_initCommandPool(this->_graphicsQueueIndex);
   this->_allocateCommandBuffer(this->_graphicsCommandBuffer);
-  this->_initDescriptorPool(1);
-  this->_allocateDescriptorSet<UniformDescriptorObject>(this->_descriptorSet);
+  std::array<DescriptoAllocatorGrowable::PoolSizeRatio, 1> ratios;
+  ratios[0].type = 
+  this->descriptorAllocator.init(this->_device, 1, ratios)
 
   this->updateDescriptorSet(this->_descriptorSet);
   this->updateUbos(this->ubo);
@@ -414,36 +416,10 @@ void mvk::vkEngine::_initFrameBuffers() {
   });
 }
 
-void mvk::vkEngine::_initDescriptorPool(uint32_t size) {
-  vk::DescriptorPoolSize poolSize{.type = vk::DescriptorType::eUniformBuffer,
-                                  .descriptorCount = size};
-
-  vk::DescriptorPoolCreateInfo poolInfo{
-      .flags = vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet,
-      .maxSets = 1,
-      .poolSizeCount = 1,
-      .pPoolSizes = &poolSize,
-  };
-
-  this->_descriptorPool = this->_device.createDescriptorPool(poolInfo);
-
-  this->deletionStack.pushFunction(
-      [&]() { this->_device.destroyDescriptorPool(this->_descriptorPool); });
-}
-
 void mvk::vkEngine::updateDescriptorSet(mvk::DescriptorObject &descriptor) {
-  vk::DescriptorBufferInfo bufferInfo{
-      .buffer = descriptor.buffer.buffer,
-      .offset = descriptor.buffer.allocationInfo.offset,
-      .range = vk::WholeSize};
-  vk::WriteDescriptorSet writeDS{.dstSet = descriptor.descriptor,
-                                 .dstBinding = 0,
-                                 .descriptorCount = 1,
-                                 .descriptorType =
-                                     vk::DescriptorType::eUniformBuffer,
-                                 .pBufferInfo = &bufferInfo};
-
-  this->_device.updateDescriptorSets(writeDS, nullptr);
+  DescriptorWriter writer;
+  writer.writeBuffer(0, descriptor.buffer.buffer, vk::WholeSize, descriptor.buffer.allocationInfo.offset, vk::DescriptorType::eUniformBuffer);
+  writer.updateSet(this->_device, descriptor.descriptor);
 }
 
 void mvk::vkEngine::updateUbos(mvk::UniformDescriptorObject ubo) {
@@ -473,44 +449,6 @@ void mvk::vkEngine::updateUbos(mvk::UniformDescriptorObject ubo) {
 
   memcpy(this->_descriptorSet.buffer.allocationInfo.pMappedData, &ubo,
          sizeof(ubo));
-}
-
-template <typename T>
-void mvk::vkEngine::_allocateDescriptorSet(
-    mvk::DescriptorObject &descriptorSet) {
-  descriptorSet.buffer = this->_allocateBuffer(
-      sizeof(T), vk::BufferUsageFlagBits::eUniformBuffer,
-      vma::AllocationCreateFlagBits::eHostAccessSequentialWrite |
-          vma::AllocationCreateFlagBits::eMapped,
-      vma::MemoryUsage::eAuto);
-  this->deletionStack.pushFunction(
-      [&]() { this->_destroyBuffer(descriptorSet.buffer); });
-  vk::DescriptorSetLayoutBinding descriptorBinding{
-      .descriptorType = vk::DescriptorType::eUniformBuffer,
-      .descriptorCount = 1,
-      .stageFlags = vk::ShaderStageFlagBits::eVertex};
-
-  vk::DescriptorSetLayoutCreateInfo descriptorSetLayout{
-      // TODO make it a parameter
-      .bindingCount = 1,
-      .pBindings = &descriptorBinding};
-
-  vk::DescriptorSetLayout layout =
-      this->_device.createDescriptorSetLayout(descriptorSetLayout);
-  descriptorSet.layout = layout;
-
-  vk::DescriptorSetAllocateInfo allocInfo{.descriptorPool =
-                                              this->_descriptorPool,
-                                          .descriptorSetCount = 1,
-                                          .pSetLayouts = &layout};
-
-  descriptorSet.descriptor = this->_device.allocateDescriptorSets(allocInfo)[0];
-
-  this->deletionStack.pushFunction([&]() {
-    this->_device.destroyDescriptorSetLayout(descriptorSet.layout);
-    this->_device.freeDescriptorSets(this->_descriptorPool,
-                                     descriptorSet.descriptor);
-  });
 }
 
 void mvk::vkEngine::_recordCommandBuffer(vk::CommandBuffer commandBuffer,

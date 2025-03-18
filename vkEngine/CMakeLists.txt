@@ -8,6 +8,8 @@ find_package(unofficial-vulkan-memory-allocator-hpp CONFIG REQUIRED)
 find_package(VulkanHeaders CONFIG)
 find_package(vk-bootstrap CONFIG REQUIRED)
 find_package(fastgltf CONFIG REQUIRED)
+find_package(glm CONFIG REQUIRED)
+find_package(SDL3 CONFIG REQUIRED)
 
 add_library(${PROJECT_NAME} STATIC 
     "src/vkEngine.cpp"
@@ -17,6 +19,8 @@ add_library(${PROJECT_NAME} STATIC
     "src/infoCreator.cpp"
     "src/gltfLoader.cpp"
     "src/objLoader.cpp"
+    "src/DescriptorAllocatorGrowable.cpp"
+    "src/DescriptorWriter.cpp"
 )
 add_library(lib::vkEngine ALIAS ${PROJECT_NAME})
 
@@ -29,6 +33,10 @@ target_compile_definitions(
     Vulkan::Headers
     INTERFACE VULKAN_HPP_DISPATCH_LOADER_DYNAMIC=1
 )
+
+target_link_libraries(${PROJECT_NAME} PUBLIC SDL3::SDL3)
+target_link_libraries(${PROJECT_NAME} PUBLIC glm::glm)
+
 target_link_libraries(
     ${PROJECT_NAME}
     PRIVATE

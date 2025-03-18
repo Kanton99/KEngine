@@ -1,13 +1,12 @@
 #ifndef KENGINE_MAIN
 #define KENGINE_MAIN
 
-#include "vkEngine/gltfLoader.hpp"
+#include <vkEngine/gltfLoader.hpp>
 #include <SDL3/SDL_system.h>
 #include <cstdint>
 #include <exception>
-#include <glm/fwd.hpp>
 #define SDL_MAIN_HANDLED
-#include "vkEngine/vkEngine.hpp"
+#include <vkEngine/vkEngine.hpp>
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_hints.h>
 #include <SDL3/SDL_vulkan.h>
