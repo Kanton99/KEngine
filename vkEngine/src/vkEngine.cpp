@@ -1,4 +1,5 @@
 #include "vkEngine/DescriptorWriter.hpp"
+#include <functional>
 #define VMA_IMPLEMENTATION
 #include "vkEngine/vkEngine.hpp"
 #include "vkEngine/infoCreator.hpp"
@@ -66,9 +67,22 @@ void mvk::vkEngine::init() {
                        static_cast<uint32_t>(height));
   this->_initCommandPool(this->_graphicsQueueIndex);
   this->_allocateCommandBuffer(this->_graphicsCommandBuffer);
+
   std::array<DescriptoAllocatorGrowable::PoolSizeRatio, 1> ratios;
-  ratios[0].type = 
-  this->descriptorAllocator.init(this->_device, 1, ratios)
+  ratios[0].type = vk::DescriptorType::eUniformBuffer;
+  ratios[1].ratio = 1.f;
+  this->descriptorAllocator.init(this->_device, 1, ratios);
+
+  vk::DescriptorSetLayoutBinding binding{};
+  binding.setBinding(0);
+  binding.setDescriptorCount(1);
+  binding.setStageFlags(vk::ShaderStageFlagBits::eVertex);
+  binding.setDescriptorType(vk::DescriptorType::eUniformBuffer);
+
+  vk::DescriptorSetLayoutCreateInfo layoutInfo{};
+  layoutInfo.setBindings(binding);
+  auto layout = this->_device.createDescriptorSetLayout(layoutInfo);
+  this->_descriptorSet.descriptor = this->descriptorAllocator.allocate(this->_device, layout);
 
   this->updateDescriptorSet(this->_descriptorSet);
   this->updateUbos(this->ubo);
