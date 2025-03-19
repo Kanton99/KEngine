@@ -68,12 +68,12 @@ vk::DescriptorSet mvk::DescriptoAllocatorGrowable::allocate(vk::Device device, v
     .pNext = pNext,
     .descriptorPool = poolToUse,
     .descriptorSetCount = 1,
-    .pSetLayouts = &layout
   };
+  info.setSetLayouts(layout);
 
   vk::DescriptorSet ds;
   try{
-  auto result = device.allocateDescriptorSets(info);
+  ds = device.allocateDescriptorSets(info).front();
   }catch(vk::SystemError error){
     if(error.code() == vk::Result::eErrorOutOfPoolMemory || error.code() == vk::Result::eErrorFragmentedPool) {
       this->fullPools.push_back(poolToUse);

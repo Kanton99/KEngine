@@ -684,11 +684,14 @@ void mvk::vkEngine::initDescriptors(){
   builder.addBinding(0, vk::DescriptorType::eUniformBuffer);
   auto layout = builder.build(this->_device, vk::ShaderStageFlagBits::eVertex);
 
+  this->_descriptorSet.layout = layout;
   this->_descriptorSet.descriptor = this->descriptorAllocator.allocate(this->_device, layout);
 
   this->_descriptorSet.buffer = this->_allocateBuffer(sizeof(mvk::UniformDescriptorObject), vk::BufferUsageFlagBits::eUniformBuffer, vma::AllocationCreateFlagBits::eMapped | vma::AllocationCreateFlagBits::eHostAccessSequentialWrite, vma::MemoryUsage::eAuto);
 
   this->deletionStack.pushFunction([&](){
     this->_allocator.destroyBuffer(this->_descriptorSet.buffer.buffer, this->_descriptorSet.buffer.allocation);
+    this->_device.destroyDescriptorSetLayout(this->_descriptorSet.layout);
+    this->descriptorAllocator.destroyPools(this->_device);
   });
 }
