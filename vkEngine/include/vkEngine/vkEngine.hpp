@@ -49,6 +49,7 @@ private: // Methods
 
   void _initFrameBuffers();
 
+  void initDescriptors();
   void updateDescriptorSet(mvk::DescriptorObject &descriptor);
   void
   updateUbos(mvk::UniformDescriptorObject ubo); // TODO temporary for testing

@@ -1,10 +1,11 @@
-#include "vkEngine/DescriptorWriter.hpp"
 #include <functional>
 #define VMA_IMPLEMENTATION
 #include "vkEngine/vkEngine.hpp"
 #include "vkEngine/infoCreator.hpp"
 #include "vkEngine/pipeline_builder.hpp"
 #include "vkEngine/utils.hpp"
+#include "vkEngine/DescriptorLayoutBuilder.hpp"
+#include "vkEngine/DescriptorWriter.hpp"
 #include <SDL3/SDL_vulkan.h>
 #include <VkBootstrap.h>
 #include <array>
@@ -68,22 +69,7 @@ void mvk::vkEngine::init() {
   this->_initCommandPool(this->_graphicsQueueIndex);
   this->_allocateCommandBuffer(this->_graphicsCommandBuffer);
 
-  std::array<DescriptoAllocatorGrowable::PoolSizeRatio, 1> ratios;
-  ratios[0].type = vk::DescriptorType::eUniformBuffer;
-  ratios[1].ratio = 1.f;
-  this->descriptorAllocator.init(this->_device, 1, ratios);
-
-  vk::DescriptorSetLayoutBinding binding{};
-  binding.setBinding(0);
-  binding.setDescriptorCount(1);
-  binding.setStageFlags(vk::ShaderStageFlagBits::eVertex);
-  binding.setDescriptorType(vk::DescriptorType::eUniformBuffer);
-
-  vk::DescriptorSetLayoutCreateInfo layoutInfo{};
-  layoutInfo.setBindings(binding);
-  auto layout = this->_device.createDescriptorSetLayout(layoutInfo);
-  this->_descriptorSet.descriptor = this->descriptorAllocator.allocate(this->_device, layout);
-
+  this->initDescriptors();
   this->updateDescriptorSet(this->_descriptorSet);
   this->updateUbos(this->ubo);
 
@@ -686,4 +672,23 @@ void mvk::vkEngine::immediateSubmit(
   this->_graphicsQueue.submit2(submitInfo, this->immediateFence);
 
   this->_device.waitForFences(this->immediateFence, true, 9999999);
+}
+
+void mvk::vkEngine::initDescriptors(){
+  std::array<DescriptoAllocatorGrowable::PoolSizeRatio, 1> ratios;
+  ratios[0].type = vk::DescriptorType::eUniformBuffer;
+  ratios[0].ratio = 1.f;
+  this->descriptorAllocator.init(this->_device, 1, ratios);
+
+  mvk::DescriptorLayoutBuidler builder;
+  builder.addBinding(0, vk::DescriptorType::eUniformBuffer);
+  auto layout = builder.build(this->_device, vk::ShaderStageFlagBits::eVertex);
+
+  this->_descriptorSet.descriptor = this->descriptorAllocator.allocate(this->_device, layout);
+
+  this->_descriptorSet.buffer = this->_allocateBuffer(sizeof(mvk::UniformDescriptorObject), vk::BufferUsageFlagBits::eUniformBuffer, vma::AllocationCreateFlagBits::eMapped | vma::AllocationCreateFlagBits::eHostAccessSequentialWrite, vma::MemoryUsage::eAuto);
+
+  this->deletionStack.pushFunction([&](){
+    this->_allocator.destroyBuffer(this->_descriptorSet.buffer.buffer, this->_descriptorSet.buffer.allocation);
+  });
 }

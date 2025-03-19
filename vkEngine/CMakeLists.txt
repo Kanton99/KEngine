@@ -21,6 +21,7 @@ add_library(${PROJECT_NAME} STATIC
     "src/objLoader.cpp"
     "src/DescriptorAllocatorGrowable.cpp"
     "src/DescriptorWriter.cpp"
+    "src/DescriptorLayoutBuilder.cpp"
 )
 add_library(lib::vkEngine ALIAS ${PROJECT_NAME})
 
