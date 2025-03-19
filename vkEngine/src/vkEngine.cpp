@@ -160,6 +160,7 @@ void mvk::vkEngine::_initVulkan() {
 #ifndef NDEBUG
   this->_debugMessanger = vk::DebugUtilsMessengerEXT(instRet->debug_messenger);
   this->deletionStack.pushFunction([=, this]() {
+    std::cout << "Destroying debug messenger\n";
     this->_instance.destroyDebugUtilsMessengerEXT(this->_debugMessanger);
   });
 #endif // !NDEBUG
@@ -203,14 +204,18 @@ void mvk::vkEngine::_initVulkan() {
       vk::Queue(vkbDevice.get_queue(vkb::QueueType::graphics).value());
   this->_graphicsQueueIndex =
       vkbDevice.get_queue_index(vkb::QueueType::graphics).value();
+  this->deletionStack.pushFunction([=, this]() { 
+    std::cout << "Destroying device\n";
+    this->_device.destroy(); 
+  });
 
   this->deletionStack.pushFunction([&]() {
     for (const auto &buffer : testMeshes) {
+      std::cout << "Destroying mesh buffers: " << buffer->name << std::endl;
       this->_destroyBuffer(buffer->buffers.vertexBuffer);
       this->_destroyBuffer(buffer->buffers.indexBuffer);
     }
   });
-  this->deletionStack.pushFunction([=, this]() { this->_device.destroy(); });
 }
 
 void mvk::vkEngine::_initCommandPool(uint32_t queueFamilyIndex) {
@@ -222,6 +227,7 @@ void mvk::vkEngine::_initCommandPool(uint32_t queueFamilyIndex) {
   this->_immediateCommandPool = this->_device.createCommandPool(poolInfo);
 
   this->deletionStack.pushFunction([&]() {
+    std::cout << "Destroying command pools\n";
     this->_device.destroyCommandPool(this->_graphicsCommandPool);
     this->_device.destroyCommandPool(this->_immediateCommandPool);
   });
@@ -295,6 +301,7 @@ void mvk::vkEngine::_initSwapchain(uint32_t width, uint32_t height) {
   this->_createDrawImage();
 
   this->deletionStack.pushFunction([=, this]() {
+    std::cout << "Destroying swapchain and its images\n";
     this->_device.destroySwapchainKHR(this->_graphicSwapchain.swapchain);
 
     for (unsigned long i = 0; i < this->_graphicSwapchain.imageViews.size();
@@ -339,6 +346,7 @@ void mvk::vkEngine::_createDrawImage() {
   this->_drawImage.imageView = this->_device.createImageView(imageViewInfo);
 
   this->deletionStack.pushFunction([&]() {
+    std::cout << "Destroying draw Image\n";
     this->_device.destroyImageView(this->_drawImage.imageView);
     this->_allocator.destroyImage(this->_drawImage.image,
                                   this->_drawImage.allocation);
@@ -386,6 +394,7 @@ void mvk::vkEngine::_initGraphicPipeline(
   this->_device.destroyShaderModule(fragModule);
 
   this->deletionStack.pushFunction([&]() {
+    std::cout << "Destroying pipeline\n";
     this->_device.destroyPipelineLayout(this->_graphicsPipelineLayout);
     // this->_device.destroyRenderPass(this->_renderPass);
     this->_device.destroyPipeline(this->_graphicsPipeline);
@@ -690,6 +699,7 @@ void mvk::vkEngine::initDescriptors(){
   this->_descriptorSet.buffer = this->_allocateBuffer(sizeof(mvk::UniformDescriptorObject), vk::BufferUsageFlagBits::eUniformBuffer, vma::AllocationCreateFlagBits::eMapped | vma::AllocationCreateFlagBits::eHostAccessSequentialWrite, vma::MemoryUsage::eAuto);
 
   this->deletionStack.pushFunction([&](){
+    std::cout << "Destroying descriptor set and associated data structures\n";
     this->_allocator.destroyBuffer(this->_descriptorSet.buffer.buffer, this->_descriptorSet.buffer.allocation);
     this->_device.destroyDescriptorSetLayout(this->_descriptorSet.layout);
     this->descriptorAllocator.destroyPools(this->_device);
