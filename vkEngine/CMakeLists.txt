@@ -11,7 +11,7 @@ find_package(fastgltf CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)
 find_package(SDL3 CONFIG REQUIRED)
 
-add_library(${PROJECT_NAME} STATIC 
+add_library(${PROJECT_NAME} SHARED 
     "src/vkEngine.cpp"
     "src/utils.cpp"
     "src/pipeline_builder.cpp"

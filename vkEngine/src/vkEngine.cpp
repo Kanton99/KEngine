@@ -52,7 +52,8 @@ void mvk::vkEngine::init() {
 
   vma::VulkanFunctions vulkanFunctions{
       .vkGetInstanceProcAddr = &vkGetInstanceProcAddr,
-      .vkGetDeviceProcAddr = &vkGetDeviceProcAddr};
+      .vkGetDeviceProcAddr = &vkGetDeviceProcAddr
+  };
   vma::AllocatorCreateInfo allocatorInfo{
       .flags = vma::AllocatorCreateFlagBits::eBufferDeviceAddress,
       .physicalDevice = this->_physDevice,
@@ -62,7 +63,10 @@ void mvk::vkEngine::init() {
       .vulkanApiVersion = vk::ApiVersion13,
   };
   this->_allocator = vma::createAllocator(allocatorInfo);
-  this->deletionStack.pushFunction([&]() { this->_allocator.destroy(); });
+  this->deletionStack.pushFunction([&]() { 
+    std::cout << "Destroying Allocator" << std::endl;
+    this->_allocator.destroy(); 
+  });
 
   this->_initSwapchain(static_cast<uint32_t>(width),
                        static_cast<uint32_t>(height));
@@ -76,8 +80,11 @@ void mvk::vkEngine::init() {
   std::vector<vk::DescriptorSetLayout> layouts = {this->_descriptorSet.layout};
   this->_initGraphicPipeline(layouts);
   this->_initSynchronizationObjects();
+
+
   this->deletionStack.pushFunction([&]() {
     for (const auto &buffer : testMeshes) {
+      std::cout << "Destroying mesh buffers for " << buffer->name << std::endl;
       this->_destroyBuffer(buffer->buffers.vertexBuffer);
       this->_destroyBuffer(buffer->buffers.indexBuffer);
     }
@@ -207,14 +214,6 @@ void mvk::vkEngine::_initVulkan() {
   this->deletionStack.pushFunction([=, this]() { 
     std::cout << "Destroying device\n";
     this->_device.destroy(); 
-  });
-
-  this->deletionStack.pushFunction([&]() {
-    for (const auto &buffer : testMeshes) {
-      std::cout << "Destroying mesh buffers: " << buffer->name << std::endl;
-      this->_destroyBuffer(buffer->buffers.vertexBuffer);
-      this->_destroyBuffer(buffer->buffers.indexBuffer);
-    }
   });
 }
 
