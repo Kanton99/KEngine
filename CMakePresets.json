@@ -29,9 +29,11 @@
       "name": "windows-debug",
       "inherits": "base",
       "cacheVariables": {
-        "CMAKE_C_COMPILER":   "clang-cl.exe",
-        "CMAKE_CXX_COMPILER": "clang-cl.exe",
-        "CMAKE_BUILD_TYPE": "Debug"
+        "CMAKE_C_COMPILER": "cl.exe",
+        "CMAKE_CXX_COMPILER": "cl.exe",
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS": "TRUE",
+        "BUILD_SHARED_LIBS": "TRUE"
       }    
     }
   ]
