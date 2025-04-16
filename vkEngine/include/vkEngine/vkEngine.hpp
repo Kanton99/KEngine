@@ -14,7 +14,7 @@
 namespace mvk {
 class vkEngine {
 public:
-  static vkEngine *get(SDL_Window *window);
+  static vkEngine& get(SDL_Window *window);
   void init();
 
   void draw();
@@ -58,55 +58,55 @@ public:
   std::vector<std::shared_ptr<MeshAsset>> testMeshes;
 
 private: // Members
-  static vkEngine *_engine;
-  mvk::DeletionStack deletionStack;
+  static vkEngine *m_engine;
+  mvk::DeletionStack m_deletionStack;
 
-  vk::Instance _instance;
-  SDL_Window *_window;
-  vk::SurfaceKHR _surface;
+  vk::Instance m_instance;
+  SDL_Window *m_window;
+  vk::SurfaceKHR m_surface;
 #ifndef NDEBUG
-  vk::DebugUtilsMessengerEXT _debugMessanger;
+  vk::DebugUtilsMessengerEXT m_debugMessanger;
 #endif // !DEBUG
 
-  vk::Device _device;
-  vk::PhysicalDevice _physDevice;
+  vk::Device m_device;
+  vk::PhysicalDevice m_physDevice;
 
-  vk::Queue _graphicsQueue;
-  uint32_t _graphicsQueueIndex;
+  vk::Queue m_graphicsQueue;
+  uint32_t m_graphicsQueueIndex;
 
-  vk::CommandPool _graphicsCommandPool;
-  vk::CommandBuffer _graphicsCommandBuffer;
-  vk::CommandPool _immediateCommandPool;
-  vk::CommandBuffer _immediateCommandBuffer;
-  vk::Fence immediateFence;
+  vk::CommandPool m_graphicsCommandPool;
+  vk::CommandBuffer m_graphicsCommandBuffer;
+  vk::CommandPool m_immediateCommandPool;
+  vk::CommandBuffer m_immediateCommandBuffer;
+  vk::Fence m_immediateFence;
 
-  mvk::SwapChain _graphicSwapchain;
-  vk::Extent2D swapchainExtent;
-  mvk::AllocatedImage _drawImage;
+  mvk::SwapChain m_graphicSwapchain;
+  vk::Extent2D m_swapchainExtent;
+  mvk::AllocatedImage m_drawImage;
 
   // Depth testing
-  mvk::AllocatedImage _depthImage;
+  mvk::AllocatedImage m_depthImage;
 
-  vk::RenderPass _renderPass;
+  vk::RenderPass m_renderPass;
   // temporary
-  vk::PipelineLayout _graphicsPipelineLayout;
-  vk::Pipeline _graphicsPipeline;
+  vk::PipelineLayout m_graphicsPipelineLayout;
+  vk::Pipeline m_graphicsPipeline;
 
   // Synchro primitives
-  vk::Semaphore _imageAvailableSempahore, _renderFinishedSemaphore;
-  vk::Fence inFlightFence;
+  vk::Semaphore m_imageAvailableSempahore, m_renderFinishedSemaphore;
+  vk::Fence m_inFlightFence;
 
   // Buffer allocation
-  vma::Allocator _allocator;
+  vma::Allocator m_allocator;
 
   // Descriptors
   /*vk::DescriptorPool _descriptorPool;*/
-  mvk::DescriptoAllocatorGrowable descriptorAllocator;
-  mvk::DescriptorObject _descriptorSet;
-  mvk::UniformDescriptorObject ubo;
+  mvk::DescriptoAllocatorGrowable m_descriptorAllocator;
+  mvk::DescriptorObject m_descriptorSet;
+  mvk::UniformDescriptorObject m_ubo;
 
   // Push constants
-  mvk::GPUDrawPushConstants samplePushConstants;
+  mvk::GPUDrawPushConstants m_samplePushConstants;
 };
 } // namespace mvk
 
