@@ -23,13 +23,13 @@ VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
 #endif
 #endif
 
-mvk::vkEngine *mvk::vkEngine::_engine = nullptr;
+mvk::vkEngine *mvk::vkEngine::m_engine = nullptr;
 
-mvk::vkEngine *mvk::vkEngine::get(SDL_Window *window) {
-  if (!_engine) {
-    _engine = new mvk::vkEngine(window);
+mvk::vkEngine& mvk::vkEngine::get(SDL_Window *window) {
+  if (!m_engine) {
+    m_engine = new mvk::vkEngine(window);
   }
-  return _engine;
+  return *m_engine;
 }
 
 void mvk::vkEngine::init() {
@@ -40,15 +40,15 @@ void mvk::vkEngine::init() {
   this->_initVulkan();
 
 #if VULKAN_HPP_DISPATCH_LOADER_DYNAMIC == 1
-  VULKAN_HPP_DEFAULT_DISPATCHER.init(this->_instance);
+  VULKAN_HPP_DEFAULT_DISPATCHER.init(this->m_instance);
 #endif // VULKAN_HPP_DEFAULT_DISPATCHER.init(instance);
 
 #if VULKAN_HPP_DISPATCH_LOADER_DYNAMIC == 1
-  VULKAN_HPP_DEFAULT_DISPATCHER.init(this->_device);
+  VULKAN_HPP_DEFAULT_DISPATCHER.init(this->m_device);
 #endif // VULKAN_HPP_DEFAULT_DISPATCHER.init(device);
   //
   int width, height;
-  SDL_GetWindowSize(this->_window, &width, &height);
+  SDL_GetWindowSize(this->m_window, &width, &height);
 
   vma::VulkanFunctions vulkanFunctions{
       .vkGetInstanceProcAddr = &vkGetInstanceProcAddr,
@@ -56,33 +56,33 @@ void mvk::vkEngine::init() {
   };
   vma::AllocatorCreateInfo allocatorInfo{
       .flags = vma::AllocatorCreateFlagBits::eBufferDeviceAddress,
-      .physicalDevice = this->_physDevice,
-      .device = this->_device,
+      .physicalDevice = this->m_physDevice,
+      .device = this->m_device,
       .pVulkanFunctions = &vulkanFunctions,
-      .instance = this->_instance,
+      .instance = this->m_instance,
       .vulkanApiVersion = vk::ApiVersion13,
   };
-  this->_allocator = vma::createAllocator(allocatorInfo);
-  this->deletionStack.pushFunction([&]() { 
+  this->m_allocator = vma::createAllocator(allocatorInfo);
+  this->m_deletionStack.pushFunction([&]() { 
     std::cout << "Destroying Allocator" << std::endl;
-    this->_allocator.destroy(); 
+    this->m_allocator.destroy(); 
   });
 
   this->_initSwapchain(static_cast<uint32_t>(width),
                        static_cast<uint32_t>(height));
-  this->_initCommandPool(this->_graphicsQueueIndex);
-  this->_allocateCommandBuffer(this->_graphicsCommandBuffer);
+  this->_initCommandPool(this->m_graphicsQueueIndex);
+  this->_allocateCommandBuffer(this->m_graphicsCommandBuffer);
 
   this->initDescriptors();
-  this->updateDescriptorSet(this->_descriptorSet);
-  this->updateUbos(this->ubo);
+  this->updateDescriptorSet(this->m_descriptorSet);
+  this->updateUbos(this->m_ubo);
 
-  std::vector<vk::DescriptorSetLayout> layouts = {this->_descriptorSet.layout};
+  std::vector<vk::DescriptorSetLayout> layouts = {this->m_descriptorSet.layout};
   this->_initGraphicPipeline(layouts);
   this->_initSynchronizationObjects();
 
 
-  this->deletionStack.pushFunction([&]() {
+  this->m_deletionStack.pushFunction([&]() {
     for (const auto &buffer : testMeshes) {
       std::cout << "Destroying mesh buffers for " << buffer->name << std::endl;
       this->_destroyBuffer(buffer->buffers.vertexBuffer);
@@ -92,61 +92,61 @@ void mvk::vkEngine::init() {
 }
 
 void mvk::vkEngine::draw() {
-  this->_device.waitForFences(this->inFlightFence, vk::True, UINT64_MAX);
-  this->_device.resetFences(this->inFlightFence);
+  this->m_device.waitForFences(this->m_inFlightFence, vk::True, UINT64_MAX);
+  this->m_device.resetFences(this->m_inFlightFence);
 
   uint32_t imageIndex =
-      this->_device
-          .acquireNextImageKHR(this->_graphicSwapchain.swapchain, UINT64_MAX,
-                               this->_imageAvailableSempahore)
+      this->m_device
+          .acquireNextImageKHR(this->m_graphicSwapchain.swapchain, UINT64_MAX,
+                               this->m_imageAvailableSempahore)
           .value;
 
-  this->_graphicsCommandBuffer.reset();
+  this->m_graphicsCommandBuffer.reset();
 
-  this->_recordCommandBuffer(this->_graphicsCommandBuffer, imageIndex);
+  this->_recordCommandBuffer(this->m_graphicsCommandBuffer, imageIndex);
 
   auto cmdSubmitInfo =
-      utils::commandBufferSubmitInfo(this->_graphicsCommandBuffer);
+      utils::commandBufferSubmitInfo(this->m_graphicsCommandBuffer);
 
   auto signalInfo = utils::semaphoreSubmitInfo(
       vk::PipelineStageFlagBits2::eColorAttachmentOutput,
-      this->_renderFinishedSemaphore);
+      this->m_renderFinishedSemaphore);
   auto waitInfo = utils::semaphoreSubmitInfo(
-      vk::PipelineStageFlagBits2::eAllGraphics, this->_imageAvailableSempahore);
+      vk::PipelineStageFlagBits2::eAllGraphics, this->m_imageAvailableSempahore);
 
   auto submitInfo2 = utils::submitInfo(&cmdSubmitInfo, &signalInfo, &waitInfo);
-  this->_graphicsQueue.submit2(submitInfo2, this->inFlightFence);
+  this->m_graphicsQueue.submit2(submitInfo2, this->m_inFlightFence);
 
   vk::PresentInfoKHR prensetInfo{
       .waitSemaphoreCount = 1,
-      .pWaitSemaphores = &this->_renderFinishedSemaphore,
+      .pWaitSemaphores = &this->m_renderFinishedSemaphore,
       .swapchainCount = 1,
-      .pSwapchains = &this->_graphicSwapchain.swapchain,
+      .pSwapchains = &this->m_graphicSwapchain.swapchain,
       .pImageIndices = &imageIndex};
-  this->_graphicsQueue.presentKHR(prensetInfo);
+  this->m_graphicsQueue.presentKHR(prensetInfo);
 }
 
 void mvk::vkEngine::cleanup() {
-  this->_device.waitIdle();
-  this->deletionStack.flush();
+  this->m_device.waitIdle();
+  this->m_deletionStack.flush();
 }
 
-mvk::vkEngine::vkEngine(SDL_Window *window) : _window(window) {}
+mvk::vkEngine::vkEngine(SDL_Window *window) : m_window(window) {}
 
 void mvk::vkEngine::_allocateCommandBuffer(vk::CommandBuffer &buffer) {
   vk::CommandBufferAllocateInfo bufferAllocationInfo{
-      .commandPool = this->_graphicsCommandPool,
+      .commandPool = this->m_graphicsCommandPool,
       .level = vk::CommandBufferLevel::ePrimary,
       .commandBufferCount = 1};
-  buffer = this->_device.allocateCommandBuffers(bufferAllocationInfo).front();
+  buffer = this->m_device.allocateCommandBuffers(bufferAllocationInfo).front();
 
   vk::CommandBufferAllocateInfo immediateAllocationInfo{
-      .commandPool = this->_immediateCommandPool,
+      .commandPool = this->m_immediateCommandPool,
       .level = vk::CommandBufferLevel::ePrimary,
       .commandBufferCount = 1,
   };
-  this->_immediateCommandBuffer =
-      this->_device.allocateCommandBuffers(immediateAllocationInfo).front();
+  this->m_immediateCommandBuffer =
+      this->m_device.allocateCommandBuffers(immediateAllocationInfo).front();
 }
 
 void mvk::vkEngine::_initVulkan() {
@@ -160,28 +160,28 @@ void mvk::vkEngine::_initVulkan() {
 #endif // !NDEBUG
                      .build();
 
-  this->_instance = vk::Instance(instRet.value().instance);
+  this->m_instance = vk::Instance(instRet.value().instance);
 
-  this->deletionStack.pushFunction([=, this]() { this->_instance.destroy(); });
+  this->m_deletionStack.pushFunction([=, this]() { this->m_instance.destroy(); });
 
 #ifndef NDEBUG
-  this->_debugMessanger = vk::DebugUtilsMessengerEXT(instRet->debug_messenger);
-  this->deletionStack.pushFunction([=, this]() {
+  this->m_debugMessanger = vk::DebugUtilsMessengerEXT(instRet->debug_messenger);
+  this->m_deletionStack.pushFunction([=, this]() {
     std::cout << "Destroying debug messenger\n";
-    this->_instance.destroyDebugUtilsMessengerEXT(this->_debugMessanger);
+    this->m_instance.destroyDebugUtilsMessengerEXT(this->m_debugMessanger);
   });
 #endif // !NDEBUG
 
   VkSurfaceKHR surface;
-  if (!SDL_Vulkan_CreateSurface(this->_window,
-                                static_cast<VkInstance>(this->_instance),
+  if (!SDL_Vulkan_CreateSurface(this->m_window,
+                                static_cast<VkInstance>(this->m_instance),
                                 nullptr, &surface)) {
     std::cerr << "Error generating surface\n";
   }
-  this->_surface = vk::SurfaceKHR(surface);
+  this->m_surface = vk::SurfaceKHR(surface);
 
-  this->deletionStack.pushFunction(
-      [=, this]() { this->_instance.destroySurfaceKHR(this->_surface); });
+  this->m_deletionStack.pushFunction(
+      [=, this]() { this->m_instance.destroySurfaceKHR(this->m_surface); });
 
   vkb::PhysicalDeviceSelector selector{instRet.value()};
   vk::PhysicalDeviceVulkan13Features features_13{
@@ -193,7 +193,7 @@ void mvk::vkEngine::_initVulkan() {
   };
   vkb::PhysicalDevice vkbPhysDevice =
       selector.set_minimum_version(1, 3)
-          .set_surface(static_cast<VkSurfaceKHR>(this->_surface))
+          .set_surface(static_cast<VkSurfaceKHR>(this->m_surface))
           .set_required_features_12(
               static_cast<VkPhysicalDeviceVulkan12Features>(features_12))
           .set_required_features_13(
@@ -205,15 +205,15 @@ void mvk::vkEngine::_initVulkan() {
 
   vkb::Device vkbDevice = deviceBuilder.build().value();
 
-  this->_device = vk::Device(vkbDevice.device);
-  this->_physDevice = vk::PhysicalDevice(vkbPhysDevice.physical_device);
-  this->_graphicsQueue =
+  this->m_device = vk::Device(vkbDevice.device);
+  this->m_physDevice = vk::PhysicalDevice(vkbPhysDevice.physical_device);
+  this->m_graphicsQueue =
       vk::Queue(vkbDevice.get_queue(vkb::QueueType::graphics).value());
-  this->_graphicsQueueIndex =
+  this->m_graphicsQueueIndex =
       vkbDevice.get_queue_index(vkb::QueueType::graphics).value();
-  this->deletionStack.pushFunction([=, this]() { 
+  this->m_deletionStack.pushFunction([=, this]() { 
     std::cout << "Destroying device\n";
-    this->_device.destroy(); 
+    this->m_device.destroy(); 
   });
 }
 
@@ -222,21 +222,21 @@ void mvk::vkEngine::_initCommandPool(uint32_t queueFamilyIndex) {
       .flags = vk::CommandPoolCreateFlagBits::eResetCommandBuffer,
       .queueFamilyIndex = (uint32_t)queueFamilyIndex};
 
-  this->_graphicsCommandPool = this->_device.createCommandPool(poolInfo);
-  this->_immediateCommandPool = this->_device.createCommandPool(poolInfo);
+  this->m_graphicsCommandPool = this->m_device.createCommandPool(poolInfo);
+  this->m_immediateCommandPool = this->m_device.createCommandPool(poolInfo);
 
-  this->deletionStack.pushFunction([&]() {
+  this->m_deletionStack.pushFunction([&]() {
     std::cout << "Destroying command pools\n";
-    this->_device.destroyCommandPool(this->_graphicsCommandPool);
-    this->_device.destroyCommandPool(this->_immediateCommandPool);
+    this->m_device.destroyCommandPool(this->m_graphicsCommandPool);
+    this->m_device.destroyCommandPool(this->m_immediateCommandPool);
   });
 }
 
 void mvk::vkEngine::_initSwapchain(uint32_t width, uint32_t height) {
   vkb::SwapchainBuilder swapchainBuilder{
-      static_cast<VkPhysicalDevice>(this->_physDevice),
-      static_cast<VkDevice>(this->_device),
-      static_cast<VkSurfaceKHR>(this->_surface)};
+      static_cast<VkPhysicalDevice>(this->m_physDevice),
+      static_cast<VkDevice>(this->m_device),
+      static_cast<VkSurfaceKHR>(this->m_surface)};
 
   vk::ImageUsageFlags swapchainUsageFlags =
       vk::ImageUsageFlagBits::eColorAttachment |
@@ -254,74 +254,74 @@ void mvk::vkEngine::_initSwapchain(uint32_t width, uint32_t height) {
           .value();
 
   // store swapchain and its related images
-  this->_graphicSwapchain.swapchain = vkbSwapchain.swapchain;
+  this->m_graphicSwapchain.swapchain = vkbSwapchain.swapchain;
   auto _swapchainImages = vkbSwapchain.get_images().value();
   auto _swapchainImageViews = vkbSwapchain.get_image_views().value();
 
-  this->_graphicSwapchain.images.reserve(_swapchainImages.size());
+  this->m_graphicSwapchain.images.reserve(_swapchainImages.size());
   for (auto image : _swapchainImages) {
-    this->_graphicSwapchain.images.emplace_back(vk::Image(image));
+    this->m_graphicSwapchain.images.emplace_back(vk::Image(image));
   }
 
-  this->_graphicSwapchain.imageViews.reserve(_swapchainImageViews.size());
+  this->m_graphicSwapchain.imageViews.reserve(_swapchainImageViews.size());
   for (auto image : _swapchainImageViews) {
-    this->_graphicSwapchain.imageViews.emplace_back(vk::ImageView(image));
+    this->m_graphicSwapchain.imageViews.emplace_back(vk::ImageView(image));
   }
 
-  this->_graphicSwapchain.format = vk::Format(vkbSwapchain.image_format);
+  this->m_graphicSwapchain.format = vk::Format(vkbSwapchain.image_format);
 
-  this->swapchainExtent = vkbSwapchain.extent;
+  this->m_swapchainExtent = vkbSwapchain.extent;
 
   // Creating Depth testing image
-  this->_depthImage.format = vk::Format::eD32Sfloat;
-  this->_depthImage.extent.width = width;
-  this->_depthImage.extent.height = height;
-  this->_depthImage.extent.depth = 1;
+  this->m_depthImage.format = vk::Format::eD32Sfloat;
+  this->m_depthImage.extent.width = width;
+  this->m_depthImage.extent.height = height;
+  this->m_depthImage.extent.depth = 1;
 
   vk::ImageCreateInfo imageInfo = mvk::utils::imageCreateInfo(
-      this->_depthImage.format, vk::ImageUsageFlagBits::eDepthStencilAttachment,
-      this->_depthImage.extent);
+      this->m_depthImage.format, vk::ImageUsageFlagBits::eDepthStencilAttachment,
+      this->m_depthImage.extent);
 
   vma::AllocationCreateInfo allocCreateInfo{
       .usage = vma::MemoryUsage::eAuto,
   };
 
   auto allocatedImage =
-      this->_allocator.createImage(imageInfo, allocCreateInfo);
-  this->_depthImage.image = allocatedImage.first;
-  this->_depthImage.allocation = allocatedImage.second;
+      this->m_allocator.createImage(imageInfo, allocCreateInfo);
+  this->m_depthImage.image = allocatedImage.first;
+  this->m_depthImage.allocation = allocatedImage.second;
 
   vk::ImageViewCreateInfo viewInfo = mvk::utils::imageViewCreateInfo(
-      this->_depthImage.format, this->_depthImage.image,
+      this->m_depthImage.format, this->m_depthImage.image,
       vk::ImageAspectFlagBits::eDepth);
 
-  this->_depthImage.imageView = this->_device.createImageView(viewInfo);
+  this->m_depthImage.imageView = this->m_device.createImageView(viewInfo);
 
   this->_createDrawImage();
 
-  this->deletionStack.pushFunction([=, this]() {
+  this->m_deletionStack.pushFunction([=, this]() {
     std::cout << "Destroying swapchain and its images\n";
-    this->_device.destroySwapchainKHR(this->_graphicSwapchain.swapchain);
+    this->m_device.destroySwapchainKHR(this->m_graphicSwapchain.swapchain);
 
-    for (unsigned long i = 0; i < this->_graphicSwapchain.imageViews.size();
+    for (unsigned long i = 0; i < this->m_graphicSwapchain.imageViews.size();
          i++) {
-      this->_device.destroyImageView(this->_graphicSwapchain.imageViews[i]);
+      this->m_device.destroyImageView(this->m_graphicSwapchain.imageViews[i]);
     }
 
-    this->_device.destroyImageView(this->_depthImage.imageView);
-    this->_allocator.destroyImage(this->_depthImage.image,
-                                  this->_depthImage.allocation);
+    this->m_device.destroyImageView(this->m_depthImage.imageView);
+    this->m_allocator.destroyImage(this->m_depthImage.image,
+                                  this->m_depthImage.allocation);
   });
 }
 
 void mvk::vkEngine::_createDrawImage() {
-  _drawImage.extent = {
-      this->swapchainExtent.width,
-      this->swapchainExtent.height,
+  m_drawImage.extent = {
+      this->m_swapchainExtent.width,
+      this->m_swapchainExtent.height,
       1,
   };
 
-  _drawImage.format = vk::Format::eR16G16B16A16Sfloat;
+  m_drawImage.format = vk::Format::eR16G16B16A16Sfloat;
 
   vk::ImageUsageFlags drawImageFlags = vk::ImageUsageFlagBits::eTransferSrc |
                                        vk::ImageUsageFlagBits::eTransferSrc |
@@ -329,26 +329,26 @@ void mvk::vkEngine::_createDrawImage() {
                                        vk::ImageUsageFlagBits::eColorAttachment;
 
   vk::ImageCreateInfo drawImageInfo = mvk::utils::imageCreateInfo(
-      this->_drawImage.format, drawImageFlags, _drawImage.extent);
+      this->m_drawImage.format, drawImageFlags, m_drawImage.extent);
 
   vma::AllocationCreateInfo imageAllocInfo{
       .usage = vma::MemoryUsage::eGpuOnly,
       .requiredFlags = vk::MemoryPropertyFlagBits::eDeviceLocal};
 
   auto imageAllocation =
-      this->_allocator.createImage(drawImageInfo, imageAllocInfo);
-  _drawImage.image = imageAllocation.first;
-  _drawImage.allocation = imageAllocation.second;
+      this->m_allocator.createImage(drawImageInfo, imageAllocInfo);
+  m_drawImage.image = imageAllocation.first;
+  m_drawImage.allocation = imageAllocation.second;
 
   auto imageViewInfo = mvk::utils::imageViewCreateInfo(
-      _drawImage.format, _drawImage.image, vk::ImageAspectFlagBits::eColor);
-  this->_drawImage.imageView = this->_device.createImageView(imageViewInfo);
+      m_drawImage.format, m_drawImage.image, vk::ImageAspectFlagBits::eColor);
+  this->m_drawImage.imageView = this->m_device.createImageView(imageViewInfo);
 
-  this->deletionStack.pushFunction([&]() {
+  this->m_deletionStack.pushFunction([&]() {
     std::cout << "Destroying draw Image\n";
-    this->_device.destroyImageView(this->_drawImage.imageView);
-    this->_allocator.destroyImage(this->_drawImage.image,
-                                  this->_drawImage.allocation);
+    this->m_device.destroyImageView(this->m_drawImage.imageView);
+    this->m_allocator.destroyImage(this->m_drawImage.image,
+                                  this->m_drawImage.allocation);
   });
 }
 
@@ -359,8 +359,8 @@ void mvk::vkEngine::_initGraphicPipeline(
   auto fragShaderCode =
       utils::readFile("resources/shaders/compiled/base_frag.frag.spv");
 
-  auto vertModule = utils::createShaderModule(vertShaderCode, this->_device);
-  auto fragModule = utils::createShaderModule(fragShaderCode, this->_device);
+  auto vertModule = utils::createShaderModule(vertShaderCode, this->m_device);
+  auto fragModule = utils::createShaderModule(fragShaderCode, this->m_device);
 
   vk::PushConstantRange pushConstantRanges{};
   pushConstantRanges.setOffset(0);
@@ -370,12 +370,12 @@ void mvk::vkEngine::_initGraphicPipeline(
   vk::PipelineLayoutCreateInfo pipelineLayoutCreateInfo{};
   pipelineLayoutCreateInfo.setSetLayouts(layouts);
   pipelineLayoutCreateInfo.setPushConstantRanges(pushConstantRanges);
-  this->_graphicsPipelineLayout =
-      this->_device.createPipelineLayout(pipelineLayoutCreateInfo);
+  this->m_graphicsPipelineLayout =
+      this->m_device.createPipelineLayout(pipelineLayoutCreateInfo);
 
   PipelineBuilder pipelineBuilder;
 
-  pipelineBuilder._pipelineLayout = _graphicsPipelineLayout;
+  pipelineBuilder._pipelineLayout = m_graphicsPipelineLayout;
   pipelineBuilder.setShaders(vertModule, fragModule);
   pipelineBuilder.setInputTopology(vk::PrimitiveTopology::eTriangleList);
   pipelineBuilder.setPolygonMode(vk::PolygonMode::eFill);
@@ -384,50 +384,50 @@ void mvk::vkEngine::_initGraphicPipeline(
   pipelineBuilder.setMultisamplingNone();
   pipelineBuilder.disableBlending();
   pipelineBuilder.enableDepthtest(true, vk::CompareOp::eGreaterOrEqual);
-  pipelineBuilder.setColorAttachmentFormat(this->_drawImage.format);
-  pipelineBuilder.setDepthFormat(_depthImage.format);
+  pipelineBuilder.setColorAttachmentFormat(this->m_drawImage.format);
+  pipelineBuilder.setDepthFormat(m_depthImage.format);
 
-  _graphicsPipeline = pipelineBuilder.buildPipeline(this->_device);
+  m_graphicsPipeline = pipelineBuilder.buildPipeline(this->m_device);
 
-  this->_device.destroyShaderModule(vertModule);
-  this->_device.destroyShaderModule(fragModule);
+  this->m_device.destroyShaderModule(vertModule);
+  this->m_device.destroyShaderModule(fragModule);
 
-  this->deletionStack.pushFunction([&]() {
+  this->m_deletionStack.pushFunction([&]() {
     std::cout << "Destroying pipeline\n";
-    this->_device.destroyPipelineLayout(this->_graphicsPipelineLayout);
+    this->m_device.destroyPipelineLayout(this->m_graphicsPipelineLayout);
     // this->_device.destroyRenderPass(this->_renderPass);
-    this->_device.destroyPipeline(this->_graphicsPipeline);
+    this->m_device.destroyPipeline(this->m_graphicsPipeline);
   });
 }
 
 void mvk::vkEngine::_initFrameBuffers() {
-  this->_graphicSwapchain.frameBuffers.resize(
-      this->_graphicSwapchain.imageViews.size());
+  this->m_graphicSwapchain.frameBuffers.resize(
+      this->m_graphicSwapchain.imageViews.size());
 
-  for (size_t i = 0; i < _graphicSwapchain.imageViews.size(); i++) {
-    vk::ImageView attachments[] = {_graphicSwapchain.imageViews[i]};
+  for (size_t i = 0; i < m_graphicSwapchain.imageViews.size(); i++) {
+    vk::ImageView attachments[] = {m_graphicSwapchain.imageViews[i]};
 
     vk::FramebufferCreateInfo framebufferInfo{
-        .renderPass = this->_renderPass,
+        .renderPass = this->m_renderPass,
         .attachmentCount = 1,
         .pAttachments = attachments,
-        .width = this->swapchainExtent.width,
-        .height = this->swapchainExtent.height,
+        .width = this->m_swapchainExtent.width,
+        .height = this->m_swapchainExtent.height,
         .layers = 1};
 
-    _graphicSwapchain.frameBuffers[i] =
-        this->_device.createFramebuffer(framebufferInfo);
+    m_graphicSwapchain.frameBuffers[i] =
+        this->m_device.createFramebuffer(framebufferInfo);
   }
-  this->deletionStack.pushFunction([&]() {
-    for (auto frameBuffer : _graphicSwapchain.frameBuffers)
-      this->_device.destroyFramebuffer(frameBuffer);
+  this->m_deletionStack.pushFunction([&]() {
+    for (auto frameBuffer : m_graphicSwapchain.frameBuffers)
+      this->m_device.destroyFramebuffer(frameBuffer);
   });
 }
 
 void mvk::vkEngine::updateDescriptorSet(mvk::DescriptorObject &descriptor) {
   DescriptorWriter writer;
   writer.writeBuffer(0, descriptor.buffer.buffer, vk::WholeSize, descriptor.buffer.allocationInfo.offset, vk::DescriptorType::eUniformBuffer);
-  writer.updateSet(this->_device, descriptor.descriptor);
+  writer.updateSet(this->m_device, descriptor.descriptor);
 }
 
 void mvk::vkEngine::updateUbos(mvk::UniformDescriptorObject ubo) {
@@ -437,8 +437,8 @@ void mvk::vkEngine::updateUbos(mvk::UniformDescriptorObject ubo) {
       glm::rotate(ubo.model, glm::radians(rotationAngle++), glm::vec3(0, 1, 0));
 
   ubo.proj = glm::perspectiveRH_ZO(glm::radians(45.f),
-                                   (float)this->_drawImage.extent.width /
-                                       (float)this->_drawImage.extent.height,
+                                   (float)this->m_drawImage.extent.width /
+                                       (float)this->m_drawImage.extent.height,
                                    1000.f, 0.1f);
   ubo.proj[1][1] *= -1;
 
@@ -455,7 +455,7 @@ void mvk::vkEngine::updateUbos(mvk::UniformDescriptorObject ubo) {
   /*  ubo.view = glm::translate(ubo.view, glm::vec3(0, 0, -1));*/
   /*}*/
 
-  memcpy(this->_descriptorSet.buffer.allocationInfo.pMappedData, &ubo,
+  memcpy(this->m_descriptorSet.buffer.allocationInfo.pMappedData, &ubo,
          sizeof(ubo));
 }
 
@@ -464,17 +464,17 @@ void mvk::vkEngine::_recordCommandBuffer(vk::CommandBuffer commandBuffer,
   vk::CommandBufferBeginInfo beginInfo{};
   commandBuffer.begin(beginInfo);
 
-  utils::transitionImage(commandBuffer, this->_depthImage.image,
+  utils::transitionImage(commandBuffer, this->m_depthImage.image,
                          vk::ImageLayout::eUndefined,
                          vk::ImageLayout::eDepthAttachmentOptimal);
-  utils::transitionImage(commandBuffer, this->_drawImage.image,
+  utils::transitionImage(commandBuffer, this->m_drawImage.image,
                          vk::ImageLayout::eUndefined,
                          vk::ImageLayout::eColorAttachmentOptimal);
   utils::transitionImage(
-      commandBuffer, this->_graphicSwapchain.images[imageIndex],
+      commandBuffer, this->m_graphicSwapchain.images[imageIndex],
       vk::ImageLayout::eUndefined, vk::ImageLayout::eGeneral);
   vk::RenderingAttachmentInfo depthAttachment{
-      .imageView = _depthImage.imageView,
+      .imageView = m_depthImage.imageView,
       .imageLayout = vk::ImageLayout::eDepthAttachmentOptimal,
       .loadOp = vk::AttachmentLoadOp::eClear,
       .storeOp = vk::AttachmentStoreOp::eStore,
@@ -482,15 +482,15 @@ void mvk::vkEngine::_recordCommandBuffer(vk::CommandBuffer commandBuffer,
 
   std::array<float, 4> clearColor = {0.f};
   vk::RenderingAttachmentInfo colorAttachment{
-      .imageView = this->_drawImage.imageView,
+      .imageView = this->m_drawImage.imageView,
       .imageLayout = vk::ImageLayout::eColorAttachmentOptimal,
       .loadOp = vk::AttachmentLoadOp::eClear,
       .storeOp = vk::AttachmentStoreOp::eStore,
       .clearValue = {.color = {clearColor}}};
 
   vk::RenderingInfo renderInfo{
-      .renderArea = {.extent = {.width = this->_drawImage.extent.width,
-                                .height = this->_drawImage.extent.height}},
+      .renderArea = {.extent = {.width = this->m_drawImage.extent.width,
+                                .height = this->m_drawImage.extent.height}},
       .layerCount = 1,
       .colorAttachmentCount = 1,
       .pColorAttachments = &colorAttachment,
@@ -500,22 +500,22 @@ void mvk::vkEngine::_recordCommandBuffer(vk::CommandBuffer commandBuffer,
   commandBuffer.beginRendering(renderInfo);
 
   commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics,
-                             this->_graphicsPipeline);
+                             this->m_graphicsPipeline);
 
   vk::Viewport viewport{.x = 0.f,
                         .y = 0.f,
-                        .width = (float)this->_drawImage.extent.width,
-                        .height = (float)this->_drawImage.extent.height,
+                        .width = (float)this->m_drawImage.extent.width,
+                        .height = (float)this->m_drawImage.extent.height,
                         .minDepth = 0.f,
                         .maxDepth = 1.f};
   commandBuffer.setViewport(0, viewport);
 
-  vk::Rect2D scissors{.offset = {0, 0}, .extent = this->swapchainExtent};
+  vk::Rect2D scissors{.offset = {0, 0}, .extent = this->m_swapchainExtent};
 
   commandBuffer.setScissor(0, scissors);
 
-  this->updateDescriptorSet(this->_descriptorSet);
-  this->updateUbos(this->ubo);
+  this->updateDescriptorSet(this->m_descriptorSet);
+  this->updateUbos(this->m_ubo);
 
   vk::DeviceSize offsets[] = {0};
   /*commandBuffer.bindVertexBuffers(0, this->tmpMesh.vertexBuffer.buffer,*/
@@ -525,36 +525,36 @@ void mvk::vkEngine::_recordCommandBuffer(vk::CommandBuffer commandBuffer,
                                 offsets[0], vk::IndexType::eUint32);
 
   commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics,
-                                   this->_graphicsPipelineLayout, 0,
-                                   this->_descriptorSet.descriptor, nullptr);
+                                   this->m_graphicsPipelineLayout, 0,
+                                   this->m_descriptorSet.descriptor, nullptr);
   /*commandBuffer.draw(3, 1, 0, 0);*/
 
-  this->samplePushConstants.vertexBuffer =
+  this->m_samplePushConstants.vertexBuffer =
       this->testMeshes[2]->buffers.vertexBufferAddress;
   commandBuffer.pushConstants<GPUDrawPushConstants>(
-      this->_graphicsPipelineLayout, vk::ShaderStageFlagBits::eVertex, 0,
-      this->samplePushConstants);
+      this->m_graphicsPipelineLayout, vk::ShaderStageFlagBits::eVertex, 0,
+      this->m_samplePushConstants);
   commandBuffer.drawIndexed(this->testMeshes[2]->buffers.indexCount, 1, 0, 0,
                             0);
 
   commandBuffer.endRendering();
 
-  mvk::utils::transitionImage(this->_graphicsCommandBuffer,
-                              this->_drawImage.image,
+  mvk::utils::transitionImage(this->m_graphicsCommandBuffer,
+                              this->m_drawImage.image,
                               vk::ImageLayout::eColorAttachmentOptimal,
                               vk::ImageLayout::eTransferSrcOptimal);
   mvk::utils::transitionImage(
-      this->_graphicsCommandBuffer, this->_graphicSwapchain.images[imageIndex],
+      this->m_graphicsCommandBuffer, this->m_graphicSwapchain.images[imageIndex],
       vk::ImageLayout::eGeneral, vk::ImageLayout::eTransferDstOptimal);
 
-  vk::Extent2D drawImageExtent{this->_drawImage.extent.width,
-                               this->_drawImage.extent.height};
-  utils::copyImageToImage(commandBuffer, this->_drawImage.image,
-                          this->_graphicSwapchain.images[imageIndex],
-                          drawImageExtent, this->swapchainExtent);
+  vk::Extent2D drawImageExtent{this->m_drawImage.extent.width,
+                               this->m_drawImage.extent.height};
+  utils::copyImageToImage(commandBuffer, this->m_drawImage.image,
+                          this->m_graphicSwapchain.images[imageIndex],
+                          drawImageExtent, this->m_swapchainExtent);
 
   utils::transitionImage(
-      commandBuffer, this->_graphicSwapchain.images[imageIndex],
+      commandBuffer, this->m_graphicSwapchain.images[imageIndex],
       vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout::ePresentSrcKHR);
   commandBuffer.end();
 }
@@ -563,18 +563,18 @@ void mvk::vkEngine::_initSynchronizationObjects() {
   vk::SemaphoreCreateInfo semaphore_info{};
   vk::FenceCreateInfo fence_info{.flags = vk::FenceCreateFlagBits::eSignaled};
 
-  this->_imageAvailableSempahore =
-      this->_device.createSemaphore(semaphore_info);
-  this->_renderFinishedSemaphore =
-      this->_device.createSemaphore(semaphore_info);
-  this->inFlightFence = this->_device.createFence(fence_info);
-  this->immediateFence = this->_device.createFence(fence_info);
+  this->m_imageAvailableSempahore =
+      this->m_device.createSemaphore(semaphore_info);
+  this->m_renderFinishedSemaphore =
+      this->m_device.createSemaphore(semaphore_info);
+  this->m_inFlightFence = this->m_device.createFence(fence_info);
+  this->m_immediateFence = this->m_device.createFence(fence_info);
 
-  this->deletionStack.pushFunction([&]() {
-    this->_device.destroyFence(this->inFlightFence);
-    this->_device.destroyFence(this->immediateFence);
-    this->_device.destroySemaphore(this->_imageAvailableSempahore);
-    this->_device.destroySemaphore(this->_renderFinishedSemaphore);
+  this->m_deletionStack.pushFunction([&]() {
+    this->m_device.destroyFence(this->m_inFlightFence);
+    this->m_device.destroyFence(this->m_immediateFence);
+    this->m_device.destroySemaphore(this->m_imageAvailableSempahore);
+    this->m_device.destroySemaphore(this->m_renderFinishedSemaphore);
   });
 }
 
@@ -593,7 +593,7 @@ mvk::vkEngine::_allocateBuffer(size_t size, vk::BufferUsageFlags usage,
 
   AllocatedBuffer allocBuffer;
 
-  auto vmaAllocatedBuffer = this->_allocator.createBuffer(
+  auto vmaAllocatedBuffer = this->m_allocator.createBuffer(
       bufferInfo, allocationInfo, &allocBuffer.allocationInfo);
 
   allocBuffer.buffer = vmaAllocatedBuffer.first;
@@ -603,7 +603,7 @@ mvk::vkEngine::_allocateBuffer(size_t size, vk::BufferUsageFlags usage,
 }
 
 void mvk::vkEngine::_destroyBuffer(const mvk::AllocatedBuffer &buffer) {
-  this->_allocator.destroyBuffer(buffer.buffer, buffer.allocation);
+  this->m_allocator.destroyBuffer(buffer.buffer, buffer.allocation);
 }
 
 mvk::MeshData mvk::vkEngine::uploadMesh(std::span<mvk::VertexData> vertices,
@@ -626,7 +626,7 @@ mvk::MeshData mvk::vkEngine::uploadMesh(std::span<mvk::VertexData> vertices,
 
   vk::BufferDeviceAddressInfo addressInfo;
   addressInfo.setBuffer(mesh.vertexBuffer.buffer);
-  mesh.vertexBufferAddress = this->_device.getBufferAddress(addressInfo);
+  mesh.vertexBufferAddress = this->m_device.getBufferAddress(addressInfo);
 
   mvk::AllocatedBuffer staginBuffer = this->_allocateBuffer(
       vertexDataSize + indecesDataSize, vk::BufferUsageFlagBits::eTransferSrc,
@@ -656,10 +656,10 @@ mvk::MeshData mvk::vkEngine::uploadMesh(std::span<mvk::VertexData> vertices,
 
 void mvk::vkEngine::immediateSubmit(
     std::function<void(vk::CommandBuffer cmd)> &&function) {
-  this->_device.resetFences(1, &this->immediateFence);
-  this->_immediateCommandBuffer.reset();
+  this->m_device.resetFences(1, &this->m_immediateFence);
+  this->m_immediateCommandBuffer.reset();
 
-  vk::CommandBuffer cmd = this->_immediateCommandBuffer;
+  vk::CommandBuffer cmd = this->m_immediateCommandBuffer;
 
   vk::CommandBufferBeginInfo cmdBeginInfo{
       .flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit,
@@ -677,30 +677,30 @@ void mvk::vkEngine::immediateSubmit(
 
   vk::SubmitInfo2 submitInfo{.commandBufferInfoCount = 1,
                              .pCommandBufferInfos = &commandSubmitInfo};
-  this->_graphicsQueue.submit2(submitInfo, this->immediateFence);
+  this->m_graphicsQueue.submit2(submitInfo, this->m_immediateFence);
 
-  this->_device.waitForFences(this->immediateFence, true, 9999999);
+  this->m_device.waitForFences(this->m_immediateFence, true, 9999999);
 }
 
 void mvk::vkEngine::initDescriptors(){
   std::array<DescriptoAllocatorGrowable::PoolSizeRatio, 1> ratios;
   ratios[0].type = vk::DescriptorType::eUniformBuffer;
   ratios[0].ratio = 1.f;
-  this->descriptorAllocator.init(this->_device, 1, ratios);
+  this->m_descriptorAllocator.init(this->m_device, 1, ratios);
 
   mvk::DescriptorLayoutBuidler builder;
   builder.addBinding(0, vk::DescriptorType::eUniformBuffer);
-  auto layout = builder.build(this->_device, vk::ShaderStageFlagBits::eVertex);
+  auto layout = builder.build(this->m_device, vk::ShaderStageFlagBits::eVertex);
 
-  this->_descriptorSet.layout = layout;
-  this->_descriptorSet.descriptor = this->descriptorAllocator.allocate(this->_device, layout);
+  this->m_descriptorSet.layout = layout;
+  this->m_descriptorSet.descriptor = this->m_descriptorAllocator.allocate(this->m_device, layout);
 
-  this->_descriptorSet.buffer = this->_allocateBuffer(sizeof(mvk::UniformDescriptorObject), vk::BufferUsageFlagBits::eUniformBuffer, vma::AllocationCreateFlagBits::eMapped | vma::AllocationCreateFlagBits::eHostAccessSequentialWrite, vma::MemoryUsage::eAuto);
+  this->m_descriptorSet.buffer = this->_allocateBuffer(sizeof(mvk::UniformDescriptorObject), vk::BufferUsageFlagBits::eUniformBuffer, vma::AllocationCreateFlagBits::eMapped | vma::AllocationCreateFlagBits::eHostAccessSequentialWrite, vma::MemoryUsage::eAuto);
 
-  this->deletionStack.pushFunction([&](){
+  this->m_deletionStack.pushFunction([&](){
     std::cout << "Destroying descriptor set and associated data structures\n";
-    this->_allocator.destroyBuffer(this->_descriptorSet.buffer.buffer, this->_descriptorSet.buffer.allocation);
-    this->_device.destroyDescriptorSetLayout(this->_descriptorSet.layout);
-    this->descriptorAllocator.destroyPools(this->_device);
+    this->m_allocator.destroyBuffer(this->m_descriptorSet.buffer.buffer, this->m_descriptorSet.buffer.allocation);
+    this->m_device.destroyDescriptorSetLayout(this->m_descriptorSet.layout);
+    this->m_descriptorAllocator.destroyPools(this->m_device);
   });
 }

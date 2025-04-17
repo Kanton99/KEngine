@@ -30,11 +30,11 @@ int main() {
       return -1;
     }
 
-    mvk::vkEngine *engine = mvk::vkEngine::get(window);
-    engine->init();
+    mvk::vkEngine engine = mvk::vkEngine::get(window);
+    engine.init();
 
-    engine->testMeshes =
-        mvk::loadGltfMesh(engine, "resources/Meshes/basicmesh.glb").value();
+    engine.testMeshes =
+        mvk::loadGltfMesh(&engine, "resources/Meshes/basicmesh.glb").value();
     /*engine->testMeshes = mvk::loadObj(engine,
      * "resources/Meshes/viking_room.obj").value();*/
 
@@ -46,11 +46,11 @@ int main() {
         if (event.type == SDL_EVENT_QUIT)
           running = false;
       }
-      engine->draw();
+      engine.draw();
       SDL_Delay(static_cast<uint32_t>(1.f / 60.f) * 1000);
     }
 
-    engine->cleanup();
+    engine.cleanup();
 
     SDL_DestroyWindow(window);
     SDL_Quit();
