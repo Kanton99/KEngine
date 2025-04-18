@@ -1,3 +1,4 @@
+#include <cmath>
 #include <functional>
 #define VMA_IMPLEMENTATION
 #include "vkEngine/vkEngine.hpp"
@@ -73,10 +74,9 @@ void mvk::vkEngine::init() {
   this->_initCommandPool(this->m_graphicsQueueIndex);
   this->_allocateCommandBuffer(this->m_graphicsCommandBuffer);
 
-  this->initDescriptors();
-  this->updateDescriptorSet(this->m_descriptorSet);
-  this->updateUbos(this->m_ubo);
-
+  this->_initDescriptors();
+  this->_updateDescriptorSet(this->m_descriptorSet);
+  this->_updateUbos(this->m_ubo);
   std::vector<vk::DescriptorSetLayout> layouts = {this->m_descriptorSet.layout};
   this->_initGraphicPipeline(layouts);
   this->_initSynchronizationObjects();
@@ -424,13 +424,13 @@ void mvk::vkEngine::_initFrameBuffers() {
   });
 }
 
-void mvk::vkEngine::updateDescriptorSet(mvk::DescriptorObject &descriptor) {
+void mvk::vkEngine::_updateDescriptorSet(mvk::DescriptorObject &descriptor) {
   DescriptorWriter writer;
   writer.writeBuffer(0, descriptor.buffer.buffer, vk::WholeSize, descriptor.buffer.allocationInfo.offset, vk::DescriptorType::eUniformBuffer);
   writer.updateSet(this->m_device, descriptor.descriptor);
 }
 
-void mvk::vkEngine::updateUbos(mvk::UniformDescriptorObject ubo) {
+void mvk::vkEngine::_updateUbos(mvk::UniformDescriptorObject ubo) {
   static float rotationAngle;
   ubo.model = glm::identity<glm::mat4>();
   ubo.model =
@@ -514,8 +514,8 @@ void mvk::vkEngine::_recordCommandBuffer(vk::CommandBuffer commandBuffer,
 
   commandBuffer.setScissor(0, scissors);
 
-  this->updateDescriptorSet(this->m_descriptorSet);
-  this->updateUbos(this->m_ubo);
+  this->_updateDescriptorSet(this->m_descriptorSet);
+  this->_updateUbos(this->m_ubo);
 
   vk::DeviceSize offsets[] = {0};
   /*commandBuffer.bindVertexBuffers(0, this->tmpMesh.vertexBuffer.buffer,*/
@@ -638,7 +638,7 @@ mvk::MeshData mvk::vkEngine::uploadMesh(std::span<mvk::VertexData> vertices,
   memcpy((char *)data + vertexDataSize, indeces.data(), indecesDataSize);
   mesh.indexCount = static_cast<uint32_t>(indeces.size());
 
-  immediateSubmit([&](vk::CommandBuffer cmd) {
+  _immediateSubmit([&](vk::CommandBuffer cmd) {
     vk::BufferCopy vertexCopy{
         .srcOffset = 0, .dstOffset = 0, .size = vertexDataSize};
 
@@ -654,7 +654,7 @@ mvk::MeshData mvk::vkEngine::uploadMesh(std::span<mvk::VertexData> vertices,
   return mesh;
 }
 
-void mvk::vkEngine::immediateSubmit(
+void mvk::vkEngine::_immediateSubmit(
     std::function<void(vk::CommandBuffer cmd)> &&function) {
   this->m_device.resetFences(1, &this->m_immediateFence);
   this->m_immediateCommandBuffer.reset();
@@ -682,7 +682,7 @@ void mvk::vkEngine::immediateSubmit(
   this->m_device.waitForFences(this->m_immediateFence, true, 9999999);
 }
 
-void mvk::vkEngine::initDescriptors(){
+void mvk::vkEngine::_initDescriptors(){
   std::array<DescriptoAllocatorGrowable::PoolSizeRatio, 1> ratios;
   ratios[0].type = vk::DescriptorType::eUniformBuffer;
   ratios[0].ratio = 1.f;
@@ -703,4 +703,66 @@ void mvk::vkEngine::initDescriptors(){
     this->m_device.destroyDescriptorSetLayout(this->m_descriptorSet.layout);
     this->m_descriptorAllocator.destroyPools(this->m_device);
   });
+}
+
+mvk::AllocatedImage mvk::vkEngine::_createImage(vk::Extent3D size, vk::Format format, vk::ImageUsageFlags usage, bool mipmapped)
+{
+  AllocatedImage newImage;
+  newImage.extent = size;
+  newImage.format = format;
+  
+  vk::ImageCreateInfo imgInfo = utils::imageCreateInfo(format, usage, size);
+  if(mipmapped)
+    imgInfo.mipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(size.width, size.height))));
+
+  vma::AllocationCreateInfo allocaInfo{};
+  allocaInfo.setUsage(vma::MemoryUsage::eGpuOnly);
+  allocaInfo.setRequiredFlags(vk::MemoryPropertyFlagBits::eDeviceLocal);
+  
+  auto imageCreationResult = this->m_allocator.createImage(imgInfo, allocaInfo);
+  newImage.image = imageCreationResult.first;
+  newImage.allocation = imageCreationResult.second;
+
+  vk::ImageAspectFlags aspectFlags = vk::ImageAspectFlagBits::eColor;
+  if(format == vk::Format::eD32Sfloat) aspectFlags = vk::ImageAspectFlagBits::eDepth;
+
+  vk::ImageViewCreateInfo viewInfo{};
+
+  viewInfo.subresourceRange.setLevelCount(imgInfo.mipLevels);
+
+  newImage.imageView = this->m_device.createImageView(viewInfo);
+
+  return newImage;
+}
+
+mvk::AllocatedImage mvk::vkEngine::_createImage(void* data, vk::Extent3D size, vk::Format format, vk::ImageUsageFlags usage, bool mipmapped)
+{
+  size_t dataSize = size.depth * size.height * size.width*4;
+  AllocatedBuffer uplodaBuffer = this->_allocateBuffer(dataSize, vk::BufferUsageFlagBits::eTransferSrc, vma::AllocationCreateFlagBits::eMapped, vma::MemoryUsage::eCpuToGpu);
+  
+  memcpy(uplodaBuffer.allocationInfo.pMappedData, data, dataSize);
+
+  AllocatedImage newImage = this->_createImage(size, format, usage | vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eTransferDst, mipmapped);
+
+  this->_immediateSubmit([&](vk::CommandBuffer cmd){
+    mvk::utils::transitionImage(cmd, newImage.image, vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal);
+
+    vk::BufferImageCopy copyRegion{};
+    copyRegion.imageSubresource.setAspectMask(vk::ImageAspectFlagBits::eColor);
+    copyRegion.imageSubresource.setLayerCount(1);
+    copyRegion.setImageExtent(size);
+
+    cmd.copyBufferToImage(uplodaBuffer.buffer, newImage.image, vk::ImageLayout::eTransferDstOptimal, copyRegion);
+    
+    mvk::utils::transitionImage(cmd, newImage.image, vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout::eShaderReadOnlyOptimal);
+  });
+
+  this->_destroyBuffer(uplodaBuffer);
+
+  return newImage;
+}
+
+void mvk::vkEngine::_destroyImage(const AllocatedImage& image){
+  this->m_device.destroyImageView(image.imageView);
+  this->m_allocator.destroyImage(image.image, image.allocation);
 }

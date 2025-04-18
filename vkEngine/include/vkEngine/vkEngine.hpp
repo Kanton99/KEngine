@@ -34,7 +34,7 @@ private: // Methods
 
   void _initCommandPool(uint32_t queueFamilyIndex);
   void _allocateCommandBuffer(vk::CommandBuffer &buffer);
-  void immediateSubmit(std::function<void(vk::CommandBuffer cmd)> &&function);
+  void _immediateSubmit(std::function<void(vk::CommandBuffer cmd)> &&function);
   void _recordCommandBuffer(vk::CommandBuffer commandBuffer,
                             uint32_t imageIndex);
 
@@ -49,10 +49,14 @@ private: // Methods
 
   void _initFrameBuffers();
 
-  void initDescriptors();
-  void updateDescriptorSet(mvk::DescriptorObject &descriptor);
+  void _initDescriptors();
+  void _updateDescriptorSet(mvk::DescriptorObject &descriptor);
   void
-  updateUbos(mvk::UniformDescriptorObject ubo); // TODO temporary for testing
+  _updateUbos(mvk::UniformDescriptorObject ubo); // TODO temporary for testing
+  
+  AllocatedImage _createImage(vk::Extent3D size, vk::Format format, vk::ImageUsageFlags usage, bool mipmapped = false);
+  AllocatedImage _createImage(void* data, vk::Extent3D size, vk::Format format, vk::ImageUsageFlags usage, bool mipmapped = false);
+  void _destroyImage(const AllocatedImage& image);
 
 public:
   std::vector<std::shared_ptr<MeshAsset>> testMeshes;

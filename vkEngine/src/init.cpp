@@ -1,7 +1,7 @@
 #include "vkEngine/init.hpp"
 
 vk::PipelineShaderStageCreateInfo
-vkInit::pipeline_shader_stage_create_info(vk::ShaderStageFlagBits stage,
+mvk::vkInit::pipeline_shader_stage_create_info(vk::ShaderStageFlagBits stage,
                                           vk::ShaderModule shader_module,
                                           const char *entry) {
   vk::PipelineShaderStageCreateInfo info{
@@ -10,7 +10,7 @@ vkInit::pipeline_shader_stage_create_info(vk::ShaderStageFlagBits stage,
   return info;
 }
 
-vk::PipelineLayoutCreateInfo vkInit::pipeline_layout_create_info(
+vk::PipelineLayoutCreateInfo mvk::vkInit::pipeline_layout_create_info(
     const std::span<vk::DescriptorSetLayout> &descritorLayouts) {
   vk::PipelineLayoutCreateInfo info{
       .setLayoutCount = static_cast<uint32_t>(descritorLayouts.size()),
