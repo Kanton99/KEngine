@@ -24,3 +24,5 @@ notes.txt
 resources/shaders/compiled/*
 
 *.cap
+
+*.log

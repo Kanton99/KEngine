@@ -13,7 +13,8 @@
       "binaryDir": "${sourceDir}/out/build/${presetName}",
       "installDir": "${sourceDir}/out/install/${presetName}",
       "cacheVariables": {
-        "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
+        "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
+        "CMAKE_CXX_STANDARD":  "20"
       }
     },
     {
@@ -26,15 +27,20 @@
       }
     },
     {
-      "name": "windows-debug",
-      "inherits": "base",
-      "cacheVariables": {
-        "CMAKE_C_COMPILER": "cl.exe",
-        "CMAKE_CXX_COMPILER": "cl.exe",
-        "CMAKE_BUILD_TYPE": "Debug",
-        "CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS": "TRUE",
-        "BUILD_SHARED_LIBS": "TRUE"
-      }    
+        "name": "windows-debug",
+        "inherits": "base",
+        "cacheVariables": {
+            "CMAKE_C_COMPILER": "clang.exe",
+            "CMAKE_CXX_COMPILER": "clang++.exe",
+            "CMAKE_BUILD_TYPE": "Debug",
+            "CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS": "TRUE",
+            "BUILD_SHARED_LIBS": "TRUE",
+            "CMAKE_LINKER": "lld-link",
+            "CMAKE_CXX_FLAGS": "-fuse-ld=lld",
+            "CMAKE_C_FLAGS": "-fuse-ld=lld",
+            "CMAKE_C_COMPILER_TARGET": "x86_64-pc-windows-gnu",
+            "CMAKE_CXX_COMPILER_TARGET": "x86_64-pc-windows-gnu"
+        }
     }
   ]
 }
