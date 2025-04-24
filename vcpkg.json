@@ -2,7 +2,7 @@
   "dependencies": [
     "fastgltf",
     "glm",
-    "sdl2-image",
+    "sdl3-image",
     {
       "name": "sdl3",
       "features": [

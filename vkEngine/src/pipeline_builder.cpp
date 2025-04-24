@@ -69,9 +69,9 @@ void PipelineBuilder::setShaders(vk::ShaderModule vertexShader,
                                  vk::ShaderModule fragmentShader) {
   _shaderStages.clear();
 
-  _shaderStages.push_back(vkInit::pipeline_shader_stage_create_info(
+  _shaderStages.push_back(mvk::vkInit::pipeline_shader_stage_create_info(
       vk::ShaderStageFlagBits::eVertex, vertexShader));
-  _shaderStages.push_back(vkInit::pipeline_shader_stage_create_info(
+  _shaderStages.push_back(mvk::vkInit::pipeline_shader_stage_create_info(
       vk::ShaderStageFlagBits::eFragment, fragmentShader));
 }
 

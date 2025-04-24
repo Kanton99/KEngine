@@ -51,12 +51,13 @@ private: // Methods
 
   void _initDescriptors();
   void _updateDescriptorSet(mvk::DescriptorObject &descriptor);
-  void
-  _updateUbos(mvk::UniformDescriptorObject ubo); // TODO temporary for testing
+  void _updateUbos(mvk::UniformDescriptorObject ubo); // TODO temporary for testing
   
   AllocatedImage _createImage(vk::Extent3D size, vk::Format format, vk::ImageUsageFlags usage, bool mipmapped = false);
   AllocatedImage _createImage(void* data, vk::Extent3D size, vk::Format format, vk::ImageUsageFlags usage, bool mipmapped = false);
   void _destroyImage(const AllocatedImage& image);
+
+  void _initDefaultData();
 
 public:
   std::vector<std::shared_ptr<MeshAsset>> testMeshes;
@@ -111,6 +112,13 @@ private: // Members
 
   // Push constants
   mvk::GPUDrawPushConstants m_samplePushConstants;
+
+  mvk::AllocatedImage m_whiteImage;
+  mvk::AllocatedImage m_blackImage;
+  mvk::AllocatedImage m_greyImage;
+  mvk::AllocatedImage m_errorCheckerboardImage;
+  vk::Sampler m_defaultSamplerLinear;
+  vk::Sampler m_defaultSamplerNearest;
 };
 } // namespace mvk
 

@@ -1,12 +1,13 @@
 #include <cmath>
 #include <functional>
+#include <glm/packing.hpp>
 #define VMA_IMPLEMENTATION
-#include "vkEngine/vkEngine.hpp"
+#include "vkEngine/DescriptorLayoutBuilder.hpp"
+#include "vkEngine/DescriptorWriter.hpp"
 #include "vkEngine/infoCreator.hpp"
 #include "vkEngine/pipeline_builder.hpp"
 #include "vkEngine/utils.hpp"
-#include "vkEngine/DescriptorLayoutBuilder.hpp"
-#include "vkEngine/DescriptorWriter.hpp"
+#include "vkEngine/vkEngine.hpp"
 #include <SDL3/SDL_vulkan.h>
 #include <VkBootstrap.h>
 #include <array>
@@ -26,7 +27,7 @@ VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
 
 mvk::vkEngine *mvk::vkEngine::m_engine = nullptr;
 
-mvk::vkEngine& mvk::vkEngine::get(SDL_Window *window) {
+mvk::vkEngine &mvk::vkEngine::get(SDL_Window *window) {
   if (!m_engine) {
     m_engine = new mvk::vkEngine(window);
   }
@@ -53,8 +54,7 @@ void mvk::vkEngine::init() {
 
   vma::VulkanFunctions vulkanFunctions{
       .vkGetInstanceProcAddr = &vkGetInstanceProcAddr,
-      .vkGetDeviceProcAddr = &vkGetDeviceProcAddr
-  };
+      .vkGetDeviceProcAddr = &vkGetDeviceProcAddr};
   vma::AllocatorCreateInfo allocatorInfo{
       .flags = vma::AllocatorCreateFlagBits::eBufferDeviceAddress,
       .physicalDevice = this->m_physDevice,
@@ -64,9 +64,9 @@ void mvk::vkEngine::init() {
       .vulkanApiVersion = vk::ApiVersion13,
   };
   this->m_allocator = vma::createAllocator(allocatorInfo);
-  this->m_deletionStack.pushFunction([&]() { 
+  this->m_deletionStack.pushFunction([&]() {
     std::cout << "Destroying Allocator" << std::endl;
-    this->m_allocator.destroy(); 
+    this->m_allocator.destroy();
   });
 
   this->_initSwapchain(static_cast<uint32_t>(width),
@@ -81,6 +81,7 @@ void mvk::vkEngine::init() {
   this->_initGraphicPipeline(layouts);
   this->_initSynchronizationObjects();
 
+  this->_initDefaultData();
 
   this->m_deletionStack.pushFunction([&]() {
     for (const auto &buffer : testMeshes) {
@@ -111,8 +112,9 @@ void mvk::vkEngine::draw() {
   auto signalInfo = utils::semaphoreSubmitInfo(
       vk::PipelineStageFlagBits2::eColorAttachmentOutput,
       this->m_renderFinishedSemaphore);
-  auto waitInfo = utils::semaphoreSubmitInfo(
-      vk::PipelineStageFlagBits2::eAllGraphics, this->m_imageAvailableSempahore);
+  auto waitInfo =
+      utils::semaphoreSubmitInfo(vk::PipelineStageFlagBits2::eAllGraphics,
+                                 this->m_imageAvailableSempahore);
 
   auto submitInfo2 = utils::submitInfo(&cmdSubmitInfo, &signalInfo, &waitInfo);
   this->m_graphicsQueue.submit2(submitInfo2, this->m_inFlightFence);
@@ -123,6 +125,7 @@ void mvk::vkEngine::draw() {
       .swapchainCount = 1,
       .pSwapchains = &this->m_graphicSwapchain.swapchain,
       .pImageIndices = &imageIndex};
+
   this->m_graphicsQueue.presentKHR(prensetInfo);
 }
 
@@ -162,7 +165,8 @@ void mvk::vkEngine::_initVulkan() {
 
   this->m_instance = vk::Instance(instRet.value().instance);
 
-  this->m_deletionStack.pushFunction([=, this]() { this->m_instance.destroy(); });
+  this->m_deletionStack.pushFunction(
+      [=, this]() { this->m_instance.destroy(); });
 
 #ifndef NDEBUG
   this->m_debugMessanger = vk::DebugUtilsMessengerEXT(instRet->debug_messenger);
@@ -211,9 +215,9 @@ void mvk::vkEngine::_initVulkan() {
       vk::Queue(vkbDevice.get_queue(vkb::QueueType::graphics).value());
   this->m_graphicsQueueIndex =
       vkbDevice.get_queue_index(vkb::QueueType::graphics).value();
-  this->m_deletionStack.pushFunction([=, this]() { 
+  this->m_deletionStack.pushFunction([=, this]() {
     std::cout << "Destroying device\n";
-    this->m_device.destroy(); 
+    this->m_device.destroy();
   });
 }
 
@@ -279,7 +283,8 @@ void mvk::vkEngine::_initSwapchain(uint32_t width, uint32_t height) {
   this->m_depthImage.extent.depth = 1;
 
   vk::ImageCreateInfo imageInfo = mvk::utils::imageCreateInfo(
-      this->m_depthImage.format, vk::ImageUsageFlagBits::eDepthStencilAttachment,
+      this->m_depthImage.format,
+      vk::ImageUsageFlagBits::eDepthStencilAttachment,
       this->m_depthImage.extent);
 
   vma::AllocationCreateInfo allocCreateInfo{
@@ -310,7 +315,7 @@ void mvk::vkEngine::_initSwapchain(uint32_t width, uint32_t height) {
 
     this->m_device.destroyImageView(this->m_depthImage.imageView);
     this->m_allocator.destroyImage(this->m_depthImage.image,
-                                  this->m_depthImage.allocation);
+                                   this->m_depthImage.allocation);
   });
 }
 
@@ -348,7 +353,7 @@ void mvk::vkEngine::_createDrawImage() {
     std::cout << "Destroying draw Image\n";
     this->m_device.destroyImageView(this->m_drawImage.imageView);
     this->m_allocator.destroyImage(this->m_drawImage.image,
-                                  this->m_drawImage.allocation);
+                                   this->m_drawImage.allocation);
   });
 }
 
@@ -426,7 +431,9 @@ void mvk::vkEngine::_initFrameBuffers() {
 
 void mvk::vkEngine::_updateDescriptorSet(mvk::DescriptorObject &descriptor) {
   DescriptorWriter writer;
-  writer.writeBuffer(0, descriptor.buffer.buffer, vk::WholeSize, descriptor.buffer.allocationInfo.offset, vk::DescriptorType::eUniformBuffer);
+  writer.writeBuffer(0, descriptor.buffer.buffer, vk::WholeSize,
+                     descriptor.buffer.allocationInfo.offset,
+                     vk::DescriptorType::eUniformBuffer);
   writer.updateSet(this->m_device, descriptor.descriptor);
 }
 
@@ -543,9 +550,10 @@ void mvk::vkEngine::_recordCommandBuffer(vk::CommandBuffer commandBuffer,
                               this->m_drawImage.image,
                               vk::ImageLayout::eColorAttachmentOptimal,
                               vk::ImageLayout::eTransferSrcOptimal);
-  mvk::utils::transitionImage(
-      this->m_graphicsCommandBuffer, this->m_graphicSwapchain.images[imageIndex],
-      vk::ImageLayout::eGeneral, vk::ImageLayout::eTransferDstOptimal);
+  mvk::utils::transitionImage(this->m_graphicsCommandBuffer,
+                              this->m_graphicSwapchain.images[imageIndex],
+                              vk::ImageLayout::eGeneral,
+                              vk::ImageLayout::eTransferDstOptimal);
 
   vk::Extent2D drawImageExtent{this->m_drawImage.extent.width,
                                this->m_drawImage.extent.height};
@@ -682,7 +690,7 @@ void mvk::vkEngine::_immediateSubmit(
   this->m_device.waitForFences(this->m_immediateFence, true, 9999999);
 }
 
-void mvk::vkEngine::_initDescriptors(){
+void mvk::vkEngine::_initDescriptors() {
   std::array<DescriptoAllocatorGrowable::PoolSizeRatio, 1> ratios;
   ratios[0].type = vk::DescriptorType::eUniformBuffer;
   ratios[0].ratio = 1.f;
@@ -693,40 +701,52 @@ void mvk::vkEngine::_initDescriptors(){
   auto layout = builder.build(this->m_device, vk::ShaderStageFlagBits::eVertex);
 
   this->m_descriptorSet.layout = layout;
-  this->m_descriptorSet.descriptor = this->m_descriptorAllocator.allocate(this->m_device, layout);
+  this->m_descriptorSet.descriptor =
+      this->m_descriptorAllocator.allocate(this->m_device, layout);
 
-  this->m_descriptorSet.buffer = this->_allocateBuffer(sizeof(mvk::UniformDescriptorObject), vk::BufferUsageFlagBits::eUniformBuffer, vma::AllocationCreateFlagBits::eMapped | vma::AllocationCreateFlagBits::eHostAccessSequentialWrite, vma::MemoryUsage::eAuto);
+  this->m_descriptorSet.buffer = this->_allocateBuffer(
+      sizeof(mvk::UniformDescriptorObject),
+      vk::BufferUsageFlagBits::eUniformBuffer,
+      vma::AllocationCreateFlagBits::eMapped |
+          vma::AllocationCreateFlagBits::eHostAccessSequentialWrite,
+      vma::MemoryUsage::eAuto);
 
-  this->m_deletionStack.pushFunction([&](){
+  this->m_deletionStack.pushFunction([&]() {
     std::cout << "Destroying descriptor set and associated data structures\n";
-    this->m_allocator.destroyBuffer(this->m_descriptorSet.buffer.buffer, this->m_descriptorSet.buffer.allocation);
+    this->m_allocator.destroyBuffer(this->m_descriptorSet.buffer.buffer,
+                                    this->m_descriptorSet.buffer.allocation);
     this->m_device.destroyDescriptorSetLayout(this->m_descriptorSet.layout);
     this->m_descriptorAllocator.destroyPools(this->m_device);
   });
 }
 
-mvk::AllocatedImage mvk::vkEngine::_createImage(vk::Extent3D size, vk::Format format, vk::ImageUsageFlags usage, bool mipmapped)
-{
+mvk::AllocatedImage mvk::vkEngine::_createImage(vk::Extent3D size,
+                                                vk::Format format,
+                                                vk::ImageUsageFlags usage,
+                                                bool mipmapped) {
   AllocatedImage newImage;
   newImage.extent = size;
   newImage.format = format;
-  
+
   vk::ImageCreateInfo imgInfo = utils::imageCreateInfo(format, usage, size);
-  if(mipmapped)
-    imgInfo.mipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(size.width, size.height))));
+  if (mipmapped)
+    imgInfo.mipLevels = static_cast<uint32_t>(
+        std::floor(std::log2(std::max(size.width, size.height))));
 
   vma::AllocationCreateInfo allocaInfo{};
   allocaInfo.setUsage(vma::MemoryUsage::eGpuOnly);
   allocaInfo.setRequiredFlags(vk::MemoryPropertyFlagBits::eDeviceLocal);
-  
+
   auto imageCreationResult = this->m_allocator.createImage(imgInfo, allocaInfo);
   newImage.image = imageCreationResult.first;
   newImage.allocation = imageCreationResult.second;
 
   vk::ImageAspectFlags aspectFlags = vk::ImageAspectFlagBits::eColor;
-  if(format == vk::Format::eD32Sfloat) aspectFlags = vk::ImageAspectFlagBits::eDepth;
+  if (format == vk::Format::eD32Sfloat)
+    aspectFlags = vk::ImageAspectFlagBits::eDepth;
 
-  vk::ImageViewCreateInfo viewInfo{};
+  vk::ImageViewCreateInfo viewInfo =
+      utils::imageViewCreateInfo(format, newImage.image, aspectFlags);
 
   viewInfo.subresourceRange.setLevelCount(imgInfo.mipLevels);
 
@@ -735,26 +755,39 @@ mvk::AllocatedImage mvk::vkEngine::_createImage(vk::Extent3D size, vk::Format fo
   return newImage;
 }
 
-mvk::AllocatedImage mvk::vkEngine::_createImage(void* data, vk::Extent3D size, vk::Format format, vk::ImageUsageFlags usage, bool mipmapped)
-{
-  size_t dataSize = size.depth * size.height * size.width*4;
-  AllocatedBuffer uplodaBuffer = this->_allocateBuffer(dataSize, vk::BufferUsageFlagBits::eTransferSrc, vma::AllocationCreateFlagBits::eMapped, vma::MemoryUsage::eCpuToGpu);
-  
+mvk::AllocatedImage mvk::vkEngine::_createImage(void *data, vk::Extent3D size,
+                                                vk::Format format,
+                                                vk::ImageUsageFlags usage,
+                                                bool mipmapped) {
+  size_t dataSize = size.depth * size.height * size.width * 4;
+  AllocatedBuffer uplodaBuffer = this->_allocateBuffer(
+      dataSize, vk::BufferUsageFlagBits::eTransferSrc,
+      vma::AllocationCreateFlagBits::eMapped, vma::MemoryUsage::eCpuToGpu);
+
   memcpy(uplodaBuffer.allocationInfo.pMappedData, data, dataSize);
 
-  AllocatedImage newImage = this->_createImage(size, format, usage | vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eTransferDst, mipmapped);
+  AllocatedImage newImage =
+      this->_createImage(size, format,
+                         usage | vk::ImageUsageFlagBits::eTransferDst |
+                             vk::ImageUsageFlagBits::eTransferDst,
+                         mipmapped);
 
-  this->_immediateSubmit([&](vk::CommandBuffer cmd){
-    mvk::utils::transitionImage(cmd, newImage.image, vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal);
+  this->_immediateSubmit([&](vk::CommandBuffer cmd) {
+    mvk::utils::transitionImage(cmd, newImage.image,
+                                vk::ImageLayout::eUndefined,
+                                vk::ImageLayout::eTransferDstOptimal);
 
     vk::BufferImageCopy copyRegion{};
     copyRegion.imageSubresource.setAspectMask(vk::ImageAspectFlagBits::eColor);
     copyRegion.imageSubresource.setLayerCount(1);
     copyRegion.setImageExtent(size);
 
-    cmd.copyBufferToImage(uplodaBuffer.buffer, newImage.image, vk::ImageLayout::eTransferDstOptimal, copyRegion);
-    
-    mvk::utils::transitionImage(cmd, newImage.image, vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout::eShaderReadOnlyOptimal);
+    cmd.copyBufferToImage(uplodaBuffer.buffer, newImage.image,
+                          vk::ImageLayout::eTransferDstOptimal, copyRegion);
+
+    mvk::utils::transitionImage(cmd, newImage.image,
+                                vk::ImageLayout::eTransferDstOptimal,
+                                vk::ImageLayout::eShaderReadOnlyOptimal);
   });
 
   this->_destroyBuffer(uplodaBuffer);
@@ -762,7 +795,56 @@ mvk::AllocatedImage mvk::vkEngine::_createImage(void* data, vk::Extent3D size, v
   return newImage;
 }
 
-void mvk::vkEngine::_destroyImage(const AllocatedImage& image){
+void mvk::vkEngine::_destroyImage(const AllocatedImage &image) {
   this->m_device.destroyImageView(image.imageView);
   this->m_allocator.destroyImage(image.image, image.allocation);
+}
+
+void mvk::vkEngine::_initDefaultData() {
+  uint32_t white = glm::packUnorm4x8(glm::vec4(1, 1, 1, 1));
+  m_whiteImage = this->_createImage((void *)&white, vk::Extent3D(1, 1, 1),
+                                    vk::Format::eR8G8B8A8Unorm,
+                                    vk::ImageUsageFlagBits::eSampled);
+
+  uint32_t gray = glm::packUnorm4x8(glm::vec4(0.66f, 0.66f, 0.66f, 1));
+  m_greyImage = this->_createImage((void *)&gray, vk::Extent3D(1, 1, 1),
+                                   vk::Format::eR8G8B8A8Unorm,
+                                   vk::ImageUsageFlagBits::eSampled);
+
+  uint32_t black = glm::packUnorm4x8(glm::vec4(0, 0, 0, 1));
+  m_blackImage = this->_createImage((void *)&black, vk::Extent3D(1, 1, 1),
+                                    vk::Format::eR8G8B8A8Unorm,
+                                    vk::ImageUsageFlagBits::eSampled);
+
+  uint32_t magenta = glm::packUnorm4x8(glm::vec4(1, 0, 1, 1));
+  std::array<uint32_t, 16 * 16> pixels;
+  for (size_t x = 0; x < 16; x++) {
+    for (size_t y = 0; y < 16; y++) {
+      pixels[y * 16 + x] = ((x % 2) ^ (y % 2)) ? magenta : black;
+    }
+  }
+
+  m_errorCheckerboardImage = this->_createImage(
+      pixels.data(), vk::Extent3D(16, 16, 1), vk::Format::eR8G8B8A8Unorm,
+      vk::ImageUsageFlagBits::eSampled);
+
+  vk::SamplerCreateInfo sampl{};
+
+  sampl.setMagFilter(vk::Filter::eNearest);
+  sampl.setMinFilter(vk::Filter::eNearest);
+  this->m_defaultSamplerNearest = this->m_device.createSampler(sampl);
+
+  sampl.setMagFilter(vk::Filter::eLinear);
+  sampl.setMinFilter(vk::Filter::eLinear);
+  this->m_defaultSamplerLinear = this->m_device.createSampler(sampl);
+
+  this->m_deletionStack.pushFunction([&]() {
+    this->m_device.destroySampler(m_defaultSamplerLinear);
+    this->m_device.destroySampler(m_defaultSamplerNearest);
+
+    this->_destroyImage(m_whiteImage);
+    this->_destroyImage(m_greyImage);
+    this->_destroyImage(m_blackImage);
+    this->_destroyImage(m_errorCheckerboardImage);
+  });
 }
