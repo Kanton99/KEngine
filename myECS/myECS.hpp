@@ -1,7 +1,0 @@
-
-
-namespace mecs {
-	class MyECS {
-
-	};
-}
