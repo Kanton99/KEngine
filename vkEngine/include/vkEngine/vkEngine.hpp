@@ -4,17 +4,17 @@
 #include <memory>
 #include <vector>
 #define VULKAN_HPP_NO_CONSTRUCTORS
+#include "DescriptorAllocator.hpp"
+#include "meshData.hpp"
+#include "util_structs.hpp"
 #include <SDL3/SDL.h>
 #include <vulkan-memory-allocator-hpp/vk_mem_alloc.hpp>
 #include <vulkan/vulkan.hpp>
-#include "meshData.hpp"
-#include "util_structs.hpp"
-#include "DescriptorAllocator.hpp"
 
 namespace mvk {
 class vkEngine {
 public:
-  static vkEngine& get(SDL_Window *window);
+  static vkEngine &get(SDL_Window *window);
   void init();
 
   void draw();
@@ -51,11 +51,16 @@ private: // Methods
 
   void _initDescriptors();
   void _updateDescriptorSet(mvk::DescriptorObject &descriptor);
-  void _updateUbos(mvk::UniformDescriptorObject ubo); // TODO temporary for testing
-  
-  AllocatedImage _createImage(vk::Extent3D size, vk::Format format, vk::ImageUsageFlags usage, bool mipmapped = false);
-  AllocatedImage _createImage(void* data, vk::Extent3D size, vk::Format format, vk::ImageUsageFlags usage, bool mipmapped = false);
-  void _destroyImage(const AllocatedImage& image);
+  void
+  _updateUbos(mvk::UniformDescriptorObject ubo); // TODO temporary for testing
+
+  AllocatedImage _createImage(vk::Extent3D size, vk::Format format,
+                              vk::ImageUsageFlags usage,
+                              bool mipmapped = false);
+  AllocatedImage _createImage(void *data, vk::Extent3D size, vk::Format format,
+                              vk::ImageUsageFlags usage,
+                              bool mipmapped = false);
+  void _destroyImage(const AllocatedImage &image);
 
   void _initDefaultData();
 
@@ -119,6 +124,8 @@ private: // Members
   mvk::AllocatedImage m_errorCheckerboardImage;
   vk::Sampler m_defaultSamplerLinear;
   vk::Sampler m_defaultSamplerNearest;
+
+  vk::DescriptorSetLayout _singleImageDescriptorLayout;
 };
 } // namespace mvk
 
