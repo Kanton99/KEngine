@@ -26,3 +26,5 @@ resources/shaders/compiled/*
 *.cap
 
 *.log
+
+overlays/
