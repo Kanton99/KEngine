@@ -1,10 +1,10 @@
 ﻿{
-    "version": 9,
-    "cmakeMinimumRequired": {
-      "major": 3,
-      "minor": 30,
-      "patch": 0
-    },
+  "version": 9,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 30,
+    "patch": 0
+  },
   "configurePresets": [
     {
       "name": "base",
@@ -27,20 +27,16 @@
       }
     },
     {
-        "name": "windows-debug",
-        "inherits": "base",
-        "cacheVariables": {
-            "CMAKE_C_COMPILER": "clang.exe",
-            "CMAKE_CXX_COMPILER": "clang++.exe",
-            "CMAKE_BUILD_TYPE": "Debug",
-            "CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS": "TRUE",
-            "BUILD_SHARED_LIBS": "TRUE",
-            "CMAKE_LINKER": "lld-link",
-            "CMAKE_CXX_FLAGS": "-fuse-ld=lld",
-            "CMAKE_C_FLAGS": "-fuse-ld=lld",
-            "CMAKE_C_COMPILER_TARGET": "x86_64-pc-windows-gnu",
-            "CMAKE_CXX_COMPILER_TARGET": "x86_64-pc-windows-gnu"
-        }
+      "name": "windows-debug",
+      "inherits": "base",
+      "generator": "Ninja",
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "clang-cl.exe",
+        "CMAKE_CXX_COMPILER": "clang-cl.exe",
+        "CMAKE_BUILD_TYPE": "Debug",
+        "VCPKG_TARGET_TRIPLET": "x64-windows",
+		"CMAKE_EXPORT_COMPILE_COMMANDS": "1"
+      }
     }
   ]
 }
