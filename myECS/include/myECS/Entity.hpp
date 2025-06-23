@@ -6,9 +6,9 @@
 namespace KEngine::myECS {
 class Entity {
 public: // Members
-  std::string name;
-  // uuids::uuid id;
-  uint32_t id;
+	std::string name;
+	// uuids::uuid id;
+	uint32_t id;
 };
 } // namespace KEngine::myECS
 

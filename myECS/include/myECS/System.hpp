@@ -4,9 +4,9 @@
 namespace KEngine::myECS {
 class System {
 public:
-  virtual void update() const = 0;
-  virtual void start() const = 0;
+	virtual void update() const = 0;
+	virtual void start() const = 0;
 };
-} // namespace KEngine
+} // namespace KEngine::myECS
 
 #endif // !KENGINE_SYSTEM_HPP

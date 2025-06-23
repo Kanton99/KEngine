@@ -6,7 +6,7 @@
 
 namespace KEngine::myECS {
 class Component {
-  std::shared_ptr<Entity> entity;
+	std::shared_ptr<Entity> entity;
 };
 } // namespace KEngine::myECS
 
