@@ -7,7 +7,6 @@ add_library(
     SHARED
     "src/SystemManager.cpp"
     "src/ComponentManager.cpp"
-    "src/EntityManager.cpp"
 )
 add_library(KEngine::myECS ALIAS ${PROJECT_NAME})
 

@@ -1,10 +1,10 @@
 #ifndef KENGINE_ENTITY_HPP
 #define KENGINE_ENTITY_HPP
-#include <string>
+#include <cstdint>
 // #include <stduuid/uuids.h> //TODO fix uuid lib issue
 
 namespace KEngine::myECS {
-	long Enitity;
+using EntityId = uint32_t;
 } // namespace KEngine::myECS
 
 #endif
