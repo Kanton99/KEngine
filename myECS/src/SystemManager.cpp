@@ -1,18 +1,36 @@
 #include <memory>
 #include <myECS/SystemManager.hpp>
+namespace KEngine::myECS {
 
-void KEngine::myECS::SystemManager::addSystem(std::unique_ptr<System> system) {
-  this->m_systems.push_back(std::move(system));
+void SystemManager::addSystem(UpdateSteps step, std::unique_ptr<System> system) {
+	switch (step) {
+	case UpdateSteps::UPDATE:
+		this->m_updateSystems.push_back(std::move(system));
+		break;
+	case UpdateSteps::PREUPDATE:
+		this->m_preUpdateSystems.push_back(std::move(system));
+		break;
+	case UpdateSteps::POSTUPDATE:
+		this->m_postUpdateSystems.push_back(std::move(system));
+		break;
+	}
 }
 
-void KEngine::myECS::SystemManager::startSystems() const {
-  for (const auto &system : m_systems) {
-    system->start();
-  }
+void SystemManager::runPreUpdates() const {
+	for (const auto &system : m_preUpdateSystems) {
+		system->start();
+	}
 }
 
-void KEngine::myECS::SystemManager::updateSystems() const {
-  for (const auto &system : m_systems) {
-    system->update();
-  }
+void SystemManager::runupdates() const {
+	for (const auto &system : m_updateSystems) {
+		system->update();
+	}
 }
+
+void SystemManager::runPostUpdates() const {
+	for (const auto &system : m_postUpdateSystems) {
+		system->update();
+	}
+}
+} // namespace KEngine::myECS
