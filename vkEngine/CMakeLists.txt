@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.30)
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 23)
 project("vkEngine")
 
 find_package(Vulkan REQUIRED)
@@ -11,7 +11,9 @@ find_package(fastgltf CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)
 find_package(SDL3 CONFIG REQUIRED)
 
-add_library(${PROJECT_NAME} SHARED 
+add_library(
+    ${PROJECT_NAME}
+    SHARED
     "src/vkEngine.cpp"
     "src/utils.cpp"
     "src/pipeline_builder.cpp"
@@ -25,9 +27,11 @@ add_library(${PROJECT_NAME} SHARED
 )
 add_library(KEngine::vkEngine ALIAS ${PROJECT_NAME})
 
-target_include_directories(${PROJECT_NAME} PUBLIC
-  ${PROJECT_SOURCE_DIR}/include
-  ${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/include/vma
+target_include_directories(
+    ${PROJECT_NAME}
+    PUBLIC
+        ${PROJECT_SOURCE_DIR}/include
+        ${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/include/vma
 )
 
 target_compile_definitions(
@@ -60,7 +64,12 @@ set(SHADER_DIR ${CMAKE_SOURCE_DIR}/resources/shaders)
 set(SHADER_BINARY_DIR ${CMAKE_SOURCE_DIR}/resources/shaders/compiled)
 
 # Find all GLSL shader files
-file(GLOB SHADERS "${SHADER_DIR}/*.vert" "${SHADER_DIR}/*.frag" "${SHADER_DIR}/*.comp")
+file(
+    GLOB SHADERS
+    "${SHADER_DIR}/*.vert"
+    "${SHADER_DIR}/*.frag"
+    "${SHADER_DIR}/*.comp"
+)
 
 set(COMPILED_SHADERS)
 
@@ -70,7 +79,9 @@ foreach(SHADER ${SHADERS})
 
     add_custom_command(
         OUTPUT ${COMPILED_SHADER}
-        COMMAND $ENV{VULKAN_SDK}/bin/glslangValidator -V ${SHADER} -o ${COMPILED_SHADER}
+        COMMAND
+            $ENV{VULKAN_SDK}/bin/glslangValidator -V ${SHADER} -o
+            ${COMPILED_SHADER}
         DEPENDS ${SHADER}
         COMMENT "Compiling GLSL shader: ${SHADER_NAME}"
         VERBATIM

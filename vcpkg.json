@@ -24,7 +24,6 @@
     "vk-bootstrap",
     "volk",
     "vulkan-memory-allocator",
-    "vulkan-memory-allocator-hpp",
-    "stduuid"
+    "vulkan-memory-allocator-hpp"
   ]
 }
