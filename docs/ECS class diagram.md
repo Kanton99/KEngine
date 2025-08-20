@@ -1,10 +1,4 @@
 ```mermaid
----
-config:
-  theme: mc
-  look: classic
-  layout: elk
----
 classDiagram
     class System {
 	    +Update() void
@@ -14,8 +8,10 @@ classDiagram
 	    -transform: mat4
 	    +position() vec3
     }
-    class ComponentManager {
-	    +components: Map[ComponentType, Component[]]
+    class ComponentStorage {
+	    -components: Component[]
+        -ent_comp: Map[Entity, Component]
+        -comp_ent: Map[Component, Entity]
     }
     class SystemManager {
 	    +systems: System[]
@@ -27,8 +23,7 @@ classDiagram
 	    +entity: Entity
     }
     class Entity {
-	    +name: String
-	    +id: uuid
+	    +id: uint32
     }
     class EntityManager {
 	    -entities: Entity[]
@@ -36,10 +31,14 @@ classDiagram
         +destroyEntity(id)
 	    +getEntity() Entity
     }
+    
+    class Archetype{
+        +compenents[]
+}
 
     Component <|-- Transform
     EntityManager "1" <-- "*" Entity
-    ComponentManager "1" <-- "*" Component
+    ComponentStorage "1" <-- "*" Component
     SystemManager "1" <-- "*" System
     Component <.. Entity
 ```
