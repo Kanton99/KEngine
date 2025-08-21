@@ -28,3 +28,4 @@ resources/shaders/compiled/*
 *.log
 
 overlays/
+.codecompanion.workspace.json
