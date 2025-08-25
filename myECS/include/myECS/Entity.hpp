@@ -5,6 +5,7 @@
 
 namespace KEngine::myECS {
 using EntityId = uint32_t;
+using Signature = uint64_t;
 } // namespace KEngine::myECS
 
 #endif

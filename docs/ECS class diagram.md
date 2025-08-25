@@ -34,6 +34,7 @@ classDiagram
     
     class Archetype{
         +compenents[]
+        +signature: int32
 }
 
     Component <|-- Transform

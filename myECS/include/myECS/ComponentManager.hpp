@@ -1,6 +1,3 @@
-#include <myECS/Component.hpp>
 namespace KEngine::myECS {
-class App {
-  public:
-};
+class ComponentManager {};
 } // namespace KEngine::myECS
