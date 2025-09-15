@@ -1,6 +1,0 @@
-#include <myECS/Component.hpp>
-namespace KEngine::myECS {
-class App {
-  public:
-};
-} // namespace KEngine::myECS
