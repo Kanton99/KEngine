@@ -1,3 +1,3 @@
 #include <myECS/Component.hpp>
 
-unsigned int KEngine::myECS::IComponent::signCounter = 0;
+unsigned int KEngine::IComponent::signCounter = 0;

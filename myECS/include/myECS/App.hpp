@@ -2,10 +2,12 @@
 #define ECS_APP
 
 #include "myECS/Component.hpp"
+#include "myECS/World.hpp"
+#include "myECS/definitions.hpp"
 #include <iostream>
 #include <memory>
 #include <myECS/ComponentsManager.hpp>
-namespace KEngine::myECS {
+namespace KEngine {
 class App {
 
 public:
@@ -17,9 +19,17 @@ public:
 
   template <ComponentType Comp> void registerComponent();
 
+  void createWorld();
+
+  Entity createEntity();
+  void destroyEntity(Entity entity);
+
 private:
   std::unique_ptr<ComponentsManager> m_components;
   int sampleVar;
+
+  std::vector<std::unique_ptr<World>> m_worlds;
+  std::unique_ptr<World> m_currentWorld;
 };
 
 //------------------------------------------------------------------------------------------
@@ -28,6 +38,6 @@ template <ComponentType Comp> void App::registerComponent() {
   std::cout << "Registered in app Component: " << typeid(Comp).name()
             << std::endl;
 }
-} // namespace KEngine::myECS
+} // namespace KEngine
 
 #endif // !ECS_APP

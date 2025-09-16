@@ -1,3 +1,3 @@
 #include <myECS/ComponentsManager.hpp>
 
-namespace KEngine::myECS {} // namespace KEngine::myECS
+namespace KEngine {} // namespace KEngine

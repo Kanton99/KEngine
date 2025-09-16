@@ -3,7 +3,7 @@
 
 #include <concepts>
 #include <myECS/definitions.hpp>
-namespace KEngine::myECS {
+namespace KEngine {
 
 class IComponent { // base class to have common signature counter;
 protected:
@@ -26,6 +26,6 @@ concept ComponentType = requires(C c) { std::derived_from<C, Component<C>>; };
 template <typename T>
 const Signature Component<T>::signature = Component<T>::getSignature();
 
-} // namespace KEngine::myECS
+} // namespace KEngine
 
 #endif // !ECS_COMPONENT_HPP

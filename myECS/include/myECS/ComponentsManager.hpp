@@ -5,7 +5,7 @@
 #include <memory>
 #include <myECS/ComponentStorage.hpp>
 #include <unordered_map>
-namespace KEngine::myECS {
+namespace KEngine {
 
 class ComponentsManager {
 public:
@@ -25,6 +25,6 @@ template <ComponentType Comp> void ComponentsManager::registerComponent() {
   this->m_storages.emplace(Comp::signature,
                            std::make_unique<ComponentStorage<Comp>>());
 }
-} // namespace KEngine::myECS
+} // namespace KEngine
 
 #endif // !ECS_COMPONENT_MANAGER_HPP

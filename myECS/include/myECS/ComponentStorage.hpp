@@ -4,7 +4,7 @@
 #include <concepts>
 #include <myECS/Component.hpp>
 #include <vector>
-namespace KEngine::myECS {
+namespace KEngine {
 
 class IComponentStorage {
 public:
@@ -19,6 +19,6 @@ private:
   std::vector<Component<Comp>> m_components;
 };
 
-} // namespace KEngine::myECS
+} // namespace KEngine
 
 #endif // !ECS_COMPONENT_STORAGE_HPP
