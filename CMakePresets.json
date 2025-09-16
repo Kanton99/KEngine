@@ -1,49 +1,63 @@
 ﻿{
-  "version": 9,
-  "cmakeMinimumRequired": {
-    "major": 3,
-    "minor": 30,
-    "patch": 0
-  },
-  "configurePresets": [
-    {
-      "name": "base",
-      "hidden": true,
-      "generator": "Ninja",
-      "binaryDir": "${sourceDir}/build/${presetName}",
-      "installDir": "${sourceDir}/install/${presetName}",
-      "cacheVariables": {
-        "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
+	"version": 9,
+	"cmakeMinimumRequired": {
+		"major": 3,
+		"minor": 30,
+		"patch": 0
+	},
+	"configurePresets": [
+		{
+			"name": "base",
+			"hidden": true,
+			"generator": "Ninja",
+			"binaryDir": "${sourceDir}/build/${presetName}",
+			"installDir": "${sourceDir}/install/${presetName}",
+			"toolchainFile": "../vcpkg/scripts/buildsystems/vcpkg.cmake",
+			"cacheVariables": {
 				"CMAKE_EXPORT_COMPILE_COMMANDS": "1"
-      }
-    },
-    {
-      "name": "linux-debug",
-      "inherits": "base",
-      "cacheVariables": {
-        "CMAKE_C_COMPILER": "clang",
-        "CMAKE_CXX_COMPILER": "clang++",
-        "CMAKE_BUILD_TYPE": "Debug",
-        "VCPKG_OVERLAY_PORTS":"overlays"
-      }
-    },
-    {
-      "name": "windows-debug",
-      "inherits": "base",
-      "generator": "Ninja",
-      "cacheVariables": {
-        "CMAKE_C_COMPILER": "clang-cl.exe",
-        "CMAKE_CXX_COMPILER": "clang-cl.exe",
-        "CMAKE_BUILD_TYPE": "Debug",
-        "VCPKG_TARGET_TRIPLET": "x64-windows",
-				"CMAKE_EXPORT_COMPILE_COMMANDS": "1"
-      }
-    }
-  ],
-	"buildPresets":[
+			}
+		},
+		{
+			"name": "linux-debug",
+			"inherits": "base",
+			"cacheVariables": {
+				"CMAKE_C_COMPILER": "clang",
+				"CMAKE_CXX_COMPILER": "clang++",
+				"CMAKE_BUILD_TYPE": "Debug",
+				"VCPKG_OVERLAY_PORTS": "overlays"
+			}
+		},
+		{
+			"name": "windows-debug",
+			"inherits": "base",
+			"generator": "Ninja",
+			"cacheVariables": {
+				"CMAKE_C_COMPILER": "clang-cl.exe",
+				"CMAKE_CXX_COMPILER": "clang-cl.exe",
+				"CMAKE_BUILD_TYPE": "Debug",
+				"VCPKG_TARGET_TRIPLET": "x64-windows"
+			}
+		}
+	],
+	"buildPresets": [
 		{
 			"name": "linux-build-debug",
 			"configurePreset": "linux-debug"
+		}
+	],
+	"workflowPresets": [
+		{
+			"name": "debug",
+			"steps": [
+				{
+					"type": "configure",
+					"name": "linux-debug"
+				},
+				{
+					"type": "build",
+					"name": "linux-build-debug"
+				}
+			]
 		}
 	]
 }

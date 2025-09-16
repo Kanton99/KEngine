@@ -1,0 +1,194 @@
+{
+	"$schema": "http://json-schema.org/draft-07/schema#",
+	"title": "CodeCompanion.nvim workspace configuration file",
+	"description": "Schema for a CodeCompanion.nvim workspace configuration file. A workspace is a collection of groups which relate to functionality in a codebase",
+	"type": "object",
+	"required": [
+		"name",
+		"version",
+		"system_prompt",
+		"groups",
+		"data"
+	],
+	"properties": {
+		"name": {
+			"type": "string",
+			"description": "Game Engine Workspace"
+		},
+		"version": {
+			"type": "string",
+			"description": "1.0.0"
+		},
+		"system_prompt": {
+			"type": "string",
+			"description": "You are an expert C++ game engine developer working on a Linux-based game engine using Vulkan graphics and ECS architecture. You have deep knowledge of the codebase structure and can explain how different components interact with each other."
+		},
+		"vars": {
+			"type": "object",
+			"description": "Variables that can be used within groups and data objects",
+			"additionalProperties": {
+				"type": "string"
+			}
+		},
+		"groups": [
+			{
+				"name": "Main Engine",
+				"system_prompt": "You are an expert C++ game engine developer working on the main engine components. You understand how the core engine architecture integrates with the various subsystems like Vulkan rendering and ECS.",
+				"data": [
+					"main_cpp"
+				]
+			},
+			{
+				"name": "vkEngine",
+				"system_prompt": "You are an expert C++ game engine developer specializing in Vulkan graphics implementation. You understand the Vulkan engine's architecture, including descriptor sets, pipelines, loaders, and the overall graphics rendering pipeline.",
+				"data": [
+					"vkengine_header",
+					"vkengine_descriptor_allocator",
+					"vkengine_descriptor_layout_builder",
+					"vkengine_descriptor_writer",
+					"vkengine_gltf_loader",
+					"vkengine_info_creator",
+					"vkengine_init",
+					"vkengine_mesh_data",
+					"vkengine_obj_loader",
+					"vkengine_pipeline_builder",
+					"vkengine_util_struct",
+					"vkengine_utils",
+					"vkengine_vk_engine"
+				]
+			},
+			{
+				"name": "myECS",
+				"system_prompt": "You are an expert C++ game engine developer specializing in Entity Component System architecture. You understand how entities, components, systems, and archetypes work together to create a flexible game engine architecture.",
+				"data": [
+					"myecs_app",
+					"myecs_archetype",
+					"myecs_archetype_manager",
+					"myecs_component",
+					"myecs_component_manager",
+					"myecs_component_storage",
+					"myecs_entity",
+					"myecs_system",
+					"myecs_system_manager"
+				]
+			}
+		],
+		"data": {
+			"main_cpp": {
+				"type": "file",
+				"path": "main.cpp",
+				"description": "Main entry point of the game engine application"
+			},
+			"vkengine_header": {
+				"type": "file",
+				"path": "vkEngine/include/vkEngine/vkEngine.hpp",
+				"description": "Main header file for the Vulkan engine containing core class definitions"
+			},
+			"vkengine_descriptor_allocator": {
+				"type": "file",
+				"path": "vkEngine/include/vkEngine/DescriptorAllocator.hpp",
+				"description": "Header file for descriptor allocator implementation"
+			},
+			"vkengine_descriptor_layout_builder": {
+				"type": "file",
+				"path": "vkEngine/include/vkEngine/DescriptorLayoutBuilder.hpp",
+				"description": "Header file for descriptor layout builder implementation"
+			},
+			"vkengine_descriptor_writer": {
+				"type": "file",
+				"path": "vkEngine/include/vkEngine/DescriptorWriter.hpp",
+				"description": "Header file for descriptor writer implementation"
+			},
+			"vkengine_gltf_loader": {
+				"type": "file",
+				"path": "vkEngine/include/vkEngine/gltfLoader.hpp",
+				"description": "Header file for GLTF model loader implementation"
+			},
+			"vkengine_info_creator": {
+				"type": "file",
+				"path": "vkEngine/include/vkEngine/infoCreator.hpp",
+				"description": "Header file for info creator implementation"
+			},
+			"vkengine_init": {
+				"type": "file",
+				"path": "vkEngine/include/vkEngine/init.hpp",
+				"description": "Header file for engine initialization functions"
+			},
+			"vkengine_mesh_data": {
+				"type": "file",
+				"path": "vkEngine/include/vkEngine/meshData.hpp",
+				"description": "Header file for mesh data structures"
+			},
+			"vkengine_obj_loader": {
+				"type": "file",
+				"path": "vkEngine/include/vkEngine/objLoader.hpp",
+				"description": "Header file for OBJ model loader implementation"
+			},
+			"vkengine_pipeline_builder": {
+				"type": "file",
+				"path": "vkEngine/include/vkEngine/pipeline_builder.hpp",
+				"description": "Header file for pipeline builder implementation"
+			},
+			"vkengine_util_struct": {
+				"type": "file",
+				"path": "vkEngine/include/vkEngine/util_struct.hpp",
+				"description": "Header file for utility structures"
+			},
+			"vkengine_utils": {
+				"type": "file",
+				"path": "vkEngine/include/vkEngine/utils.hpp",
+				"description": "Header file for utility functions"
+			},
+			"vkengine_vk_engine": {
+				"type": "file",
+				"path": "vkEngine/include/vkEngine/vkEngine.hpp",
+				"description": "Main Vulkan engine header file"
+			},
+			"myecs_app": {
+				"type": "file",
+				"path": "myECS/include/myECS/App.hpp",
+				"description": "Application class for the ECS system"
+			},
+			"myecs_archetype": {
+				"type": "file",
+				"path": "myECS/include/myECS/Archetype.hpp",
+				"description": "Header file for archetype implementation"
+			},
+			"myecs_archetype_manager": {
+				"type": "file",
+				"path": "myECS/include/myECS/ArchetypeManager.hpp",
+				"description": "Header file for archetype manager implementation"
+			},
+			"myecs_component": {
+				"type": "file",
+				"path": "myECS/include/myECS/Component.hpp",
+				"description": "Header file for component definitions"
+			},
+			"myecs_component_manager": {
+				"type": "file",
+				"path": "myECS/include/myECS/ComponentManager.hpp",
+				"description": "Header file for component manager implementation"
+			},
+			"myecs_component_storage": {
+				"type": "file",
+				"path": "myECS/include/myECS/ComponentStorage.hpp",
+				"description": "Header file for component storage implementation"
+			},
+			"myecs_entity": {
+				"type": "file",
+				"path": "myECS/include/myECS/Entity.hpp",
+				"description": "Header file for entity definitions"
+			},
+			"myecs_system": {
+				"type": "file",
+				"path": "myECS/include/myECS/System.hpp",
+				"description": "Header file for system definitions"
+			},
+			"myecs_system_manager": {
+				"type": "file",
+				"path": "myECS/include/myECS/SystemManager.hpp",
+				"description": "Header file for system manager implementation"
+			}
+		}
+	}
+}

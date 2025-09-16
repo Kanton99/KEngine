@@ -1,8 +1,8 @@
 #ifndef KENGINE_MAIN
 #define KENGINE_MAIN
 
+#include "myECS/SystemManager.hpp"
 #include <SDL3/SDL_system.h>
-#include <cstdint>
 #include <exception>
 #include <vkEngine/gltfLoader.hpp>
 #define SDL_MAIN_HANDLED
@@ -12,60 +12,26 @@
 #include <iostream>
 #include <vkEngine/vkEngine.hpp>
 
+#include <myECS/App.hpp>
 #include <myECS/Component.hpp>
 
 struct Trasform : public KEngine::myECS::Component<Trasform> {
-	glm::mat4 transform;
+  glm::mat4 transform;
 };
 struct Player : public KEngine::myECS::Component<Player> {};
 struct Enemy : public KEngine::myECS::Component<Enemy> {};
 
 int main() {
-	try {
-		// setenv("SDL_VIDEODRIVER", "x11", 1);
-		if (!SDL_Init(SDL_INIT_VIDEO)) {
-			std::cerr << "Failed to init video, Error: " << SDL_GetError() << std::endl;
-			return -1;
-		}
-		SDL_Vulkan_LoadLibrary(NULL);
-		SDL_Window *window = SDL_CreateWindow("test windows", 1600, 900, SDL_WINDOW_VULKAN);
+  try {
+    KEngine::myECS::App app;
+    app.registerComponent<Trasform>();
+    app.registerComponent<Player>();
+    app.registerComponent<Enemy>();
+  } catch (const std::exception &e) {
+    std::cerr << e.what() << std::endl;
+  }
 
-		if (!window) {
-			std::cerr << "Failed to create window, Error: " << SDL_GetError() << std::endl;
-			return -1;
-		}
-
-		mvk::vkEngine engine = mvk::vkEngine::get(window);
-		engine.init();
-
-		engine.testMeshes = mvk::loadGltfMesh(&engine, "resources/Meshes/basicmesh.glb").value();
-		/*engine->testMeshes = mvk::loadObj(engine,
-		 * "resources/Meshes/viking_room.obj").value();*/
-
-		SDL_Event event;
-		bool running = true;
-		std::cout << "Trasform signature: " << Trasform::signature << std::endl;
-		std::cout << "Player signature: " << Player::signature << std::endl;
-		std::cout << "Enemy signature: " << std::format("{:#032b}", Enemy::signature | Trasform::signature) << std::endl;
-
-		// while (running) {
-		// 	while (SDL_PollEvent(&event)) {
-		// 		if (event.type == SDL_EVENT_QUIT)
-		// 			running = false;
-		// 	}
-		// 	engine.draw();
-		// 	SDL_Delay(static_cast<uint32_t>(1.f / 60.f) * 1000);
-		// }
-
-		engine.cleanup();
-
-		SDL_DestroyWindow(window);
-		SDL_Quit();
-	} catch (const std::exception &e) {
-		std::cerr << e.what() << std::endl;
-	}
-
-	return 0;
+  return 0;
 }
 
 #endif
