@@ -1,6 +1,7 @@
 #include <cmath>
 #include <functional>
 #include <glm/packing.hpp>
+#include <vulkan/vulkan_core.h>
 #define VMA_IMPLEMENTATION
 #include "vkEngine/DescriptorLayoutBuilder.hpp"
 #include "vkEngine/DescriptorWriter.hpp"
@@ -90,7 +91,10 @@ void mvk::vkEngine::init() {
 }
 
 void mvk::vkEngine::draw() {
-	this->m_device.waitForFences(this->m_inFlightFence, vk::True, UINT64_MAX);
+	auto waitResult = this->m_device.waitForFences(this->m_inFlightFence, vk::True, UINT64_MAX);
+	if (waitResult != vk::Result::eSuccess) {
+		std::cerr << "Error waiting to draw: " << waitResult << "\n";
+	}
 	this->m_device.resetFences(this->m_inFlightFence);
 
 	uint32_t imageIndex = this->m_device.acquireNextImageKHR(this->m_graphicSwapchain.swapchain, UINT64_MAX, this->m_imageAvailableSempahore).value;
@@ -109,7 +113,10 @@ void mvk::vkEngine::draw() {
 
 	vk::PresentInfoKHR prensetInfo{.waitSemaphoreCount = 1, .pWaitSemaphores = &this->m_renderFinishedSemaphore, .swapchainCount = 1, .pSwapchains = &this->m_graphicSwapchain.swapchain, .pImageIndices = &imageIndex};
 
-	this->m_graphicsQueue.presentKHR(prensetInfo);
+	auto presentResult = this->m_graphicsQueue.presentKHR(prensetInfo);
+	if (presentResult != vk::Result::eSuccess) {
+		std::cerr << "Error presentig queue: " << presentResult << "\n";
+	}
 }
 
 void mvk::vkEngine::cleanup() {
@@ -250,8 +257,8 @@ void mvk::vkEngine::_initSwapchain(uint32_t width, uint32_t height) {
 	};
 
 	auto allocatedImage = this->m_allocator.createImage(imageInfo, allocCreateInfo);
-	this->m_depthImage.image = allocatedImage.first;
-	this->m_depthImage.allocation = allocatedImage.second;
+	this->m_depthImage.image = allocatedImage.second;
+	this->m_depthImage.allocation = allocatedImage.first;
 
 	vk::ImageViewCreateInfo viewInfo = mvk::utils::imageViewCreateInfo(this->m_depthImage.format, this->m_depthImage.image, vk::ImageAspectFlagBits::eDepth);
 
@@ -288,8 +295,8 @@ void mvk::vkEngine::_createDrawImage() {
 	vma::AllocationCreateInfo imageAllocInfo{.usage = vma::MemoryUsage::eGpuOnly, .requiredFlags = vk::MemoryPropertyFlagBits::eDeviceLocal};
 
 	auto imageAllocation = this->m_allocator.createImage(drawImageInfo, imageAllocInfo);
-	m_drawImage.image = imageAllocation.first;
-	m_drawImage.allocation = imageAllocation.second;
+	m_drawImage.image = imageAllocation.second;
+	m_drawImage.allocation = imageAllocation.first;
 
 	auto imageViewInfo = mvk::utils::imageViewCreateInfo(m_drawImage.format, m_drawImage.image, vk::ImageAspectFlagBits::eColor);
 	this->m_drawImage.imageView = this->m_device.createImageView(imageViewInfo);
@@ -425,7 +432,7 @@ void mvk::vkEngine::_recordCommandBuffer(vk::CommandBuffer commandBuffer, uint32
 		writer.updateSet(this->m_device, this->m_descriptorSet.descriptor);
 	}
 
-	// this->m_graphicsCommandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, this->m_graphicsPipelineLayout, 0, imageSet, {0});
+	this->m_graphicsCommandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, this->m_graphicsPipelineLayout, 0, imageSet, {0});
 
 	vk::Viewport viewport{.x = 0.f, .y = 0.f, .width = (float)this->m_drawImage.extent.width, .height = (float)this->m_drawImage.extent.height, .minDepth = 0.f, .maxDepth = 1.f};
 	commandBuffer.setViewport(0, viewport);
@@ -495,8 +502,8 @@ mvk::AllocatedBuffer mvk::vkEngine::_allocateBuffer(size_t size, vk::BufferUsage
 
 	auto vmaAllocatedBuffer = this->m_allocator.createBuffer(bufferInfo, allocationInfo, &allocBuffer.allocationInfo);
 
-	allocBuffer.buffer = vmaAllocatedBuffer.first;
-	allocBuffer.allocation = vmaAllocatedBuffer.second;
+	allocBuffer.buffer = vmaAllocatedBuffer.second;
+	allocBuffer.allocation = vmaAllocatedBuffer.first;
 
 	return allocBuffer;
 }
@@ -539,7 +546,9 @@ mvk::MeshData mvk::vkEngine::uploadMesh(std::span<mvk::VertexData> vertices, std
 }
 
 void mvk::vkEngine::_immediateSubmit(std::function<void(vk::CommandBuffer cmd)> &&function) {
-	this->m_device.resetFences(1, &this->m_immediateFence);
+	if (this->m_device.resetFences(1, &this->m_immediateFence) != vk::Result::eSuccess) {
+		std::cerr << "Error resetting fences";
+	}
 	this->m_immediateCommandBuffer.reset();
 
 	vk::CommandBuffer cmd = this->m_immediateCommandBuffer;
@@ -561,7 +570,9 @@ void mvk::vkEngine::_immediateSubmit(std::function<void(vk::CommandBuffer cmd)> 
 	vk::SubmitInfo2 submitInfo{.commandBufferInfoCount = 1, .pCommandBufferInfos = &commandSubmitInfo};
 	this->m_graphicsQueue.submit2(submitInfo, this->m_immediateFence);
 
-	this->m_device.waitForFences(this->m_immediateFence, true, 9999999);
+	if (this->m_device.waitForFences(this->m_immediateFence, true, 9999999) != vk::Result::eSuccess) {
+		std::cerr << "Error waiting for fences for submit\n";
+	}
 }
 
 void mvk::vkEngine::_initDescriptors() {
@@ -614,8 +625,8 @@ mvk::AllocatedImage mvk::vkEngine::_createImage(vk::Extent3D size, vk::Format fo
 	allocaInfo.setRequiredFlags(vk::MemoryPropertyFlagBits::eDeviceLocal);
 
 	auto imageCreationResult = this->m_allocator.createImage(imgInfo, allocaInfo);
-	newImage.image = imageCreationResult.first;
-	newImage.allocation = imageCreationResult.second;
+	newImage.image = imageCreationResult.second;
+	newImage.allocation = imageCreationResult.first;
 
 	vk::ImageAspectFlags aspectFlags = vk::ImageAspectFlagBits::eColor;
 	if (format == vk::Format::eD32Sfloat)

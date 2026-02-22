@@ -3,9 +3,11 @@
 
 namespace KEngine::myECS {
 class System {
-public:
+  public:
 	virtual void update() const = 0;
 	virtual void start() const = 0;
+
+	virtual ~System();
 };
 } // namespace KEngine::myECS
 
