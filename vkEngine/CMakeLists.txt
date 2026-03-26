@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.30)
+cmake_minimum_required(VERSION 4.3)
 set(CMAKE_CXX_STANDARD 23)
 project("vkEngine")
 
@@ -12,7 +12,7 @@ find_package(SDL3 CONFIG REQUIRED)
 add_library(
     ${PROJECT_NAME}
     SHARED
-    "src/vkEngine.cpp"
+    "src/engine.cpp"
 )
 add_library(KEngine::vkEngine ALIAS ${PROJECT_NAME})
 
@@ -20,7 +20,6 @@ target_include_directories(
     ${PROJECT_NAME}
     PUBLIC
         ${PROJECT_SOURCE_DIR}/include
-        ${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/include/vma
 )
 
 target_compile_definitions(
@@ -39,40 +38,3 @@ target_link_libraries(
 )
 
 target_link_libraries(${PROJECT_NAME} PRIVATE fastgltf::fastgltf)
-
-# Set paths for shaders
-set(SHADER_DIR ${CMAKE_SOURCE_DIR}/resources/shaders)
-set(SHADER_BINARY_DIR ${CMAKE_SOURCE_DIR}/resources/shaders/compiled)
-
-# Find all GLSL shader files
-file(
-    GLOB SHADERS
-    "${SHADER_DIR}/*.vert"
-    "${SHADER_DIR}/*.frag"
-    "${SHADER_DIR}/*.comp"
-)
-
-set(COMPILED_SHADERS)
-
-foreach(SHADER ${SHADERS})
-    get_filename_component(SHADER_NAME ${SHADER} NAME)
-    set(COMPILED_SHADER ${SHADER_BINARY_DIR}/${SHADER_NAME}.spv)
-
-    add_custom_command(
-        OUTPUT ${COMPILED_SHADER}
-        COMMAND
-            $ENV{VULKAN_SDK}/bin/glslangValidator -V ${SHADER} -o
-            ${COMPILED_SHADER}
-        DEPENDS ${SHADER}
-        COMMENT "Compiling GLSL shader: ${SHADER_NAME}"
-        VERBATIM
-    )
-
-    list(APPEND COMPILED_SHADERS ${COMPILED_SHADER})
-endforeach()
-
-# Ensure the shaders are compiled before building your main project
-add_custom_target(compile_shaders DEPENDS ${COMPILED_SHADERS})
-
-# Make sure your executable depends on the compiled shaders
-add_dependencies(${PROJECT_NAME} compile_shaders)

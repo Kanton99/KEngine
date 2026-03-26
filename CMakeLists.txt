@@ -1,7 +1,7 @@
 ﻿# CMakeList.txt : Top-level CMake project file, do global configuration
 # and include sub-projects here.
 #
-cmake_minimum_required(VERSION 3.30)
+cmake_minimum_required(VERSION 4.3)
 set(CMAKE_CXX_STANDARD 23)
 
 project("KEngine")
@@ -17,7 +17,7 @@ add_custom_target(
 # Include sub-projects.
 add_subdirectory("vkEngine")
 add_subdirectory("main")
-add_subdirectory("myECS")
+# add_subdirectory("myECS")
 # add_dependencies(vkEngine copy_assets)
 
 # target_link_libraries(KEngine PRIVATE KEngine::vkEngine)
