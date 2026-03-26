@@ -11,10 +11,8 @@ class MyProjectConan(ConanFile):
         "glm/1.0.1",     
         "sdl_image/3.4.0", 
         "tinyobjloader/2.0.0-rc10", 
-        #"vk-bootstrap/1.3.296", 
         "volk/1.4.313.0",       
         "vulkan-memory-allocator/3.3.0", 
-        #"vulkan-memory-allocator-hpp/3.3.0"  
     ]
 
     def requirements(self):
