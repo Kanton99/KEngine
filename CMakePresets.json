@@ -13,7 +13,6 @@
       "binaryDir": "${sourceDir}/build/${presetName}",
       "installDir": "${sourceDir}/install/${presetName}",
       "cacheVariables": {
-        "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
 				"CMAKE_EXPORT_COMPILE_COMMANDS": "1"
       }
     },
@@ -23,8 +22,7 @@
       "cacheVariables": {
         "CMAKE_C_COMPILER": "clang",
         "CMAKE_CXX_COMPILER": "clang++",
-        "CMAKE_BUILD_TYPE": "Debug",
-        "VCPKG_OVERLAY_PORTS":"overlays"
+        "CMAKE_BUILD_TYPE": "Debug"
       }
     },
     {
@@ -35,7 +33,6 @@
         "CMAKE_C_COMPILER": "clang-cl.exe",
         "CMAKE_CXX_COMPILER": "clang-cl.exe",
         "CMAKE_BUILD_TYPE": "Debug",
-        "VCPKG_TARGET_TRIPLET": "x64-windows",
 				"CMAKE_EXPORT_COMPILE_COMMANDS": "1"
       }
     }

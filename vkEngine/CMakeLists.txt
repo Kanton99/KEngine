@@ -4,9 +4,7 @@ project("vkEngine")
 
 find_package(Vulkan REQUIRED)
 find_package(VulkanMemoryAllocator CONFIG REQUIRED)
-find_package(unofficial-vulkan-memory-allocator-hpp CONFIG REQUIRED)
 find_package(VulkanHeaders CONFIG)
-find_package(vk-bootstrap CONFIG REQUIRED)
 find_package(fastgltf CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)
 find_package(SDL3 CONFIG REQUIRED)
@@ -15,15 +13,6 @@ add_library(
     ${PROJECT_NAME}
     SHARED
     "src/vkEngine.cpp"
-    "src/utils.cpp"
-    "src/pipeline_builder.cpp"
-    "src/init.cpp"
-    "src/infoCreator.cpp"
-    "src/gltfLoader.cpp"
-    "src/objLoader.cpp"
-    "src/DescriptorAllocatorGrowable.cpp"
-    "src/DescriptorWriter.cpp"
-    "src/DescriptorLayoutBuilder.cpp"
 )
 add_library(KEngine::vkEngine ALIAS ${PROJECT_NAME})
 
@@ -42,19 +31,11 @@ target_compile_definitions(
 target_link_libraries(${PROJECT_NAME} PUBLIC SDL3::SDL3)
 target_link_libraries(${PROJECT_NAME} PUBLIC glm::glm)
 
-target_link_libraries(
-    ${PROJECT_NAME}
-    PRIVATE
-        vk-bootstrap::vk-bootstrap
-        vk-bootstrap::vk-bootstrap-compiler-warnings
-        ${CMAKE_DL_LIBS}
-)
 target_link_libraries(${PROJECT_NAME} PRIVATE Vulkan::Vulkan)
 target_link_libraries(
     ${PROJECT_NAME}
     PRIVATE
         GPUOpen::VulkanMemoryAllocator
-        unofficial::VulkanMemoryAllocator-Hpp::VulkanMemoryAllocator-Hpp
 )
 
 target_link_libraries(${PROJECT_NAME} PRIVATE fastgltf::fastgltf)
