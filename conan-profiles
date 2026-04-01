@@ -1,4 +1,4 @@
 include(default)
 
 [settings]
-build_type=Release
+build_type=Debug

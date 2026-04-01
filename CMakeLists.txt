@@ -1,9 +1,18 @@
 ﻿# CMakeList.txt : Top-level CMake project file, do global configuration
 # and include sub-projects here.
 #
+include(FetchContent)
 cmake_minimum_required(VERSION 4.3)
 set(CMAKE_CXX_STANDARD 23)
 
+
+FetchContent_Declare(
+  SDL3
+  GIT_REPOSITORY https://github.com/libsdl-org/SDL.git
+  GIT_TAG release-3.4.2
+)
+
+FetchContent_MakeAvailable(SDL3)
 project("KEngine")
 # add_executable(${PROJECT_NAME} "main.cpp")
 

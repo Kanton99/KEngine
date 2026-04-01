@@ -4,7 +4,6 @@
 #include <SDL3/SDL_system.h>
 #include <cstdint>
 #include <exception>
-#include <memory>
 #define SDL_MAIN_HANDLED
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_hints.h>
