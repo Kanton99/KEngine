@@ -19,7 +19,10 @@ int main() {
 			std::cerr << "Failed to init video, Error: " << SDL_GetError() << std::endl;
 			return -1;
 		}
-		SDL_Vulkan_LoadLibrary(NULL);
+		if (!SDL_Vulkan_LoadLibrary(NULL)) {
+			std::cerr << "Failed to load vulkan library, Error: " << SDL_GetError() << std::endl;
+			return -1;
+		}
 		std::cout << "Creating window" << std::endl;
 		SDL_Window *window = SDL_CreateWindow("test windows", 1600, 900, SDL_WINDOW_VULKAN);
 
