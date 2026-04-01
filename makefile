@@ -1,7 +1,7 @@
 install: 
-	conan install . --build=missing
+	conan install . --build=missing -pr ./conan-profiles
 
-build:
-	conan build .
+build: install
+	conan build . -pr ./conan-profiles
 
 .PHONY: install build
