@@ -14,11 +14,13 @@
 int main() {
 	try {
 		// setenv("SDL_VIDEODRIVER", "x11", 1);
+		std::cout << "Initializing SDL" << std::endl;
 		if (!SDL_Init(SDL_INIT_VIDEO)) {
 			std::cerr << "Failed to init video, Error: " << SDL_GetError() << std::endl;
 			return -1;
 		}
 		SDL_Vulkan_LoadLibrary(NULL);
+		std::cout << "Creating window" << std::endl;
 		SDL_Window *window = SDL_CreateWindow("test windows", 1600, 900, SDL_WINDOW_VULKAN);
 
 		if (!window) {
@@ -26,8 +28,9 @@ int main() {
 			return -1;
 		}
 
-		std::unique_ptr<vkEngine::vkEngine> engine = std::make_unique<vkEngine::vkEngine>(window);
-		engine->init();
+		std::cout << "Creating engine\n";
+		// std::unique_ptr<vkEngine::vkEngine> engine = std::make_unique<vkEngine::vkEngine>(window);
+		// engine->init();
 		SDL_Event event;
 		bool running = true;
 
@@ -36,11 +39,12 @@ int main() {
 				if (event.type == SDL_EVENT_QUIT)
 					running = false;
 			}
-			engine->draw();
+			// engine->draw();
 			SDL_Delay(static_cast<uint32_t>(1.f / 60.f) * 1000);
 		}
 
-		engine->cleanup();
+		std::cout << "Shutting down\n";
+		// engine->cleanup();
 
 		SDL_DestroyWindow(window);
 		SDL_Quit();

@@ -4,7 +4,10 @@
 include(FetchContent)
 cmake_minimum_required(VERSION 4.3)
 set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+set(SDL_VIDEO_VULKAN ON CACHE BOOL "" FORCE)
+set(SDL_VIDEO_WAYLAND ON CACHE BOOL "" FORCE)
 
 FetchContent_Declare(
   SDL3
