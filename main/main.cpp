@@ -1,12 +1,14 @@
 #ifndef KENGINE_MAIN
 #define KENGINE_MAIN
 
-#include <SDL3/SDL_system.h>
 #include <cstdint>
 #include <exception>
+#include <memory>
 #define SDL_MAIN_HANDLED
+#include "SDL3/SDL_video.h"
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_hints.h>
+#include <SDL3/SDL_system.h>
 #include <SDL3/SDL_vulkan.h>
 #include <iostream>
 #include <vkEngine/engine.hpp>
@@ -24,16 +26,19 @@ int main() {
 			return -1;
 		}
 		std::cout << "Creating window" << std::endl;
-		SDL_Window *window = SDL_CreateWindow("test windows", 1600, 900, SDL_WINDOW_VULKAN);
-
-		if (!window) {
+		SDL_Window *win_raw = SDL_CreateWindow("test windows", 1600, 900, SDL_WINDOW_VULKAN);
+		if (!win_raw) {
 			std::cerr << "Failed to create window, Error: " << SDL_GetError() << std::endl;
 			return -1;
 		}
+		auto window = std::shared_ptr<SDL_Window>(win_raw, [](SDL_Window *w) {
+			if (w)
+				SDL_DestroyWindow(w);
+		});
 
 		std::cout << "Creating engine\n";
-		// std::unique_ptr<vkEngine::vkEngine> engine = std::make_unique<vkEngine::vkEngine>(window);
-		// engine->init();
+		std::unique_ptr<vkEngine::vkEngine> engine = std::make_unique<vkEngine::vkEngine>(window);
+		engine->init();
 		SDL_Event event;
 		bool running = true;
 
@@ -49,7 +54,6 @@ int main() {
 		std::cout << "Shutting down\n";
 		// engine->cleanup();
 
-		SDL_DestroyWindow(window);
 		SDL_Quit();
 	} catch (const std::exception &e) {
 		std::cerr << e.what() << std::endl;
