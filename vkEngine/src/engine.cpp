@@ -4,6 +4,7 @@
 #include <iostream>
 #include <memory>
 #include <vkEngine/engine.hpp>
+#include <vulkan/vulkan_hpp_macros.hpp>
 
 namespace vkEngine {
 vkEngine::vkEngine(std::shared_ptr<SDL_Window> window) :
@@ -15,6 +16,9 @@ void vkEngine::draw() {}
 void vkEngine::cleanup() { this->_cleanupQueue->flush(); }
 
 void vkEngine::_createInstance() {
+	if constexpr (VULKAN_HPP_DISPATCH_LOADER_DYNAMIC == 1) {
+		VULKAN_HPP_DEFAULT_DISPATCHER.init();
+	}
 	constexpr vk::ApplicationInfo appInfo{.pApplicationName = "Hello triangle",
 										  .applicationVersion = VK_MAKE_VERSION(0, 0, 1),
 										  .pEngineName = "vkEngine",
@@ -36,5 +40,8 @@ void vkEngine::_createInstance() {
 									  .ppEnabledExtensionNames = extensions};
 
 	this->_instance = vk::createInstance(createInfo);
+	if constexpr (VULKAN_HPP_DISPATCH_LOADER_DYNAMIC == 1) {
+		VULKAN_HPP_DEFAULT_DISPATCHER.init(this->_instance);
+	}
 }
 } // namespace vkEngine
