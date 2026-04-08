@@ -16,33 +16,6 @@ class MyProjectConan(ConanFile):
         "vulkan-memory-allocator/3.3.0",
     ]
 
-    # def requirements(self):
-    #     self.requires(
-    #         "sdl/3.4.0",
-    #         headers=True,
-    #         options={
-    #             "alsa": False,
-    #             "pulseaudio": False,
-    #             "sndio": False,
-    #             "opengl": False,
-    #             "opengles": False,
-    #             "x11": True,
-    #             "xcursor": False,
-    #             "xdbe": False,
-    #             "xinput": True,
-    #             "xfixes": False,
-    #             "xrandr": False,
-    #             "xscrnsaver": False,
-    #             "xshape": False,
-    #             "wayland": True,
-    #             "vulkan": True,
-    #             "libudev": False,
-    #             "dbus": False,
-    #             "libusb": False,
-    #             "libiconv": False,
-    #         },
-    #     )
-
     def layout(self):
         cmake_layout(self)
 
