@@ -5,4 +5,7 @@ Language: Cpp
 UseTab: Always
 IndentWidth: 4
 TabWidth: 4
-ColumnLimit: 240
+ColumnLimit: 120
+AllowAllArgumentsOnNextLine: false
+PackConstructorInitializers: Never
+BreakConstructorInitializers: AfterColon
