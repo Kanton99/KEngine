@@ -33,12 +33,16 @@ class vkEngine {
 	void _createInstance();
 	void _checkExtensions(std::vector<const char *> extensions);
 	void _checkLayers(std::vector<char const *> layers);
-	void _createDevice();
+	void _pickPhysicalDevice();
+	void _createLogicalDevice();
 
   private:
 	vk::Instance _instance;
 	std::shared_ptr<SDL_Window> _window;
 	const std::vector<char const *> _validationLayers = {"VK_LAYER_KHRONOS_validation"};
+
+	vk::PhysicalDevice _physicalDevice;
+	vk::Device _device;
 
 	std::unique_ptr<CleanupQueue> _cleanupQueue;
 };

@@ -4,12 +4,14 @@
 #include <cstdint>
 #include <cstring>
 #include <iostream>
+#include <map>
 #include <memory>
 #include <stdexcept>
+#include <utility>
 #include <vector>
 #include <vkEngine/engine.hpp>
-#include <vulkan/vulkan_funcs.hpp>
-#include <vulkan/vulkan_hpp_macros.hpp>
+#include <vulkan/vulkan.hpp>
+#include <vulkan/vulkan_structs.hpp>
 
 namespace vkEngine {
 vkEngine::vkEngine(std::shared_ptr<SDL_Window> window) :
@@ -18,6 +20,8 @@ vkEngine::vkEngine(std::shared_ptr<SDL_Window> window) :
 
 void vkEngine::init() {
 	this->_createInstance();
+	this->_pickPhysicalDevice();
+	this->_createLogicalDevice();
 	std::cout << "Rendering engine initialization complete\n";
 }
 void vkEngine::draw() {}
@@ -51,8 +55,12 @@ void vkEngine::_createInstance() {
 	this->_checkExtensions(extensions);
 
 	vk::InstanceCreateInfo createInfo{.pApplicationInfo = &appInfo,
-									  .enabledExtensionCount = extensionCount,
+									  .enabledExtensionCount = static_cast<uint32_t>(extensions.size()),
 									  .ppEnabledExtensionNames = extensions.data()};
+	if constexpr (enableValidationLayers) {
+		createInfo.ppEnabledLayerNames = this->_validationLayers.data();
+		createInfo.enabledLayerCount = static_cast<uint32_t>(this->_validationLayers.size());
+	}
 
 	this->_instance = vk::createInstance(createInfo);
 	if constexpr (VULKAN_HPP_DISPATCH_LOADER_DYNAMIC == 1) {
@@ -87,5 +95,72 @@ void vkEngine::_checkLayers(std::vector<char const *> layers) {
 	}
 }
 
-void vkEngine::_createDevice() {}
+void vkEngine::_pickPhysicalDevice() {
+	std::cout << "Selecting physical device to use\n";
+	auto physicalDevices = this->_instance.enumeratePhysicalDevices();
+	if (physicalDevices.empty())
+		throw std::runtime_error("Failed to find GPUs with vulkan suppoert!");
+
+	std::multimap<int, vk::PhysicalDevice> candidates;
+	for (const auto physicalDevice : physicalDevices) {
+		auto deviceProperties = physicalDevice.getProperties();
+		auto deviceFeatures = physicalDevice.getFeatures();
+		uint32_t score = 0;
+
+		if (deviceProperties.deviceType == vk::PhysicalDeviceType::eDiscreteGpu) // Big prefrence on discrete GPUs
+			score += 1000;
+
+		score += deviceProperties.limits.maxImageDimension2D;
+
+		if (!(deviceFeatures.geometryShader && (deviceProperties.apiVersion >= vk::ApiVersion14)))
+			continue;
+
+		// Check for graphic queue family
+		auto queueFamilies = physicalDevice.getQueueFamilyProperties();
+		bool supportsGraphics = std::ranges::any_of(queueFamilies, [](auto const &queueFamily) {
+			return !!(queueFamily.queueFlags & vk::QueueFlagBits::eGraphics);
+		});
+		if (!supportsGraphics)
+			continue;
+
+		// Check for required extensions
+		std::vector<const char *> requiredDeviceExtensions = {vk::KHRSwapchainExtensionName};
+		auto deviceExtensions = physicalDevice.enumerateDeviceExtensionProperties();
+		bool supportsAllRequiredGraphicExtensions =
+			std::ranges::all_of(requiredDeviceExtensions, [&deviceExtensions](auto const &requiredDeviceExtension) {
+				return std::ranges::any_of(deviceExtensions, [requiredDeviceExtension](auto const &deviceExtension) {
+					return strcmp(deviceExtension.extensionName, requiredDeviceExtension) == 0;
+				});
+			});
+
+		if (!supportsAllRequiredGraphicExtensions)
+			continue;
+
+		// Check for required Features
+		auto features = physicalDevice.getFeatures2<vk::PhysicalDeviceFeatures2, vk::PhysicalDeviceVulkan14Features,
+													vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT>();
+		bool suppotsRequiredFeatures =
+			features.get<vk::PhysicalDeviceVulkan14Features>().dynamicRenderingLocalRead &&
+			features.get<vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT>().extendedDynamicState;
+		if (!suppotsRequiredFeatures)
+			continue;
+
+		candidates.insert(std::make_pair(score, physicalDevice));
+	}
+
+	if (!candidates.empty() && candidates.rbegin()->first > 0)
+		this->_physicalDevice = candidates.rbegin()->second;
+	else
+		throw std::runtime_error("Failed to find a suitable GPU");
+}
+
+void vkEngine::_createLogicalDevice() {
+	std::vector<vk::QueueFamilyProperties> queueFamilyProperties = this->_physicalDevice.getQueueFamilyProperties();
+	auto graphicQueueFamilyProperty = std::ranges::find_if(queueFamilyProperties, [](auto const &qfp) {
+		return (qfp.queueFlags & vk::QueueFlagBits::eGraphics) != static_cast<vk::QueueFlags>(0);
+	});
+	auto graphicsIndex =
+		static_cast<uint32_t>(std::distance(queueFamilyProperties.begin(), graphicQueueFamilyProperty));
+	vk::DeviceQueueCreateInfo DeviceQueueCreateInfo{.queueFamilyIndex = graphicsIndex};
+}
 } // namespace vkEngine
