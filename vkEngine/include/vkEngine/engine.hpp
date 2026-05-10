@@ -35,6 +35,7 @@ class vkEngine {
 	void _checkLayers(std::vector<char const *> layers);
 	void _pickPhysicalDevice();
 	void _createLogicalDevice();
+	void _createSurface();
 
   private:
 	vk::Instance _instance;
@@ -43,6 +44,9 @@ class vkEngine {
 
 	vk::PhysicalDevice _physicalDevice;
 	vk::Device _device;
+	vk::Queue _graphicsQueue;
+
+	vk::SurfaceKHR _surface;
 
 	std::unique_ptr<CleanupQueue> _cleanupQueue;
 };
