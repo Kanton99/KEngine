@@ -162,12 +162,18 @@ void vkEngine::_createLogicalDevice() {
 
 	// Setting up queue families creations
 	std::vector<vk::QueueFamilyProperties> queueFamilyProperties{this->_physicalDevice.getQueueFamilyProperties()};
-	auto graphicQueueFamilyProperty{std::ranges::find_if(queueFamilyProperties, [](auto const &qfp) {
-		return (qfp.queueFlags & vk::QueueFlagBits::eGraphics) != static_cast<vk::QueueFlags>(0);
-	})};
-	auto graphicsIndex{static_cast<uint32_t>(std::distance(queueFamilyProperties.begin(), graphicQueueFamilyProperty))};
+
+	uint32_t queueIndex = ~0;
+	for (uint32_t qfpIndex = 0; qfpIndex < queueFamilyProperties.size(); qfpIndex++) {
+		if ((queueFamilyProperties[qfpIndex].queueFlags & vk::QueueFlagBits::eGraphics) &&
+			this->_physicalDevice.getSurfaceSupportKHR(qfpIndex, this->_surface)) {
+			queueIndex = qfpIndex;
+			break;
+		}
+	}
+
 	float queuePriority{0.5f};
-	vk::DeviceQueueCreateInfo deviceQueueCreateInfo{.queueFamilyIndex = graphicsIndex,
+	vk::DeviceQueueCreateInfo deviceQueueCreateInfo{.queueFamilyIndex = queueIndex,
 													.queueCount = 1,
 													.pQueuePriorities = &queuePriority};
 
@@ -193,7 +199,7 @@ void vkEngine::_createLogicalDevice() {
 	this->_cleanupQueue->pushFunction([&]() { this->_device.destroy(); });
 
 	std::cout << "Getting graphics queue\n";
-	this->_graphicsQueue = this->_device.getQueue(graphicsIndex, 0);
+	this->_graphicsQueue = this->_device.getQueue(queueIndex, 0);
 }
 
 void vkEngine::_createSurface() {
