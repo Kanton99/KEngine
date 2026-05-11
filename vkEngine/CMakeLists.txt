@@ -12,6 +12,7 @@ add_library(
     ${PROJECT_NAME}
     SHARED
     "src/engine.cpp"
+    "src/swapchainBuilder.cpp"
 )
 add_library(KEngine::vkEngine ALIAS ${PROJECT_NAME})
 
