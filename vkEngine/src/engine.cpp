@@ -220,5 +220,6 @@ void vkEngine::_createSwapchain() {
 						   .chooseSwapMinImageCount()
 						   .chooseSwapSurfaceFormat(this->_physicalDevice.getSurfaceFormatsKHR(this->_surface))
 						   .buildSwapchain(this->_surface, this->_device);
+	// TODO get images, format and extent;
 }
 } // namespace vkEngine
