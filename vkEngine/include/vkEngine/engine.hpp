@@ -36,9 +36,10 @@ class vkEngine {
 	void _pickPhysicalDevice();
 	void _createLogicalDevice();
 	void _createSurface();
+	void _createSwapchain();
 
   private:
-	vk::Instance _instance;
+	vk::Instance _instance = nullptr;
 	std::shared_ptr<SDL_Window> _window;
 	const std::vector<char const *> _validationLayers = {"VK_LAYER_KHRONOS_validation"};
 
@@ -47,6 +48,7 @@ class vkEngine {
 	vk::Queue _graphicsQueue;
 
 	vk::SurfaceKHR _surface;
+	vk::SwapchainKHR _swapchain;
 
 	std::unique_ptr<CleanupQueue> _cleanupQueue;
 };

@@ -1,5 +1,6 @@
 #include "SDL3/SDL_error.h"
 #include "SDL3/SDL_vulkan.h"
+#include "vkEngine/swapchainBuilder.hpp"
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
@@ -23,6 +24,7 @@ void vkEngine::init() {
 	this->_createSurface();
 	this->_pickPhysicalDevice();
 	this->_createLogicalDevice();
+	this->_createSwapchain();
 	std::cout << "Rendering engine initialization complete\n";
 }
 void vkEngine::draw() {}
@@ -208,5 +210,15 @@ void vkEngine::_createSurface() {
 		std::cerr << "Failed to create SDL surface: " << SDL_GetError() << std::endl;
 	}
 	this->_surface = vk::SurfaceKHR{baseSurface};
+}
+
+void vkEngine::_createSwapchain() {
+	std::cout << "Creating swapchain\n";
+	auto surfaceCapabilities = this->_physicalDevice.getSurfaceCapabilitiesKHR(this->_surface);
+	this->_swapchain = SwapchainBuilder{surfaceCapabilities}
+						   .chooseSwapExtent(*this->_window)
+						   .chooseSwapMinImageCount()
+						   .chooseSwapSurfaceFormat(this->_physicalDevice.getSurfaceFormatsKHR(this->_surface))
+						   .buildSwapchain(this->_surface, this->_device);
 }
 } // namespace vkEngine
