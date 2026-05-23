@@ -2,9 +2,6 @@
 #include "SDL3/SDL_vulkan.h"
 #include "vkEngine/swapchainBuilder.hpp"
 #include <algorithm>
-#include <cstddef>
-#include <cstdint>
-#include <cstring>
 #include <iostream>
 #include <map>
 #include <memory>
@@ -215,11 +212,13 @@ void vkEngine::_createSurface() {
 void vkEngine::_createSwapchain() {
 	std::cout << "Creating swapchain\n";
 	auto surfaceCapabilities = this->_physicalDevice.getSurfaceCapabilitiesKHR(this->_surface);
-	this->_swapchain = SwapchainBuilder{surfaceCapabilities}
-						   .chooseSwapExtent(*this->_window)
+	auto builder = SwapchainBuilder{surfaceCapabilities};
+	this->_swapchain = builder.chooseSwapExtent(*this->_window)
 						   .chooseSwapMinImageCount()
 						   .chooseSwapSurfaceFormat(this->_physicalDevice.getSurfaceFormatsKHR(this->_surface))
 						   .buildSwapchain(this->_surface, this->_device);
-	// TODO get images, format and extent;
+	this->swapchainImages = this->_device.getSwapchainImagesKHR(this->_swapchain);
+	this->_swapchainSurfaceFormat = builder.getFormat();
+	this->swapchianExtent = builder.getExtent();
 }
 } // namespace vkEngine

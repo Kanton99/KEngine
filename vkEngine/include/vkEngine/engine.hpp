@@ -2,6 +2,7 @@
 #define VK_ENGINE
 #include "cleanupStruct.hpp"
 #include <SDL3/SDL_video.h>
+#include <cstddef>
 #include <memory>
 #include <vector>
 #define VULKAN_HPP_NO_STRUCT_CONSTRUCTORS
@@ -48,7 +49,11 @@ class vkEngine {
 	vk::Queue _graphicsQueue;
 
 	vk::SurfaceKHR _surface;
+
 	vk::SwapchainKHR _swapchain;
+	std::vector<vk::Image> swapchainImages;
+	vk::SurfaceFormatKHR _swapchainSurfaceFormat;
+	vk::Extent2D swapchianExtent;
 
 	std::unique_ptr<CleanupQueue> _cleanupQueue;
 };

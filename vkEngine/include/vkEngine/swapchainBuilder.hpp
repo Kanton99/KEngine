@@ -21,6 +21,9 @@ class SwapchainBuilder {
 	SwapchainBuilder &chooseSwapSurfaceFormat(const std::vector<vk::SurfaceFormatKHR> &availableFormats);
 	SwapchainBuilder &choosePresentMode(const std::vector<vk::PresentModeKHR> &availablePresentModes);
 	vk::SwapchainKHR buildSwapchain(vk::SurfaceKHR &surface, const vk::Device &device);
+
+	vk::SurfaceFormatKHR getFormat() { return this->_format; }
+	vk::Extent2D getExtent() { return this->_extent; }
 };
 } // namespace vkEngine
 
