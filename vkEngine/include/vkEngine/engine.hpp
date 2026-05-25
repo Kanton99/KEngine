@@ -38,6 +38,7 @@ class vkEngine {
 	void _createLogicalDevice();
 	void _createSurface();
 	void _createSwapchain();
+	void _createImageView();
 
   private:
 	vk::Instance _instance = nullptr;
@@ -53,7 +54,8 @@ class vkEngine {
 	vk::SwapchainKHR _swapchain;
 	std::vector<vk::Image> swapchainImages;
 	vk::SurfaceFormatKHR _swapchainSurfaceFormat;
-	vk::Extent2D swapchianExtent;
+	vk::Extent2D _swapchianExtent;
+	std::vector<vk::ImageView> _swapchainImageView;
 
 	std::unique_ptr<CleanupQueue> _cleanupQueue;
 };

@@ -10,6 +10,8 @@
 #include <vector>
 #include <vkEngine/engine.hpp>
 #include <vulkan/vulkan.hpp>
+#include <vulkan/vulkan_enums.hpp>
+#include <vulkan/vulkan_structs.hpp>
 
 namespace vkEngine {
 vkEngine::vkEngine(std::shared_ptr<SDL_Window> window) :
@@ -22,6 +24,7 @@ void vkEngine::init() {
 	this->_pickPhysicalDevice();
 	this->_createLogicalDevice();
 	this->_createSwapchain();
+	this->_createImageView();
 	std::cout << "Rendering engine initialization complete\n";
 }
 void vkEngine::draw() {}
@@ -219,6 +222,26 @@ void vkEngine::_createSwapchain() {
 						   .buildSwapchain(this->_surface, this->_device);
 	this->swapchainImages = this->_device.getSwapchainImagesKHR(this->_swapchain);
 	this->_swapchainSurfaceFormat = builder.getFormat();
-	this->swapchianExtent = builder.getExtent();
+	this->_swapchianExtent = builder.getExtent();
 }
+
+void vkEngine::_createImageView() {
+	vk::ImageViewCreateInfo imageViewInfo{
+		.viewType = vk::ImageViewType::e2D,
+		.format = this->_swapchainSurfaceFormat.format,
+		.subresourceRange = {.aspectMask = vk::ImageAspectFlagBits::eColor, .levelCount = 1, .layerCount = 1}};
+	imageViewInfo.setComponents({
+		vk::ComponentSwizzle::eIdentity,
+		vk::ComponentSwizzle::eIdentity,
+		vk::ComponentSwizzle::eIdentity,
+		vk::ComponentSwizzle::eIdentity,
+	});
+
+	for (auto const &image : this->swapchainImages) {
+		imageViewInfo.image = image;
+		auto imageView = this->_device.createImageView(imageViewInfo);
+		_swapchainImageView.push_back(imageView);
+	}
+}
+
 } // namespace vkEngine
