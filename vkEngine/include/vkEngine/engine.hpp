@@ -39,6 +39,7 @@ class vkEngine {
 	void _createSurface();
 	void _createSwapchain();
 	void _createImageView();
+	void _createGraphicsPipeline();
 
   private:
 	vk::Instance _instance = nullptr;

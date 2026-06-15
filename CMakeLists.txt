@@ -26,6 +26,35 @@ add_custom_target(
         ${CMAKE_CURRENT_BINARY_DIR}/resources
 )
 
+# Compile shaders during project compilation
+function(add_slang_shader_target TARGET)
+  cmake_parse_arguments("SHADER" "" "" "SOURCES" ${ARGN})
+  set(SHADER_DIR ${CMAKE_CURRENT_LIST_DIR}/shaders)
+  set(ENTRY_POINTS -entry vertMain -entry fragMain)
+  add_custom_command(
+    OUTPUT ${SHADER_DIR}
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${SHADER_DIR}
+  )
+  add_custom_command(
+    OUTPUT ${SHADER_DIR}/slang.spv
+    COMMAND ${SLANGC_EXECUTABLE} ${SHADER_SOURCES}
+      -target spirv
+      -profile spirv_1_4
+      -emit-spirv-directly
+      -fvk-use-entrypoint-name
+      ${ENTRY_POINTS}
+      -o slang.spv
+    WORKING_DIRECTORY ${SHADER_DIR}
+    DEPENDS ${SHADER_DIR} ${SHADER_SOURCES}
+    COMMENT "Compiling Slang Shaders"
+    VERBATIM
+  )
+  add_custom_target(${TARGET} DEPENDS ${SHADER_DIR}/slang.spv)
+endfunction()
+
+add_slang_shader_target(shaders SOURCES $ {SHADER_SLANG_SOURCES})
+add_dependencies(${PROJECT} shaders)
+
 # Include sub-projects.
 add_subdirectory("vkEngine")
 add_subdirectory("main")
