@@ -4,7 +4,7 @@ install:
 build:
 	conan build . -pr ./conan-profiles
 
-run:
-	@./build/Debug/main/main
+run: build
+	./build/Debug/main/main
 
-.PHONY: install build
+.PHONY: install run
