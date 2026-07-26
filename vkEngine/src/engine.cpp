@@ -1,5 +1,6 @@
 #include "SDL3/SDL_error.h"
 #include "SDL3/SDL_vulkan.h"
+#include "vkEngine/pipelineBuilder.hpp"
 #include "vkEngine/swapchainBuilder.hpp"
 #include <algorithm>
 #include <iostream>
@@ -25,6 +26,7 @@ void vkEngine::init() {
 	this->_createLogicalDevice();
 	this->_createSwapchain();
 	this->_createImageView();
+	this->_createGraphicsPipeline();
 	std::cout << "Rendering engine initialization complete\n";
 }
 void vkEngine::draw() {}
@@ -242,6 +244,15 @@ void vkEngine::_createImageView() {
 		auto imageView = this->_device.createImageView(imageViewInfo);
 		_swapchainImageView.push_back(imageView);
 	}
+}
+
+void vkEngine::_createGraphicsPipeline() {
+	PipelineBuilder builder{this->_device};
+	auto pipeline = builder.loadShaderCode("./../../resources/shaders/slang.spv")
+						.createShaderModule()
+						.createPipelineStage(vk::ShaderStageFlagBits::eVertex, "fragMain")
+						.createPipelineStage(vk::ShaderStageFlagBits::eFragment, "fragMain")
+						.build();
 }
 
 } // namespace vkEngine

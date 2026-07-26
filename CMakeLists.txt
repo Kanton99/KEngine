@@ -27,39 +27,42 @@ add_custom_target(
 )
 
 # Compile shaders during project compilation
-function(add_slang_shader_target TARGET)
+function(add_slang_shader_target target)
   cmake_parse_arguments("SHADER" "" "" "SOURCES" ${ARGN})
-  set(SHADER_DIR ${CMAKE_CURRENT_LIST_DIR}/shaders)
-  set(ENTRY_POINTS -entry vertMain -entry fragMain)
+  set(shaders_dir ${CMAKE_CURRENT_LIST_DIR}/resources/shaders)
+  set(entry_points -entry vertMain -entry fragMain)
   add_custom_command(
-    OUTPUT ${SHADER_DIR}
-    COMMAND ${CMAKE_COMMAND} -E make_directory ${SHADER_DIR}
+    OUTPUT ${shaders_dir}
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${shaders_dir}
   )
   add_custom_command(
-    OUTPUT ${SHADER_DIR}/slang.spv
-    COMMAND ${SLANGC_EXECUTABLE} ${SHADER_SOURCES}
+    OUTPUT ${shaders_dir}/slang.spv
+    COMMAND slangc ${SHADER_SOURCES}
       -target spirv
       -profile spirv_1_4
       -emit-spirv-directly
       -fvk-use-entrypoint-name
-      ${ENTRY_POINTS}
+      ${entry_points}
       -o slang.spv
-    WORKING_DIRECTORY ${SHADER_DIR}
-    DEPENDS ${SHADER_DIR} ${SHADER_SOURCES}
+    WORKING_DIRECTORY ${shaders_dir}
+    DEPENDS ${shaders_dir} ${SHADER_SOURCES}
     COMMENT "Compiling Slang Shaders"
     VERBATIM
   )
-  add_custom_target(${TARGET} DEPENDS ${SHADER_DIR}/slang.spv)
+  add_custom_target(${target} DEPENDS ${shaders_dir}/slang.spv)
 endfunction()
 
-add_slang_shader_target(shaders SOURCES $ {SHADER_SLANG_SOURCES})
-add_dependencies(${PROJECT} shaders)
+add_slang_shader_target(
+  shaders
+  SOURCES /home/antonv/dev/KEngine/resources/shaders/base.slang
+)
 
 # Include sub-projects.
 add_subdirectory("vkEngine")
 add_subdirectory("main")
 # add_subdirectory("myECS")
 # add_dependencies(vkEngine copy_assets)
+add_dependencies(vkEngine shaders)
 
 # target_link_libraries(KEngine PRIVATE KEngine::vkEngine)
 # target_include_directories(KEngine PRIVATE vkEngine/include)

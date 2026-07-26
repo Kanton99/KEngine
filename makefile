@@ -7,4 +7,4 @@ build:
 run: build
 	./build/Debug/main/main
 
-.PHONY: install run
+.PHONY: install run build
