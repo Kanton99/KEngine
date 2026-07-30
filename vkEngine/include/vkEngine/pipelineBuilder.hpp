@@ -20,8 +20,7 @@ class PipelineBuilder {
 	PipelineBuilder &loadShaderCode(const std::string &fileName);
 	PipelineBuilder &createShaderModule();
 	PipelineBuilder &createPipelineStage(vk::ShaderStageFlagBits stage, std::string entryPoint);
-	PipelineBuilder &createDynamicStates();
-	PipelineBuilder &setVertexInput();
+	PipelineBuilder &setViewPortState(vk::Rect2D viewportSize, vk::Rect2D scissorSize);
 
   private:
 	vk::Device _device;
@@ -29,6 +28,7 @@ class PipelineBuilder {
 	vk::ShaderModule _shaderModule;
 	std::vector<vk::PipelineShaderStageCreateInfo> _shaderStages;
 	vk::PipelineDynamicStateCreateInfo _dynamicStateInfo;
+	vk::PipelineViewportStateCreateInfo _viewportState;
 };
 } // namespace vkEngine
 

@@ -252,6 +252,7 @@ void vkEngine::_createGraphicsPipeline() {
 						.createShaderModule()
 						.createPipelineStage(vk::ShaderStageFlagBits::eVertex, "fragMain")
 						.createPipelineStage(vk::ShaderStageFlagBits::eFragment, "fragMain")
+						.setViewPortState({.extent = this->_swapchianExtent}, {.extent = this->_swapchianExtent})
 						.build();
 }
 
