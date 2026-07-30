@@ -1,3 +1,4 @@
+#include <cstddef>
 #include <cstdint>
 #include <vkEngine/pipelineBuilder.hpp>
 #include <vkEngine/utils.hpp>
@@ -5,6 +6,12 @@
 #include <vulkan/vulkan_structs.hpp>
 
 namespace vkEngine {
+vk::Pipeline PipelineBuilder::build() {
+	vk::PipelineInputAssemblyStateCreateInfo inputAssembly{.topology = vk::PrimitiveTopology::eTriangleList};
+	// TODO return actual pipeline
+	return vk::Pipeline{};
+}
+
 PipelineBuilder &PipelineBuilder::loadShaderCode(const std::string &fileName) {
 	this->_shaderBinary = readFile(fileName);
 	return *this;
@@ -30,7 +37,9 @@ PipelineBuilder &PipelineBuilder::createPipelineStage(vk::ShaderStageFlagBits st
 
 PipelineBuilder &PipelineBuilder::createDynamicStates() {
 	std::vector<vk::DynamicState> dynamicStates = {vk::DynamicState::eViewport, vk::DynamicState::eScissor};
-
+	this->_dynamicStateInfo.setDynamicStates(dynamicStates);
 	return *this;
 }
+
+PipelineBuilder &PipelineBuilder::setVertexInput() { return *this; }
 } // namespace vkEngine

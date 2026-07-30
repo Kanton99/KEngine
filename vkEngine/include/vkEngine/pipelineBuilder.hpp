@@ -21,12 +21,14 @@ class PipelineBuilder {
 	PipelineBuilder &createShaderModule();
 	PipelineBuilder &createPipelineStage(vk::ShaderStageFlagBits stage, std::string entryPoint);
 	PipelineBuilder &createDynamicStates();
+	PipelineBuilder &setVertexInput();
 
   private:
 	vk::Device _device;
 	std::vector<char> _shaderBinary;
 	vk::ShaderModule _shaderModule;
 	std::vector<vk::PipelineShaderStageCreateInfo> _shaderStages;
+	vk::PipelineDynamicStateCreateInfo _dynamicStateInfo;
 };
 } // namespace vkEngine
 
