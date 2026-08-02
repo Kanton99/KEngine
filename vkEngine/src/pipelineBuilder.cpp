@@ -1,13 +1,12 @@
 #include <cstddef>
 #include <cstdint>
+#include <print>
+#include <stdexcept>
 #include <vkEngine/pipelineBuilder.hpp>
 #include <vkEngine/utils.hpp>
-#include <vulkan/vulkan.hpp>
-#include <vulkan/vulkan_enums.hpp>
-#include <vulkan/vulkan_structs.hpp>
 
 namespace vkEngine {
-vk::Pipeline PipelineBuilder::build() {
+vk::Pipeline PipelineBuilder::build(vk::SurfaceFormatKHR &format) {
 	vk::PipelineInputAssemblyStateCreateInfo inputAssembly{.topology = vk::PrimitiveTopology::eTriangleList};
 	vk::PipelineRasterizationStateCreateInfo rasterizer{.depthClampEnable = vk::False,
 														.rasterizerDiscardEnable = vk::False,
@@ -30,6 +29,8 @@ vk::Pipeline PipelineBuilder::build() {
 		.colorWriteMask = vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG |
 						  vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA,
 	};
+	vk::PipelineVertexInputStateCreateInfo vertexInputInfo{};
+
 	vk::PipelineColorBlendStateCreateInfo colorBlending{
 		.logicOpEnable = vk::False,
 		.logicOp = vk::LogicOp::eCopy,
@@ -42,39 +43,64 @@ vk::Pipeline PipelineBuilder::build() {
 
 	vk::PipelineLayoutCreateInfo pipelineLayoutInfo{.setLayoutCount = 0, .pushConstantRangeCount = 0};
 	vk::PipelineLayout layout = this->_device.createPipelineLayout(pipelineLayoutInfo);
-	// TODO return actual pipeline
-	return vk::Pipeline{};
+
+	vk::StructureChain<vk::GraphicsPipelineCreateInfo, vk::PipelineRenderingCreateInfo> pipelineCreateInfo = {
+		{.stageCount = 2,
+		 .pStages = this->_shaderStagesInfos.data(),
+		 .pVertexInputState = &vertexInputInfo,
+		 .pInputAssemblyState = &inputAssembly,
+		 .pViewportState = &this->_viewportState,
+		 .pRasterizationState = &rasterizer,
+		 .pMultisampleState = &multisampling,
+		 .pColorBlendState = &colorBlending,
+		 .pDynamicState = &this->_dynamicStateInfo,
+		 .layout = layout,
+		 .renderPass = nullptr},
+		{.colorAttachmentCount = 1, .pColorAttachmentFormats = &format.format}};
+
+	auto ret = this->_device.createGraphicsPipeline(nullptr, pipelineCreateInfo.get<vk::GraphicsPipelineCreateInfo>());
+	if (ret.result != vk::Result::eSuccess) {
+		throw std::runtime_error("Failed to create graphics pipeline");
+	}
+	return ret.value;
 }
 
 PipelineBuilder &PipelineBuilder::loadShaderCode(const std::string &fileName) {
+	std::println("Reading shader file {}", fileName);
 	this->_shaderBinary = readFile(fileName);
 	return *this;
 }
 
 PipelineBuilder &PipelineBuilder::createShaderModule() {
+	std::println("Creating shader module");
 	vk::ShaderModuleCreateInfo createInfo{.codeSize = this->_shaderBinary.size() * sizeof(char),
 										  .pCode = reinterpret_cast<const uint32_t *>(this->_shaderBinary.data())};
 	this->_shaderModule = this->_device.createShaderModule(createInfo);
 
+	std::println("Created shader module");
 	return *this;
 }
 
 PipelineBuilder &PipelineBuilder::createPipelineStage(vk::ShaderStageFlagBits stage, std::string entryPoint) {
+	std::println("Creating pipeline {} stage", entryPoint);
 	vk::PipelineShaderStageCreateInfo stageInfo{.stage = stage,
 												.module = this->_shaderModule,
 												.pName = entryPoint.data()};
 
-	this->_shaderStages.push_back(stageInfo);
+	this->_shaderStagesInfos.push_back(stageInfo);
 
+	std::println("Created pipeline {} stage", entryPoint);
 	return *this;
 }
 
 PipelineBuilder &PipelineBuilder::setViewPortState(vk::Rect2D viewportSize, vk::Rect2D scissorSize) {
+	std::println("Setting the viewports state");
 	vk::Viewport viewport{
 		0.f, 0.f, static_cast<float>(viewportSize.extent.width), static_cast<float>(viewportSize.extent.width),
 		0.f, 1.f};
 	this->_viewportState.setViewports(viewport);
 	this->_viewportState.setScissors(scissorSize);
+	std::println("Set the viewports state");
 	return *this;
 }
 

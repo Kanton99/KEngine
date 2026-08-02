@@ -58,6 +58,8 @@ class vkEngine {
 	vk::Extent2D _swapchianExtent;
 	std::vector<vk::ImageView> _swapchainImageView;
 
+	vk::Pipeline _graphicsPipeline;
+
 	std::unique_ptr<CleanupQueue> _cleanupQueue;
 };
 } // namespace vkEngine

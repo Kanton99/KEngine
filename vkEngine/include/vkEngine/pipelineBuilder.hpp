@@ -16,7 +16,7 @@ class PipelineBuilder {
 	PipelineBuilder &operator=(PipelineBuilder &&) = delete;
 	~PipelineBuilder() = default;
 
-	[[nodiscard]] vk::Pipeline build();
+	[[nodiscard]] vk::Pipeline build(vk::SurfaceFormatKHR &format);
 	PipelineBuilder &loadShaderCode(const std::string &fileName);
 	PipelineBuilder &createShaderModule();
 	PipelineBuilder &createPipelineStage(vk::ShaderStageFlagBits stage, std::string entryPoint);
@@ -26,7 +26,7 @@ class PipelineBuilder {
 	vk::Device _device;
 	std::vector<char> _shaderBinary;
 	vk::ShaderModule _shaderModule;
-	std::vector<vk::PipelineShaderStageCreateInfo> _shaderStages;
+	std::vector<vk::PipelineShaderStageCreateInfo> _shaderStagesInfos;
 	vk::PipelineDynamicStateCreateInfo _dynamicStateInfo;
 	vk::PipelineViewportStateCreateInfo _viewportState;
 };

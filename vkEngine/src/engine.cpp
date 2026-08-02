@@ -6,6 +6,7 @@
 #include <iostream>
 #include <map>
 #include <memory>
+#include <print>
 #include <stdexcept>
 #include <utility>
 #include <vector>
@@ -129,7 +130,8 @@ void vkEngine::_pickPhysicalDevice() {
 			continue;
 
 		// Check for required extensions
-		std::vector<const char *> requiredDeviceExtensions = {vk::KHRSwapchainExtensionName};
+		std::vector<const char *> requiredDeviceExtensions = {vk::KHRSwapchainExtensionName,
+															  vk::KHRShaderDrawParametersExtensionName};
 		auto deviceExtensions{physicalDevice.enumerateDeviceExtensionProperties()};
 		bool supportsAllRequiredGraphicExtensions{
 			std::ranges::all_of(requiredDeviceExtensions, [&deviceExtensions](auto const &requiredDeviceExtension) {
@@ -187,7 +189,8 @@ void vkEngine::_createLogicalDevice() {
 			{.dynamicRendering = true},	   // Enable dynamic rendering from Vulkan 1.3
 			{.extendedDynamicState = true} // Enable extended dynamic state from the extension
 		};
-	std::vector<const char *> requiredDeviceExtension = {vk::KHRSwapchainExtensionName};
+	std::vector<const char *> requiredDeviceExtension = {vk::KHRSwapchainExtensionName,
+														 vk::KHRShaderDrawParametersExtensionName};
 
 	// Creating logical device
 	vk::DeviceCreateInfo deviceCreateInfo{.pNext = &featureChain.get<vk::PhysicalDeviceFeatures2>(),
@@ -247,13 +250,16 @@ void vkEngine::_createImageView() {
 }
 
 void vkEngine::_createGraphicsPipeline() {
+	std::println("Creating graphics pipeline");
 	PipelineBuilder builder{this->_device};
-	auto pipeline = builder.loadShaderCode("./../../resources/shaders/slang.spv")
-						.createShaderModule()
-						.createPipelineStage(vk::ShaderStageFlagBits::eVertex, "fragMain")
-						.createPipelineStage(vk::ShaderStageFlagBits::eFragment, "fragMain")
-						.setViewPortState({.extent = this->_swapchianExtent}, {.extent = this->_swapchianExtent})
-						.build();
+	this->_graphicsPipeline =
+		builder.loadShaderCode("./resources/shaders/slang.spv")
+			.createShaderModule()
+			.createPipelineStage(vk::ShaderStageFlagBits::eVertex, "vertMain")
+			.createPipelineStage(vk::ShaderStageFlagBits::eFragment, "fragMain")
+			.setViewPortState({.extent = this->_swapchianExtent}, {.extent = this->_swapchianExtent})
+			.build(this->_swapchainSurfaceFormat);
+	std::println("Created Graphics pipeline");
 }
 
 } // namespace vkEngine
