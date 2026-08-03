@@ -49,7 +49,7 @@ SwapchainBuilder &SwapchainBuilder::choosePresentMode(const std::vector<vk::Pres
 	return *this;
 }
 
-vk::SwapchainKHR SwapchainBuilder::buildSwapchain(vk::SurfaceKHR &surface, const vk::Device &device) {
+SwapchainData SwapchainBuilder::buildSwapchain(vk::SurfaceKHR &surface, const vk::Device &device) {
 	vk::SwapchainCreateInfoKHR swapChainCreateInfo{.surface = surface,
 												   .minImageCount = this->_minImageCount,
 												   .imageFormat = this->_format.format,
@@ -62,6 +62,10 @@ vk::SwapchainKHR SwapchainBuilder::buildSwapchain(vk::SurfaceKHR &surface, const
 												   .compositeAlpha = vk::CompositeAlphaFlagBitsKHR::eOpaque,
 												   .presentMode = this->_presentMode,
 												   .clipped = true};
-	return device.createSwapchainKHR(swapChainCreateInfo);
+
+	SwapchainData swapchain{.swapchain = device.createSwapchainKHR(swapChainCreateInfo),
+							.surfaceFormat = this->_format,
+							.extent = this->_extent};
+	return swapchain;
 }
 } // namespace vkEngine

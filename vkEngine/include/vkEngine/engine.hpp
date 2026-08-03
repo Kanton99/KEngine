@@ -2,6 +2,7 @@
 #define VK_ENGINE
 #include "cleanupStruct.hpp"
 #include "vkEngine/commandBufferHandler.hpp"
+#include "vkEngine/swapchainBuilder.hpp"
 #include <SDL3/SDL_video.h>
 #include <cstddef>
 #include <cstdint>
@@ -63,11 +64,7 @@ class vkEngine {
 
 	vk::SurfaceKHR _surface;
 
-	vk::SwapchainKHR _swapchain;
-	std::vector<vk::Image> swapchainImages;
-	vk::SurfaceFormatKHR _swapchainSurfaceFormat;
-	vk::Extent2D _swapchianExtent;
-	std::vector<vk::ImageView> _swapchainImageView;
+	SwapchainData _swapchain;
 
 	vk::Pipeline _graphicsPipeline;
 

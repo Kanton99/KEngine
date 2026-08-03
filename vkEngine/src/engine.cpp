@@ -43,7 +43,7 @@ void vkEngine::draw() {
 		throw std::runtime_error("Failed to wait for fence");
 	}
 	this->_device.resetFences(this->framesInFlight[frameIndex].drawFence);
-	auto [result, imageIndex] = this->_device.acquireNextImageKHR(this->_swapchain, UINT32_MAX,
+	auto [result, imageIndex] = this->_device.acquireNextImageKHR(this->_swapchain.swapchain, UINT32_MAX,
 																  this->framesInFlight[frameIndex].presentComplete);
 	if (result != vk::Result::eSuccess)
 		throw std::runtime_error("Failed to acquire next swapcain image");
@@ -64,7 +64,7 @@ void vkEngine::draw() {
 	const vk::PresentInfoKHR presentInfo{.waitSemaphoreCount = 1,
 										 .pWaitSemaphores = &this->framesInFlight[frameIndex].renderFinishedSemaphore,
 										 .swapchainCount = 1,
-										 .pSwapchains = &this->_swapchain,
+										 .pSwapchains = &this->_swapchain.swapchain,
 										 .pImageIndices = &imageIndex};
 
 	result = this->_graphicsQueue.presentKHR(presentInfo);
@@ -269,15 +269,13 @@ void vkEngine::_createSwapchain() {
 						   .chooseSwapMinImageCount()
 						   .chooseSwapSurfaceFormat(this->_physicalDevice.getSurfaceFormatsKHR(this->_surface))
 						   .buildSwapchain(this->_surface, this->_device);
-	this->swapchainImages = this->_device.getSwapchainImagesKHR(this->_swapchain);
-	this->_swapchainSurfaceFormat = builder.getFormat();
-	this->_swapchianExtent = builder.getExtent();
+	this->_swapchain.images = this->_device.getSwapchainImagesKHR(this->_swapchain.swapchain);
 }
 
 void vkEngine::_createImageView() {
 	vk::ImageViewCreateInfo imageViewInfo{
 		.viewType = vk::ImageViewType::e2D,
-		.format = this->_swapchainSurfaceFormat.format,
+		.format = this->_swapchain.surfaceFormat.format,
 		.subresourceRange = {.aspectMask = vk::ImageAspectFlagBits::eColor, .levelCount = 1, .layerCount = 1}};
 	imageViewInfo.setComponents({
 		vk::ComponentSwizzle::eIdentity,
@@ -286,10 +284,10 @@ void vkEngine::_createImageView() {
 		vk::ComponentSwizzle::eIdentity,
 	});
 
-	for (auto const &image : this->swapchainImages) {
+	for (auto const &image : this->_swapchain.images) {
 		imageViewInfo.image = image;
 		auto imageView = this->_device.createImageView(imageViewInfo);
-		_swapchainImageView.push_back(imageView);
+		this->_swapchain.imageViews.push_back(imageView);
 	}
 }
 
@@ -301,8 +299,8 @@ void vkEngine::_createGraphicsPipeline() {
 			.createShaderModule()
 			.createPipelineStage(vk::ShaderStageFlagBits::eVertex, "vertMain")
 			.createPipelineStage(vk::ShaderStageFlagBits::eFragment, "fragMain")
-			.setViewPortState({.extent = this->_swapchianExtent}, {.extent = this->_swapchianExtent})
-			.build(this->_swapchainSurfaceFormat);
+			.setViewPortState({.extent = this->_swapchain.extent}, {.extent = this->_swapchain.extent})
+			.build(this->_swapchain.surfaceFormat);
 	std::println("Created Graphics pipeline");
 }
 
@@ -322,19 +320,20 @@ void vkEngine::_recordCommandBuffer(uint32_t imageIndex) {
 	auto beginResult = this->framesInFlight[frameIndex].commandBuffer.begin(&beginInfo);
 	if (beginResult != vk::Result::eSuccess)
 		throw std::runtime_error("Failed to begin recording command buffer");
-	transitionImageLayout(
-		this->swapchainImages[imageIndex], this->framesInFlight[frameIndex].commandBuffer, vk::ImageLayout::eUndefined,
-		vk::ImageLayout::eColorAttachmentOptimal, {}, vk::AccessFlagBits2::eColorAttachmentWrite,
-		vk::PipelineStageFlagBits2::eColorAttachmentOutput, vk::PipelineStageFlagBits2::eColorAttachmentOutput);
+	transitionImageLayout(this->_swapchain.images[imageIndex], this->framesInFlight[frameIndex].commandBuffer,
+						  vk::ImageLayout::eUndefined, vk::ImageLayout::eColorAttachmentOptimal, {},
+						  vk::AccessFlagBits2::eColorAttachmentWrite,
+						  vk::PipelineStageFlagBits2::eColorAttachmentOutput,
+						  vk::PipelineStageFlagBits2::eColorAttachmentOutput);
 
 	vk::ClearValue clearColor{vk::ClearColorValue(0.f, 0.f, 0.f, 1.f)};
-	vk::RenderingAttachmentInfo attachmentInfo{.imageView{this->_swapchainImageView[imageIndex]},
+	vk::RenderingAttachmentInfo attachmentInfo{.imageView{this->_swapchain.imageViews[imageIndex]},
 											   .imageLayout = vk::ImageLayout::eColorAttachmentOptimal,
 											   .loadOp = vk::AttachmentLoadOp::eClear,
 											   .storeOp = vk::AttachmentStoreOp::eStore,
 											   .clearValue{clearColor}};
 
-	vk::RenderingInfo renderingIndo{.renderArea{.offset{0, 0}, .extent{this->_swapchianExtent}},
+	vk::RenderingInfo renderingIndo{.renderArea{.offset{0, 0}, .extent{this->_swapchain.extent}},
 									.layerCount = 1,
 									.colorAttachmentCount = 1,
 									.pColorAttachments = &attachmentInfo};
@@ -344,15 +343,15 @@ void vkEngine::_recordCommandBuffer(uint32_t imageIndex) {
 																this->_graphicsPipeline);
 
 	this->framesInFlight[frameIndex].commandBuffer.setViewport(
-		0, vk::Viewport{0.f, 0.f, static_cast<float>(this->_swapchianExtent.width),
-						static_cast<float>(this->_swapchianExtent.height)});
+		0, vk::Viewport{0.f, 0.f, static_cast<float>(this->_swapchain.extent.width),
+						static_cast<float>(this->_swapchain.extent.height)});
 	this->framesInFlight[frameIndex].commandBuffer.setScissor(0,
-															  vk::Rect2D{vk::Offset2D{0, 0}, this->_swapchianExtent});
+															  vk::Rect2D{vk::Offset2D{0, 0}, this->_swapchain.extent});
 
 	this->framesInFlight[frameIndex].commandBuffer.draw(3, 1, 0, 0);
 	this->framesInFlight[frameIndex].commandBuffer.endRendering();
 
-	transitionImageLayout(this->swapchainImages[imageIndex], this->framesInFlight[frameIndex].commandBuffer,
+	transitionImageLayout(this->_swapchain.images[imageIndex], this->framesInFlight[frameIndex].commandBuffer,
 						  vk::ImageLayout::eColorAttachmentOptimal, vk::ImageLayout::ePresentSrcKHR,
 						  vk::AccessFlagBits2::eColorAttachmentWrite, {},
 						  vk::PipelineStageFlagBits2::eColorAttachmentOutput,

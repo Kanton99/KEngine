@@ -6,6 +6,13 @@
 #include <vulkan/vulkan.hpp>
 
 namespace vkEngine {
+struct SwapchainData {
+	vk::SwapchainKHR swapchain;
+	std::vector<vk::Image> images;
+	vk::SurfaceFormatKHR surfaceFormat;
+	vk::Extent2D extent;
+	std::vector<vk::ImageView> imageViews;
+};
 class SwapchainBuilder {
   private:
 	vk::SurfaceCapabilitiesKHR _surfaceCapabilities;
@@ -20,10 +27,7 @@ class SwapchainBuilder {
 	SwapchainBuilder &chooseSwapMinImageCount();
 	SwapchainBuilder &chooseSwapSurfaceFormat(const std::vector<vk::SurfaceFormatKHR> &availableFormats);
 	SwapchainBuilder &choosePresentMode(const std::vector<vk::PresentModeKHR> &availablePresentModes);
-	vk::SwapchainKHR buildSwapchain(vk::SurfaceKHR &surface, const vk::Device &device);
-
-	vk::SurfaceFormatKHR getFormat() { return this->_format; }
-	vk::Extent2D getExtent() { return this->_extent; }
+	SwapchainData buildSwapchain(vk::SurfaceKHR &surface, const vk::Device &device);
 };
 } // namespace vkEngine
 
