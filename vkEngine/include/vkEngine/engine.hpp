@@ -7,17 +7,21 @@
 #include <cstdint>
 #include <memory>
 #include <vector>
+#include <vkEngine/framesInFlight.hpp>
 #include <vulkan/vulkan_handles.hpp>
 #define VULKAN_HPP_NO_STRUCT_CONSTRUCTORS
 #define VULKAN_HPP_DISPATCH_LOADER_DYNAMIC 1
 #include <vulkan/vulkan.hpp>
 VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
+
 namespace vkEngine {
 #ifdef NDEBUG
 constexpr bool enableValidationLayers = false;
 #else
 constexpr bool enableValidationLayers = true;
 #endif
+
+constexpr int MAX_FRAMES_IN_FLIGHT = 2;
 class vkEngine {
   public:
 	vkEngine(std::shared_ptr<SDL_Window> window);
@@ -74,6 +78,9 @@ class vkEngine {
 	vk::Semaphore presentCompleteSemaphore = nullptr;
 	vk::Semaphore renderFinishedSemaphore = nullptr;
 	vk::Fence drawFence = nullptr;
+
+	uint32_t frameIndex;
+	std::vector<FrameInFlight> framesInFlight;
 
 	std::unique_ptr<CleanupQueue> _cleanupQueue;
 };
