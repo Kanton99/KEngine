@@ -47,7 +47,7 @@ int main() {
 				if (event.type == SDL_EVENT_QUIT)
 					running = false;
 			}
-			// engine->draw();
+			engine->draw();
 			SDL_Delay(static_cast<uint32_t>(1.f / 60.f) * 1000);
 		}
 

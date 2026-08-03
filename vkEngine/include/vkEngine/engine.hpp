@@ -1,10 +1,13 @@
 #ifndef VK_ENGINE
 #define VK_ENGINE
 #include "cleanupStruct.hpp"
+#include "vkEngine/commandBufferHandler.hpp"
 #include <SDL3/SDL_video.h>
 #include <cstddef>
+#include <cstdint>
 #include <memory>
 #include <vector>
+#include <vulkan/vulkan_handles.hpp>
 #define VULKAN_HPP_NO_STRUCT_CONSTRUCTORS
 #define VULKAN_HPP_DISPATCH_LOADER_DYNAMIC 1
 #include <vulkan/vulkan.hpp>
@@ -40,6 +43,9 @@ class vkEngine {
 	void _createSwapchain();
 	void _createImageView();
 	void _createGraphicsPipeline();
+	void _creteCommandBuffer();
+	void _recordCommandBuffer(uint32_t imageIndex);
+	void _createSyncObjects();
 
   private:
 	vk::Instance _instance = nullptr;
@@ -49,6 +55,7 @@ class vkEngine {
 	vk::PhysicalDevice _physicalDevice;
 	vk::Device _device;
 	vk::Queue _graphicsQueue;
+	uint32_t _graphicsQueueIndex;
 
 	vk::SurfaceKHR _surface;
 
@@ -59,6 +66,14 @@ class vkEngine {
 	std::vector<vk::ImageView> _swapchainImageView;
 
 	vk::Pipeline _graphicsPipeline;
+
+	CommandBufferHandler _commandBufferHandler;
+	vk::CommandBuffer _graphicsCommandBuffer;
+
+	// Synchronization objects
+	vk::Semaphore presentCompleteSemaphore = nullptr;
+	vk::Semaphore renderFinishedSemaphore = nullptr;
+	vk::Fence drawFence = nullptr;
 
 	std::unique_ptr<CleanupQueue> _cleanupQueue;
 };
