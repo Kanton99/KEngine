@@ -24,7 +24,7 @@ constexpr bool enableValidationLayers = true;
 
 constexpr int MAX_FRAMES_IN_FLIGHT = 2;
 class vkEngine {
-  public:
+public:
 	vkEngine(std::shared_ptr<SDL_Window> window);
 	vkEngine(vkEngine &&) = delete;
 	vkEngine(const vkEngine &) = delete;
@@ -38,7 +38,9 @@ class vkEngine {
 
 	void cleanup();
 
-  private:
+	void invalidateSwapchain();
+
+private:
 	void _createInstance();
 	void _checkExtensions(std::vector<const char *> extensions);
 	void _checkLayers(std::vector<char const *> layers);
@@ -46,13 +48,15 @@ class vkEngine {
 	void _createLogicalDevice();
 	void _createSurface();
 	void _createSwapchain();
-	void _createImageView();
+	void _createImageViews();
 	void _createGraphicsPipeline();
 	void _creteCommandBuffer();
 	void _recordCommandBuffer(uint32_t imageIndex);
 	void _createSyncObjects();
+	void _recreateSwapchain();
+	void _cleanupSwapchain();
 
-  private:
+private:
 	vk::Instance _instance = nullptr;
 	std::shared_ptr<SDL_Window> _window;
 	const std::vector<char const *> _validationLayers = {"VK_LAYER_KHRONOS_validation"};

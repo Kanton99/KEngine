@@ -3,6 +3,7 @@
 #include "vkEngine/pipelineBuilder.hpp"
 #include "vkEngine/swapchainBuilder.hpp"
 #include <algorithm>
+#include <cstddef>
 #include <cstdint>
 #include <iostream>
 #include <map>
@@ -17,10 +18,10 @@
 
 namespace vkEngine {
 vkEngine::vkEngine(std::shared_ptr<SDL_Window> window) :
-	_window(window),
-	_cleanupQueue(std::make_unique<CleanupQueue>()),
-	_commandBufferHandler{},
-	frameIndex{0} {
+		_window(window),
+		_cleanupQueue(std::make_unique<CleanupQueue>()),
+		_commandBufferHandler{},
+		frameIndex{0} {
 	this->framesInFlight.reserve(2);
 }
 
@@ -30,7 +31,7 @@ void vkEngine::init() {
 	this->_pickPhysicalDevice();
 	this->_createLogicalDevice();
 	this->_createSwapchain();
-	this->_createImageView();
+	this->_createImageViews();
 	this->_createGraphicsPipeline();
 	this->_creteCommandBuffer();
 	this->_createSyncObjects();
@@ -44,7 +45,7 @@ void vkEngine::draw() {
 	}
 	this->_device.resetFences(this->framesInFlight[frameIndex].drawFence);
 	auto [result, imageIndex] = this->_device.acquireNextImageKHR(this->_swapchain.swapchain, UINT32_MAX,
-																  this->framesInFlight[frameIndex].presentComplete);
+																																this->framesInFlight[frameIndex].presentComplete);
 	if (result != vk::Result::eSuccess)
 		throw std::runtime_error("Failed to acquire next swapcain image");
 
@@ -52,37 +53,41 @@ void vkEngine::draw() {
 
 	vk::PipelineStageFlags waitDestinationStageMask{vk::PipelineStageFlagBits::eColorAttachmentOutput};
 	const vk::SubmitInfo submitInfo{.waitSemaphoreCount = 1,
-									.pWaitSemaphores = &this->framesInFlight[frameIndex].presentComplete,
-									.pWaitDstStageMask = &waitDestinationStageMask,
-									.commandBufferCount = 1,
-									.pCommandBuffers = &this->framesInFlight[frameIndex].commandBuffer,
-									.signalSemaphoreCount = 1,
-									.pSignalSemaphores = &this->framesInFlight[frameIndex].renderFinishedSemaphore};
+																	.pWaitSemaphores = &this->framesInFlight[frameIndex].presentComplete,
+																	.pWaitDstStageMask = &waitDestinationStageMask,
+																	.commandBufferCount = 1,
+																	.pCommandBuffers = &this->framesInFlight[frameIndex].commandBuffer,
+																	.signalSemaphoreCount = 1,
+																	.pSignalSemaphores = &this->framesInFlight[frameIndex].renderFinishedSemaphore};
 
 	this->_graphicsQueue.submit(submitInfo, this->framesInFlight[frameIndex].drawFence);
 
 	const vk::PresentInfoKHR presentInfo{.waitSemaphoreCount = 1,
-										 .pWaitSemaphores = &this->framesInFlight[frameIndex].renderFinishedSemaphore,
-										 .swapchainCount = 1,
-										 .pSwapchains = &this->_swapchain.swapchain,
-										 .pImageIndices = &imageIndex};
+																			 .pWaitSemaphores = &this->framesInFlight[frameIndex].renderFinishedSemaphore,
+																			 .swapchainCount = 1,
+																			 .pSwapchains = &this->_swapchain.swapchain,
+																			 .pImageIndices = &imageIndex};
 
 	result = this->_graphicsQueue.presentKHR(presentInfo);
 	if (result != vk::Result::eSuccess)
 		throw std::runtime_error("Failed to present image");
 	frameIndex = (frameIndex + 1) % MAX_FRAMES_IN_FLIGHT;
 }
-void vkEngine::cleanup() { this->_cleanupQueue->flush(); }
+void vkEngine::cleanup() {
+	this->_device.waitIdle();
+	this->_cleanupSwapchain();
+	this->_cleanupQueue->flush();
+}
 
 void vkEngine::_createInstance() {
 	if constexpr (VULKAN_HPP_DISPATCH_LOADER_DYNAMIC == 1) {
 		VULKAN_HPP_DEFAULT_DISPATCHER.init();
 	}
 	constexpr vk::ApplicationInfo appInfo{.pApplicationName = "Hello triangle",
-										  .applicationVersion = VK_MAKE_VERSION(0, 0, 1),
-										  .pEngineName = "vkEngine",
-										  .engineVersion = VK_MAKE_VERSION(0, 0, 1),
-										  .apiVersion = vk::ApiVersion14};
+																				.applicationVersion = VK_MAKE_VERSION(0, 0, 1),
+																				.pEngineName = "vkEngine",
+																				.engineVersion = VK_MAKE_VERSION(0, 0, 1),
+																				.apiVersion = vk::ApiVersion14};
 
 	uint32_t extensionCount;
 	auto extensionsC{SDL_Vulkan_GetInstanceExtensions(&extensionCount)};
@@ -102,8 +107,8 @@ void vkEngine::_createInstance() {
 	this->_checkExtensions(extensions);
 
 	vk::InstanceCreateInfo createInfo{.pApplicationInfo = &appInfo,
-									  .enabledExtensionCount = static_cast<uint32_t>(extensions.size()),
-									  .ppEnabledExtensionNames = extensions.data()};
+																		.enabledExtensionCount = static_cast<uint32_t>(extensions.size()),
+																		.ppEnabledExtensionNames = extensions.data()};
 	if constexpr (enableValidationLayers) {
 		createInfo.ppEnabledLayerNames = this->_validationLayers.data();
 		createInfo.enabledLayerCount = static_cast<uint32_t>(this->_validationLayers.size());
@@ -118,12 +123,11 @@ void vkEngine::_createInstance() {
 void vkEngine::_checkExtensions(std::vector<const char *> extensions) {
 	std::cout << "Check required extensions support\n";
 	auto extensionProperties = vk::enumerateInstanceExtensionProperties();
-	auto unsupportedPropertyIt =
-		std::ranges::find_if(extensions, [&extensionProperties](auto const &requiredExtension) {
-			return std::ranges::none_of(extensionProperties, [requiredExtension](auto const &extensionProperty) {
-				return strcmp(extensionProperty.extensionName, requiredExtension) == 0;
-			});
+	auto unsupportedPropertyIt = std::ranges::find_if(extensions, [&extensionProperties](auto const &requiredExtension) {
+		return std::ranges::none_of(extensionProperties, [requiredExtension](auto const &extensionProperty) {
+			return strcmp(extensionProperty.extensionName, requiredExtension) == 0;
 		});
+	});
 	if (unsupportedPropertyIt != extensions.end()) {
 		throw std::runtime_error("Required extension not supported: " + std::string(*unsupportedPropertyIt));
 	}
@@ -171,28 +175,27 @@ void vkEngine::_pickPhysicalDevice() {
 			continue;
 
 		// Check for required extensions
-		std::vector<const char *> requiredDeviceExtensions = {vk::KHRSwapchainExtensionName,
-															  vk::KHRShaderDrawParametersExtensionName,
-															  vk::KHRSynchronization2ExtensionName};
+		std::vector<const char *> requiredDeviceExtensions = {
+				vk::KHRSwapchainExtensionName, vk::KHRShaderDrawParametersExtensionName, vk::KHRSynchronization2ExtensionName};
 		auto deviceExtensions{physicalDevice.enumerateDeviceExtensionProperties()};
 		bool supportsAllRequiredGraphicExtensions{
-			std::ranges::all_of(requiredDeviceExtensions, [&deviceExtensions](auto const &requiredDeviceExtension) {
-				return std::ranges::any_of(deviceExtensions, [requiredDeviceExtension](auto const &deviceExtension) {
-					return strcmp(deviceExtension.extensionName, requiredDeviceExtension) == 0;
-				});
-			})};
+				std::ranges::all_of(requiredDeviceExtensions, [&deviceExtensions](auto const &requiredDeviceExtension) {
+					return std::ranges::any_of(deviceExtensions, [requiredDeviceExtension](auto const &deviceExtension) {
+						return strcmp(deviceExtension.extensionName, requiredDeviceExtension) == 0;
+					});
+				})};
 
 		if (!supportsAllRequiredGraphicExtensions)
 			continue;
 
 		// Check for required Features
 		auto features{physicalDevice.getFeatures2<vk::PhysicalDeviceFeatures2, vk::PhysicalDeviceVulkan14Features,
-												  vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT,
-												  vk::PhysicalDeviceSynchronization2Features>()};
+																							vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT,
+																							vk::PhysicalDeviceSynchronization2Features>()};
 		bool suppotsRequiredFeatures{
-			features.get<vk::PhysicalDeviceVulkan14Features>().dynamicRenderingLocalRead &&
-			features.get<vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT>().extendedDynamicState &&
-			features.get<vk::PhysicalDeviceSynchronization2Features>().synchronization2};
+				features.get<vk::PhysicalDeviceVulkan14Features>().dynamicRenderingLocalRead &&
+				features.get<vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT>().extendedDynamicState &&
+				features.get<vk::PhysicalDeviceSynchronization2Features>().synchronization2};
 		if (!suppotsRequiredFeatures)
 			continue;
 
@@ -214,7 +217,7 @@ void vkEngine::_createLogicalDevice() {
 	this->_graphicsQueueIndex = ~0;
 	for (uint32_t qfpIndex = 0; qfpIndex < queueFamilyProperties.size(); qfpIndex++) {
 		if ((queueFamilyProperties[qfpIndex].queueFlags & vk::QueueFlagBits::eGraphics) &&
-			this->_physicalDevice.getSurfaceSupportKHR(qfpIndex, this->_surface)) {
+				this->_physicalDevice.getSurfaceSupportKHR(qfpIndex, this->_surface)) {
 			this->_graphicsQueueIndex = qfpIndex;
 			break;
 		}
@@ -222,27 +225,26 @@ void vkEngine::_createLogicalDevice() {
 
 	float queuePriority{0.5f};
 	vk::DeviceQueueCreateInfo deviceQueueCreateInfo{.queueFamilyIndex = this->_graphicsQueueIndex,
-													.queueCount = 1,
-													.pQueuePriorities = &queuePriority};
+																									.queueCount = 1,
+																									.pQueuePriorities = &queuePriority};
 
 	// Getting required device features
 	vk::StructureChain<vk::PhysicalDeviceFeatures2, vk::PhysicalDeviceVulkan13Features,
-					   vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT>
-		featureChain = {
-			{},													  // vk::PhysicalDeviceFeatures2 (empty for now)
-			{.synchronization2 = true, .dynamicRendering = true}, // Enable dynamic rendering from Vulkan 1.3
-			{.extendedDynamicState = true}						  // Enable extended dynamic state from the extension
-		};
+										 vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT>
+			featureChain = {
+					{},																										// vk::PhysicalDeviceFeatures2 (empty for now)
+					{.synchronization2 = true, .dynamicRendering = true}, // Enable dynamic rendering from Vulkan 1.3
+					{.extendedDynamicState = true}												// Enable extended dynamic state from the extension
+			};
 	std::vector<const char *> requiredDeviceExtension = {
-		vk::KHRSwapchainExtensionName, vk::KHRShaderDrawParametersExtensionName, vk::KHRSynchronization2ExtensionName};
+			vk::KHRSwapchainExtensionName, vk::KHRShaderDrawParametersExtensionName, vk::KHRSynchronization2ExtensionName};
 
 	// Creating logical device
 	vk::DeviceCreateInfo deviceCreateInfo{.pNext = &featureChain.get<vk::PhysicalDeviceFeatures2>(),
-										  .queueCreateInfoCount = 1,
-										  .pQueueCreateInfos = &deviceQueueCreateInfo,
-										  .enabledExtensionCount =
-											  static_cast<uint32_t>(requiredDeviceExtension.size()),
-										  .ppEnabledExtensionNames = requiredDeviceExtension.data()};
+																				.queueCreateInfoCount = 1,
+																				.pQueueCreateInfos = &deviceQueueCreateInfo,
+																				.enabledExtensionCount = static_cast<uint32_t>(requiredDeviceExtension.size()),
+																				.ppEnabledExtensionNames = requiredDeviceExtension.data()};
 
 	this->_device = this->_physicalDevice.createDevice(deviceCreateInfo);
 	this->_cleanupQueue->pushFunction([&]() { this->_device.destroy(); });
@@ -254,8 +256,7 @@ void vkEngine::_createLogicalDevice() {
 void vkEngine::_createSurface() {
 	std::cout << "Creating window surface\n";
 	VkSurfaceKHR baseSurface;
-	if (!SDL_Vulkan_CreateSurface(this->_window.get(), static_cast<VkInstance>(this->_instance), nullptr,
-								  &baseSurface)) {
+	if (!SDL_Vulkan_CreateSurface(this->_window.get(), static_cast<VkInstance>(this->_instance), nullptr, &baseSurface)) {
 		std::cerr << "Failed to create SDL surface: " << SDL_GetError() << std::endl;
 	}
 	this->_surface = vk::SurfaceKHR{baseSurface};
@@ -266,22 +267,22 @@ void vkEngine::_createSwapchain() {
 	auto surfaceCapabilities = this->_physicalDevice.getSurfaceCapabilitiesKHR(this->_surface);
 	auto builder = SwapchainBuilder{surfaceCapabilities};
 	this->_swapchain = builder.chooseSwapExtent(*this->_window)
-						   .chooseSwapMinImageCount()
-						   .chooseSwapSurfaceFormat(this->_physicalDevice.getSurfaceFormatsKHR(this->_surface))
-						   .buildSwapchain(this->_surface, this->_device);
+												 .chooseSwapMinImageCount()
+												 .chooseSwapSurfaceFormat(this->_physicalDevice.getSurfaceFormatsKHR(this->_surface))
+												 .buildSwapchain(this->_surface, this->_device);
 	this->_swapchain.images = this->_device.getSwapchainImagesKHR(this->_swapchain.swapchain);
 }
 
-void vkEngine::_createImageView() {
+void vkEngine::_createImageViews() {
 	vk::ImageViewCreateInfo imageViewInfo{
-		.viewType = vk::ImageViewType::e2D,
-		.format = this->_swapchain.surfaceFormat.format,
-		.subresourceRange = {.aspectMask = vk::ImageAspectFlagBits::eColor, .levelCount = 1, .layerCount = 1}};
+			.viewType = vk::ImageViewType::e2D,
+			.format = this->_swapchain.surfaceFormat.format,
+			.subresourceRange = {.aspectMask = vk::ImageAspectFlagBits::eColor, .levelCount = 1, .layerCount = 1}};
 	imageViewInfo.setComponents({
-		vk::ComponentSwizzle::eIdentity,
-		vk::ComponentSwizzle::eIdentity,
-		vk::ComponentSwizzle::eIdentity,
-		vk::ComponentSwizzle::eIdentity,
+			vk::ComponentSwizzle::eIdentity,
+			vk::ComponentSwizzle::eIdentity,
+			vk::ComponentSwizzle::eIdentity,
+			vk::ComponentSwizzle::eIdentity,
 	});
 
 	for (auto const &image : this->_swapchain.images) {
@@ -295,12 +296,12 @@ void vkEngine::_createGraphicsPipeline() {
 	std::println("Creating graphics pipeline");
 	PipelineBuilder builder{this->_device};
 	this->_graphicsPipeline =
-		builder.loadShaderCode("./resources/shaders/slang.spv")
-			.createShaderModule()
-			.createPipelineStage(vk::ShaderStageFlagBits::eVertex, "vertMain")
-			.createPipelineStage(vk::ShaderStageFlagBits::eFragment, "fragMain")
-			.setViewPortState({.extent = this->_swapchain.extent}, {.extent = this->_swapchain.extent})
-			.build(this->_swapchain.surfaceFormat);
+			builder.loadShaderCode("./resources/shaders/slang.spv")
+					.createShaderModule()
+					.createPipelineStage(vk::ShaderStageFlagBits::eVertex, "vertMain")
+					.createPipelineStage(vk::ShaderStageFlagBits::eFragment, "fragMain")
+					.setViewPortState({.extent = this->_swapchain.extent}, {.extent = this->_swapchain.extent})
+					.build(this->_swapchain.surfaceFormat);
 	std::println("Created Graphics pipeline");
 }
 
@@ -310,7 +311,7 @@ void vkEngine::_creteCommandBuffer() {
 
 	for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
 		this->framesInFlight[i].commandBuffer =
-			_commandBufferHandler.allocateCommandBuffer(this->_device, vk::CommandBufferLevel::ePrimary);
+				_commandBufferHandler.allocateCommandBuffer(this->_device, vk::CommandBufferLevel::ePrimary);
 	}
 
 	std::println("Created graphics command buffer");
@@ -321,41 +322,38 @@ void vkEngine::_recordCommandBuffer(uint32_t imageIndex) {
 	if (beginResult != vk::Result::eSuccess)
 		throw std::runtime_error("Failed to begin recording command buffer");
 	transitionImageLayout(this->_swapchain.images[imageIndex], this->framesInFlight[frameIndex].commandBuffer,
-						  vk::ImageLayout::eUndefined, vk::ImageLayout::eColorAttachmentOptimal, {},
-						  vk::AccessFlagBits2::eColorAttachmentWrite,
-						  vk::PipelineStageFlagBits2::eColorAttachmentOutput,
-						  vk::PipelineStageFlagBits2::eColorAttachmentOutput);
+												vk::ImageLayout::eUndefined, vk::ImageLayout::eColorAttachmentOptimal, {},
+												vk::AccessFlagBits2::eColorAttachmentWrite, vk::PipelineStageFlagBits2::eColorAttachmentOutput,
+												vk::PipelineStageFlagBits2::eColorAttachmentOutput);
 
 	vk::ClearValue clearColor{vk::ClearColorValue(0.f, 0.f, 0.f, 1.f)};
 	vk::RenderingAttachmentInfo attachmentInfo{.imageView{this->_swapchain.imageViews[imageIndex]},
-											   .imageLayout = vk::ImageLayout::eColorAttachmentOptimal,
-											   .loadOp = vk::AttachmentLoadOp::eClear,
-											   .storeOp = vk::AttachmentStoreOp::eStore,
-											   .clearValue{clearColor}};
+																						 .imageLayout = vk::ImageLayout::eColorAttachmentOptimal,
+																						 .loadOp = vk::AttachmentLoadOp::eClear,
+																						 .storeOp = vk::AttachmentStoreOp::eStore,
+																						 .clearValue{clearColor}};
 
 	vk::RenderingInfo renderingIndo{.renderArea{.offset{0, 0}, .extent{this->_swapchain.extent}},
-									.layerCount = 1,
-									.colorAttachmentCount = 1,
-									.pColorAttachments = &attachmentInfo};
+																	.layerCount = 1,
+																	.colorAttachmentCount = 1,
+																	.pColorAttachments = &attachmentInfo};
 	this->framesInFlight[frameIndex].commandBuffer.beginRendering(renderingIndo);
 
 	this->framesInFlight[frameIndex].commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics,
-																this->_graphicsPipeline);
+																															this->_graphicsPipeline);
 
 	this->framesInFlight[frameIndex].commandBuffer.setViewport(
-		0, vk::Viewport{0.f, 0.f, static_cast<float>(this->_swapchain.extent.width),
-						static_cast<float>(this->_swapchain.extent.height)});
-	this->framesInFlight[frameIndex].commandBuffer.setScissor(0,
-															  vk::Rect2D{vk::Offset2D{0, 0}, this->_swapchain.extent});
+			0, vk::Viewport{0.f, 0.f, static_cast<float>(this->_swapchain.extent.width),
+											static_cast<float>(this->_swapchain.extent.height)});
+	this->framesInFlight[frameIndex].commandBuffer.setScissor(0, vk::Rect2D{vk::Offset2D{0, 0}, this->_swapchain.extent});
 
 	this->framesInFlight[frameIndex].commandBuffer.draw(3, 1, 0, 0);
 	this->framesInFlight[frameIndex].commandBuffer.endRendering();
 
 	transitionImageLayout(this->_swapchain.images[imageIndex], this->framesInFlight[frameIndex].commandBuffer,
-						  vk::ImageLayout::eColorAttachmentOptimal, vk::ImageLayout::ePresentSrcKHR,
-						  vk::AccessFlagBits2::eColorAttachmentWrite, {},
-						  vk::PipelineStageFlagBits2::eColorAttachmentOutput,
-						  vk::PipelineStageFlagBits2::eBottomOfPipe);
+												vk::ImageLayout::eColorAttachmentOptimal, vk::ImageLayout::ePresentSrcKHR,
+												vk::AccessFlagBits2::eColorAttachmentWrite, {},
+												vk::PipelineStageFlagBits2::eColorAttachmentOutput, vk::PipelineStageFlagBits2::eBottomOfPipe);
 
 	this->framesInFlight[frameIndex].commandBuffer.end();
 }
@@ -371,5 +369,16 @@ void vkEngine::_createSyncObjects() {
 			this->framesInFlight[i].cleanup(this->_device);
 		}
 	});
+}
+void vkEngine::_recreateSwapchain() {
+	this->_device.waitIdle();
+
+	this->_createSwapchain();
+	this->_createImageViews();
+}
+
+void vkEngine::_cleanupSwapchain() {
+	this->_swapchain.imageViews.clear();
+	this->_swapchain.swapchain = nullptr;
 }
 } // namespace vkEngine
