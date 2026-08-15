@@ -1,6 +1,7 @@
 #ifndef KENGINE_MAIN
 #define KENGINE_MAIN
 
+#include "SDL3/SDL_events.h"
 #include <cstdint>
 #include <exception>
 #include <memory>
@@ -26,7 +27,7 @@ int main() {
 			return -1;
 		}
 		std::cout << "Creating window" << std::endl;
-		SDL_Window *win_raw = SDL_CreateWindow("test windows", 1600, 900, SDL_WINDOW_VULKAN);
+		SDL_Window *win_raw = SDL_CreateWindow("test windows", 1600, 900, SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE);
 		if (!win_raw) {
 			std::cerr << "Failed to create window, Error: " << SDL_GetError() << std::endl;
 			return -1;
@@ -46,6 +47,15 @@ int main() {
 			while (SDL_PollEvent(&event)) {
 				if (event.type == SDL_EVENT_QUIT)
 					running = false;
+				else if (event.type == SDL_EVENT_WINDOW_RESIZED) {
+					int w, h;
+					SDL_GetWindowSize(win_raw, &w, &h);
+					while(w == 0 || h==0){
+						SDL_GetWindowSize(win_raw, &w, &h);
+						SDL_PollEvent(&event);
+					}
+					engine->invalidateSwapchain(w, h);
+				}
 			}
 			engine->draw();
 			SDL_Delay(static_cast<uint32_t>(1.f / 60.f) * 1000);

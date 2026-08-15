@@ -43,12 +43,18 @@ void vkEngine::draw() {
 	if (fenceResult != vk::Result::eSuccess) {
 		throw std::runtime_error("Failed to wait for fence");
 	}
-	this->_device.resetFences(this->framesInFlight[frameIndex].drawFence);
 	auto [result, imageIndex] = this->_device.acquireNextImageKHR(this->_swapchain.swapchain, UINT32_MAX,
 																																this->framesInFlight[frameIndex].presentComplete);
-	if (result != vk::Result::eSuccess)
+	if (result == vk::Result::eErrorOutOfDateKHR) {
+		this->_recreateSwapchain();
+		return;
+	}
+	if (result != vk::Result::eSuccess && result != vk::Result::eSuboptimalKHR) {
+		assert(result == vk::Result::eTimeout || result == vk::Result::eNotReady);
 		throw std::runtime_error("Failed to acquire next swapcain image");
+	}
 
+	this->_device.resetFences(this->framesInFlight[frameIndex].drawFence);
 	this->_recordCommandBuffer(imageIndex);
 
 	vk::PipelineStageFlags waitDestinationStageMask{vk::PipelineStageFlagBits::eColorAttachmentOutput};
@@ -69,6 +75,8 @@ void vkEngine::draw() {
 																			 .pImageIndices = &imageIndex};
 
 	result = this->_graphicsQueue.presentKHR(presentInfo);
+	if ((result == vk::Result::eSuboptimalKHR) || (result == vk::Result::eErrorOutOfDateKHR))
+		this->_recreateSwapchain();
 	if (result != vk::Result::eSuccess)
 		throw std::runtime_error("Failed to present image");
 	frameIndex = (frameIndex + 1) % MAX_FRAMES_IN_FLIGHT;
@@ -268,7 +276,7 @@ void vkEngine::_createSwapchain() {
 	auto builder = SwapchainBuilder{surfaceCapabilities};
 	this->_swapchain = builder.chooseSwapExtent(*this->_window)
 												 .chooseSwapMinImageCount()
-												 .chooseSwapSurfaceFormat(this->_physicalDevice.getSurfaceFormatsKHR(this->_surface))
+												 .chooseSwapSurfaceFormat(this->_physicalDevice.getSurfaceFormatsKHR(this->_surface)).choosePresentMode({vk::PresentModeKHR::eFifo})
 												 .buildSwapchain(this->_surface, this->_device);
 	this->_swapchain.images = this->_device.getSwapchainImagesKHR(this->_swapchain.swapchain);
 }
@@ -372,13 +380,16 @@ void vkEngine::_createSyncObjects() {
 }
 void vkEngine::_recreateSwapchain() {
 	this->_device.waitIdle();
+	std::println("Recreating swapchain");
+	this->_cleanupSwapchain();
 
 	this->_createSwapchain();
 	this->_createImageViews();
 }
 
 void vkEngine::_cleanupSwapchain() {
+	this->_device.destroySwapchainKHR(this->_swapchain.swapchain);
 	this->_swapchain.imageViews.clear();
-	this->_swapchain.swapchain = nullptr;
 }
+void vkEngine::invalidateSwapchain(int width, int height) { this->_recreateSwapchain(); }
 } // namespace vkEngine
