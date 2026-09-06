@@ -40,6 +40,7 @@ int main() {
 		std::cout << "Creating engine\n";
 		std::unique_ptr<vkEngine::vkEngine> engine = std::make_unique<vkEngine::vkEngine>(window);
 		engine->init();
+		engine->vertices = {{{0, -0.5f}, {1, 0, 0}}, {{0.5f, 0.5f}, {0, 1, 0}}, {{-0.5, 0.5}, {0, 0, 1}}};
 		SDL_Event event;
 		bool running = true;
 
@@ -50,7 +51,7 @@ int main() {
 				else if (event.type == SDL_EVENT_WINDOW_RESIZED) {
 					int w, h;
 					SDL_GetWindowSize(win_raw, &w, &h);
-					while(w == 0 || h==0){
+					while (w == 0 || h == 0) {
 						SDL_GetWindowSize(win_raw, &w, &h);
 						SDL_PollEvent(&event);
 					}

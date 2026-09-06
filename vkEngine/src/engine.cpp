@@ -354,8 +354,9 @@ void vkEngine::_recordCommandBuffer(uint32_t imageIndex) {
 			0, vk::Viewport{0.f, 0.f, static_cast<float>(this->_swapchain.extent.width),
 											static_cast<float>(this->_swapchain.extent.height)});
 	this->framesInFlight[frameIndex].commandBuffer.setScissor(0, vk::Rect2D{vk::Offset2D{0, 0}, this->_swapchain.extent});
+	this->framesInFlight[frameIndex].commandBuffer.bindVertexBuffers(0, this->vertextBuffer, {0});
 
-	this->framesInFlight[frameIndex].commandBuffer.draw(3, 1, 0, 0);
+	this->framesInFlight[frameIndex].commandBuffer.draw(vertices.size(), 1, 0, 0);
 	this->framesInFlight[frameIndex].commandBuffer.endRendering();
 
 	transitionImageLayout(this->_swapchain.images[imageIndex], this->framesInFlight[frameIndex].commandBuffer,
