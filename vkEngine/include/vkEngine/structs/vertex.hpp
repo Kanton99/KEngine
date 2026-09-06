@@ -1,8 +1,12 @@
+#ifndef VKENGINE_VERTEX_HPP
+#define VKENGINE_VERTEX_HPP
+
 #include <array>
 #include <glm/glm.hpp>
 #define VULKAN_HPP_NO_STRUCT_CONSTRUCTORS
 #include <vulkan/vulkan.hpp>
 
+namespace vkEngine {
 struct Vertex {
 	glm::vec2 pos;
 	glm::vec3 color;
@@ -17,3 +21,5 @@ struct Vertex {
 				 {.location = 1, .binding = 0, .format = vk::Format::eR32G32B32A32Sfloat, .offset = offsetof(Vertex, color)}}};
 	}
 };
+} // namespace vkEngine
+#endif // !VKENGINE_VERTEX_HPP

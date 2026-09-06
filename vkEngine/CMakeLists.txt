@@ -35,5 +35,6 @@ target_link_libraries(${PROJECT_NAME} PUBLIC
   GPUOpen::VulkanMemoryAllocator
   fastgltf::fastgltf
   SDL3::SDL3
+	VulkanMemoryAllocator-Hpp::VulkanMemoryAllocator-Hpp
 )
 

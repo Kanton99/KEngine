@@ -2,10 +2,11 @@
 #include "SDL3/SDL_vulkan.h"
 #include "vkEngine/pipelineBuilder.hpp"
 #include "vkEngine/swapchainBuilder.hpp"
+#include "vkEngine/utils.hpp"
 #include <iostream>
 #include <map>
+#define VMA_IMPLEMENTATION
 #include <vkEngine/engine.hpp>
-#include <vkEngine/utils.hpp>
 
 namespace vkEngine {
 vkEngine::vkEngine(std::shared_ptr<SDL_Window> window) :
@@ -22,6 +23,13 @@ void vkEngine::init() {
 	this->_pickPhysicalDevice();
 	this->_createLogicalDevice();
 	this->_createSwapchain();
+	auto functions = vma::functionsFromDispatchers(VULKAN_HPP_DEFAULT_DISPATCHER);
+	vma::AllocatorCreateInfo allocatorInfo{.physicalDevice = this->_physicalDevice,
+																				 .device = this->_device,
+																				 .pVulkanFunctions = &functions,
+																				 .instance = this->_instance,
+																				 .vulkanApiVersion = vk::ApiVersion14};
+	this->_allocator = vma::createAllocator(allocatorInfo);
 	this->_createImageViews();
 	this->_createGraphicsPipeline();
 	this->_creteCommandBuffer();
@@ -384,4 +392,32 @@ void vkEngine::_cleanupSwapchain() {
 	this->_swapchain.imageViews.clear();
 }
 void vkEngine::invalidateSwapchain(int width, int height) { this->_recreateSwapchain(); }
+
+std::pair<vk::Buffer, vma::Allocation>
+vkEngine::_createBuffer(vk::DeviceSize size, vk::BufferUsageFlags usageFlags, vk::MemoryPropertyFlags properties,
+
+												vma::AllocationCreateFlags allocatorFlags = vma::AllocationCreateFlags{},
+												vma::MemoryUsage allocatorUsage = vma::MemoryUsage::eAuto) {
+	vk::BufferCreateInfo bufferInfo{.size = size, .usage = usageFlags};
+	vma::AllocationCreateInfo allocInfo{.flags = allocatorFlags, .usage = allocatorUsage};
+
+	auto [allocation, buffer] = this->_allocator.createBuffer(bufferInfo, allocInfo);
+	return {buffer, allocation};
+}
+
+void vkEngine::_createVertexBuffer() {
+	vk::DeviceSize bufferSize{sizeof(vertices[0]) * vertices.size()};
+
+	auto [stagingBuffer, stagingAllocation] = this->_createBuffer(
+			bufferSize, vk::BufferUsageFlagBits::eTransferSrc, vk::MemoryPropertyFlagBits::eHostVisible,
+			vma::AllocationCreateFlagBits::eHostAccessSequentialWrite | vma::AllocationCreateFlagBits::eMapped);
+	auto mappedStagedMemory = this->_allocator.mapMemory(stagingAllocation);
+
+	memcpy(mappedStagedMemory, vertices.data(), bufferSize);
+	this->_allocator.unmapMemory(stagingAllocation);
+
+	std::tie(this->vertextBuffer, this->vertexAllocation) =
+			this->_createBuffer(bufferSize, vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eTransferDst,
+													vk::MemoryPropertyFlagBits::eDeviceLocal);
+};
 } // namespace vkEngine

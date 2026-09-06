@@ -13,7 +13,7 @@ class MyProjectConan(ConanFile):
         "glm/1.0.1",
         "tinyobjloader/2.0.0-rc10",
         "volk/1.4.313.0",
-        "vulkan-memory-allocator/3.3.0",
+        # "vulkan-memory-allocator/3.3.0",
     ]
 
     def layout(self):

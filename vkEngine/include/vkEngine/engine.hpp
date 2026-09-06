@@ -4,15 +4,18 @@
 #include "vkEngine/commandBufferHandler.hpp"
 #include "vkEngine/swapchainBuilder.hpp"
 #include <SDL3/SDL_video.h>
-#include <cstddef>
-#include <cstdint>
 #include <memory>
 #include <vector>
-#include <vkEngine/framesInFlight.hpp>
 #define VULKAN_HPP_NO_STRUCT_CONSTRUCTORS
 #define VULKAN_HPP_DISPATCH_LOADER_DYNAMIC 1
 #include <vulkan/vulkan.hpp>
 VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
+#include <vkEngine/framesInFlight.hpp>
+#include <vkEngine/structs/vertex.hpp>
+#define VMA_STATIC_VULKAN_FUNCTIONS 0
+#define VMA_DYNAMIC_VULKAN_FUNCTIONS 1
+#define VK_NO_PROTOTYPES
+#include <vk_mem_alloc.hpp>
 
 namespace vkEngine {
 #ifdef NDEBUG
@@ -24,6 +27,7 @@ constexpr bool enableValidationLayers = true;
 constexpr int MAX_FRAMES_IN_FLIGHT = 2;
 class vkEngine {
 public:
+	std::vector<Vertex> vertices;
 	vkEngine(std::shared_ptr<SDL_Window> window);
 	vkEngine(vkEngine &&) = delete;
 	vkEngine(const vkEngine &) = delete;
@@ -54,6 +58,11 @@ private:
 	void _createSyncObjects();
 	void _recreateSwapchain();
 	void _cleanupSwapchain();
+	std::pair<vk::Buffer, vma::Allocation> _createBuffer(vk::DeviceSize size, vk::BufferUsageFlags usageFlags,
+																											 vk::MemoryPropertyFlags properties,
+																											 vma::AllocationCreateFlags allocatorFlags,
+																											 vma::MemoryUsage allocatorUsage);
+	void _createVertexBuffer();
 
 private:
 	vk::Instance _instance = nullptr;
@@ -83,6 +92,10 @@ private:
 	std::vector<FrameInFlight> framesInFlight;
 
 	std::unique_ptr<CleanupQueue> _cleanupQueue;
+	vma::Allocator _allocator;
+
+	vk::Buffer vertextBuffer;
+	vma::Allocation vertexAllocation;
 };
 } // namespace vkEngine
 #endif
