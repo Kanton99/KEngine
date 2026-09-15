@@ -2,3 +2,11 @@ include(default)
 
 [settings]
 build_type=Debug
+compiler=clang
+compiler.cppstd=23
+compiler.version=21
+compiler.libcxx=libc++
+
+[conf]
+tools.build:compiler_executables={"c": "/usr/bin/clang", "cpp": "/usr/bin/clang++"}
+tools.cmake.cmaketoolchain:generator=Ninja

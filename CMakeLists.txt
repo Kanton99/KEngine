@@ -61,7 +61,7 @@ endfunction()
 
 add_slang_shader_target(
 		shaders
-		SOURCES /home/antonv/dev/KEngine/resources/shaders/base.slang
+		SOURCES ${PROJECT_SOURCE_DIR}/resources/shaders/base.slang
 )
 
 # Include sub-projects.
