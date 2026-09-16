@@ -15,6 +15,8 @@ struct Buffer {
 class BufferHandler {
 private:
 	vma::Allocator allocator;
+	void copyBuffer(vk::CommandBuffer commandBuffe, vk::Queue transferQueue, vk::Buffer &srcBuffer, vk::Buffer &dstBuffer,
+									vk::DeviceSize size);
 
 public:
 	BufferHandler() :
@@ -22,8 +24,6 @@ public:
 	BufferHandler(vk::Instance instance, vk::Device device, vk::PhysicalDevice physicalDevice);
 	Buffer createBuffer(vk::DeviceSize size, vk::BufferUsageFlags usageFlags, vk::MemoryPropertyFlags properties,
 											vma::AllocationCreateFlags allocatorFlags, vma::MemoryUsage allocatorUsage);
-	void copyBuffer(vk::CommandBuffer commandBuffe, vk::Queue transferQueue, vk::Buffer &srcBuffer, vk::Buffer &dstBuffer,
-									vk::DeviceSize size);
 	void uploadBufferData(vk::CommandBuffer commandBuffer, vk::Queue transferQueue, Buffer buffer,
 												vk::DeviceSize bufferSize, void *data);
 
