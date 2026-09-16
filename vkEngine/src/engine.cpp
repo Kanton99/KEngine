@@ -439,5 +439,8 @@ void vkEngine::_createVertexBuffer() {
 
 	this->_copyBuffer(stagingBuffer, this->vertextBuffer, bufferSize);
 	this->_allocator.destroyBuffer(stagingBuffer, stagingAllocation);
+
+	this->_cleanupQueue->pushFunction(
+			[&]() { this->_allocator.destroyBuffer(this->vertextBuffer, this->vertexAllocation); });
 };
 } // namespace vkEngine
