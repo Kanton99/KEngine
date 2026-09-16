@@ -1,19 +1,22 @@
 #include "SDL3/SDL_error.h"
 #include "SDL3/SDL_vulkan.h"
+#include "vkEngine/bufferHandling.hpp"
 #include "vkEngine/pipelineBuilder.hpp"
 #include "vkEngine/swapchainBuilder.hpp"
 #include "vkEngine/utils.hpp"
+#include "vk_mem_alloc_enums.hpp"
 #include <iostream>
 #include <map>
-#include <vulkan/vulkan_enums.hpp>
-#define VMA_IMPLEMENTATION
 #include <vkEngine/engine.hpp>
+#include <vulkan/vulkan_enums.hpp>
+#include <vulkan/vulkan_handles.hpp>
 
 namespace vkEngine {
 vkEngine::vkEngine(std::shared_ptr<SDL_Window> window) :
 		_window(window),
 		_cleanupQueue(std::make_unique<CleanupQueue>()),
 		_commandBufferHandler{},
+		_bufferHandler{},
 		frameIndex{0} {
 	this->framesInFlight.reserve(2);
 }
@@ -23,14 +26,8 @@ void vkEngine::init() {
 	this->_createSurface();
 	this->_pickPhysicalDevice();
 	this->_createLogicalDevice();
+	this->_bufferHandler = BufferHandler(this->_instance, this->_device, this->_physicalDevice);
 	this->_createSwapchain();
-	auto functions = vma::functionsFromDispatchers(VULKAN_HPP_DEFAULT_DISPATCHER);
-	vma::AllocatorCreateInfo allocatorInfo{.physicalDevice = this->_physicalDevice,
-																				 .device = this->_device,
-																				 .pVulkanFunctions = &functions,
-																				 .instance = this->_instance,
-																				 .vulkanApiVersion = vk::ApiVersion14};
-	this->_allocator = vma::createAllocator(allocatorInfo);
 	this->_createImageViews();
 	this->_createGraphicsPipeline();
 	this->_creteCommandBuffer();
@@ -357,8 +354,8 @@ void vkEngine::_recordCommandBuffer(uint32_t imageIndex) {
 			0, vk::Viewport{0.f, 0.f, static_cast<float>(this->_swapchain.extent.width),
 											static_cast<float>(this->_swapchain.extent.height)});
 	this->framesInFlight[frameIndex].commandBuffer.setScissor(0, vk::Rect2D{vk::Offset2D{0, 0}, this->_swapchain.extent});
-	this->framesInFlight[frameIndex].commandBuffer.bindVertexBuffers(0, {this->vertextBuffer}, {0});
-	this->framesInFlight[frameIndex].commandBuffer.bindIndexBuffer(this->indexBuffer, 0, vk::IndexType::eUint16);
+	this->framesInFlight[frameIndex].commandBuffer.bindVertexBuffers(0, {this->vertexBuffer.buffer}, {0});
+	this->framesInFlight[frameIndex].commandBuffer.bindIndexBuffer(this->indexBuffer.buffer, 0, vk::IndexType::eUint16);
 
 	this->framesInFlight[frameIndex].commandBuffer.drawIndexed(this->indeces.size(), 1, 0, 0, 0);
 	this->framesInFlight[frameIndex].commandBuffer.endRendering();
@@ -398,71 +395,29 @@ void vkEngine::_cleanupSwapchain() {
 }
 void vkEngine::invalidateSwapchain(int width, int height) { this->_recreateSwapchain(); }
 
-std::pair<vk::Buffer, vma::Allocation>
-vkEngine::_createBuffer(vk::DeviceSize size, vk::BufferUsageFlags usageFlags, vk::MemoryPropertyFlags properties,
-
-												vma::AllocationCreateFlags allocatorFlags = vma::AllocationCreateFlags{},
-												vma::MemoryUsage allocatorUsage = vma::MemoryUsage::eAuto) {
-	vk::BufferCreateInfo bufferInfo{.size = size, .usage = usageFlags, .sharingMode = vk::SharingMode::eExclusive};
-	vma::AllocationCreateInfo allocInfo{.flags = allocatorFlags, .usage = allocatorUsage};
-
-	auto [allocation, buffer] = this->_allocator.createBuffer(bufferInfo, allocInfo);
-	return {buffer, allocation};
-}
-
-void vkEngine::_copyBuffer(vk::Buffer &srcBuffer, vk::Buffer &dstBuffer, vk::DeviceSize size) {
-	auto copyCommandBuffer =
-			this->_commandBufferHandler.allocateCommandBuffer(this->_device, vk::CommandBufferLevel::ePrimary);
-	copyCommandBuffer.begin({.flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit});
-	copyCommandBuffer.copyBuffer(srcBuffer, dstBuffer, vk::BufferCopy(0, 0, size));
-	copyCommandBuffer.end();
-
-	this->_graphicsQueue.submit(vk::SubmitInfo{.commandBufferCount = 1, .pCommandBuffers = &copyCommandBuffer});
-	this->_graphicsQueue.waitIdle();
-}
-
 void vkEngine::_createVertexBuffer() {
 	vk::DeviceSize bufferSize{sizeof(vertices[0]) * vertices.size()};
-
-	auto [stagingBuffer, stagingAllocation] = this->_createBuffer(
-			bufferSize, vk::BufferUsageFlagBits::eTransferSrc,
-			vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent,
-			vma::AllocationCreateFlagBits::eHostAccessSequentialWrite | vma::AllocationCreateFlagBits::eMapped);
-	auto mappedStagedMemory = this->_allocator.mapMemory(stagingAllocation);
-
-	memcpy(mappedStagedMemory, vertices.data(), bufferSize);
-	this->_allocator.unmapMemory(stagingAllocation);
-
-	std::tie(this->vertextBuffer, this->vertexAllocation) =
-			this->_createBuffer(bufferSize, vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eTransferDst,
-													vk::MemoryPropertyFlagBits::eDeviceLocal);
-
-	this->_copyBuffer(stagingBuffer, this->vertextBuffer, bufferSize);
-	this->_allocator.destroyBuffer(stagingBuffer, stagingAllocation);
-
-	this->_cleanupQueue->pushFunction(
-			[&]() { this->_allocator.destroyBuffer(this->vertextBuffer, this->vertexAllocation); });
+	this->vertexBuffer = this->_bufferHandler.createBuffer(
+			bufferSize, vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eTransferDst,
+			vk::MemoryPropertyFlagBits::eDeviceLocal, vma::AllocationCreateFlags{},
+			vma::MemoryUsage::eAuto); // TODO capire perché non assume i valori di default
+	auto oneTimeBuffer =
+			this->_commandBufferHandler.allocateCommandBuffer(this->_device, vk::CommandBufferLevel::ePrimary);
+	this->_bufferHandler.uploadBufferData(oneTimeBuffer, this->_graphicsQueue, this->vertexBuffer, bufferSize,
+																				vertices.data());
+	this->_cleanupQueue->pushFunction([&]() { this->_bufferHandler.deleteBuffer(vertexBuffer); });
 };
 void vkEngine::_createIndexBuffer() {
 	vk::DeviceSize bufferSize{sizeof(this->indeces[0]) * this->indeces.size()};
 
-	auto [stagingBuffer, stagingAllocation] = this->_createBuffer(
-			bufferSize, vk::BufferUsageFlagBits::eTransferSrc,
-			vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent,
-			vma::AllocationCreateFlagBits::eHostAccessSequentialWrite | vma::AllocationCreateFlagBits::eMapped);
-	auto mappedStagedMemory = this->_allocator.mapMemory(stagingAllocation);
+	this->indexBuffer = this->_bufferHandler.createBuffer(
+			bufferSize, vk::BufferUsageFlagBits::eIndexBuffer | vk::BufferUsageFlagBits::eTransferDst,
+			vk::MemoryPropertyFlagBits::eDeviceLocal, vma::AllocationCreateFlags{}, vma::MemoryUsage::eAuto);
+	auto oneTimeBuffer =
+			this->_commandBufferHandler.allocateCommandBuffer(this->_device, vk::CommandBufferLevel::ePrimary);
+	this->_bufferHandler.uploadBufferData(oneTimeBuffer, this->_graphicsQueue, this->indexBuffer, bufferSize,
+																				indeces.data());
 
-	memcpy(mappedStagedMemory, this->indeces.data(), bufferSize);
-	this->_allocator.unmapMemory(stagingAllocation);
-
-	std::tie(this->indexBuffer, this->indexBufferAllocation) =
-			this->_createBuffer(bufferSize, vk::BufferUsageFlagBits::eIndexBuffer | vk::BufferUsageFlagBits::eTransferDst,
-													vk::MemoryPropertyFlagBits::eDeviceLocal);
-
-	this->_copyBuffer(stagingBuffer, this->indexBuffer, bufferSize);
-	this->_allocator.destroyBuffer(stagingBuffer, stagingAllocation);
-
-	this->_cleanupQueue->pushFunction(
-			[&]() { this->_allocator.destroyBuffer(this->indexBuffer, this->indexBufferAllocation); });
+	this->_cleanupQueue->pushFunction([&]() { this->_bufferHandler.deleteBuffer(indexBuffer); });
 };
 } // namespace vkEngine

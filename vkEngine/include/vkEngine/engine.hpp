@@ -11,12 +11,9 @@
 #define VULKAN_HPP_DISPATCH_LOADER_DYNAMIC 1
 #include <vulkan/vulkan.hpp>
 VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
+#include "vkEngine/bufferHandling.hpp"
 #include <vkEngine/framesInFlight.hpp>
 #include <vkEngine/structs/vertex.hpp>
-#define VMA_STATIC_VULKAN_FUNCTIONS 0
-#define VMA_DYNAMIC_VULKAN_FUNCTIONS 1
-#define VK_NO_PROTOTYPES
-#include <vk_mem_alloc.hpp>
 
 namespace vkEngine {
 #ifdef NDEBUG
@@ -60,13 +57,13 @@ private:
 	void _createSyncObjects();
 	void _recreateSwapchain();
 	void _cleanupSwapchain();
-	std::pair<vk::Buffer, vma::Allocation> _createBuffer(vk::DeviceSize size, vk::BufferUsageFlags usageFlags,
-																											 vk::MemoryPropertyFlags properties,
-																											 vma::AllocationCreateFlags allocatorFlags,
-																											 vma::MemoryUsage allocatorUsage);
+	// std::pair<vk::Buffer, vma::Allocation> _createBuffer(vk::DeviceSize size, vk::BufferUsageFlags usageFlags,
+	// 																										 vk::MemoryPropertyFlags properties,
+	// 																										 vma::AllocationCreateFlags allocatorFlags,
+	// 																										 vma::MemoryUsage allocatorUsage);
 	void _createVertexBuffer();
 	void _createIndexBuffer();
-	void _copyBuffer(vk::Buffer &srcBuffer, vk::Buffer &dstBuffer, vk::DeviceSize size);
+	// void _copyBuffer(vk::Buffer &srcBuffer, vk::Buffer &dstBuffer, vk::DeviceSize size);
 
 private:
 	vk::Instance _instance = nullptr;
@@ -98,12 +95,13 @@ private:
 	std::vector<FrameInFlight> framesInFlight;
 
 	std::unique_ptr<CleanupQueue> _cleanupQueue;
-	vma::Allocator _allocator;
+	// vma::Allocator _allocator;
 
-	vk::Buffer vertextBuffer;
-	vma::Allocation vertexAllocation;
-	vk::Buffer indexBuffer;
-	vma::Allocation indexBufferAllocation;
+	// vk::Buffer vertextBuffer;
+	// vma::Allocation vertexAllocation;
+	BufferHandler _bufferHandler;
+	Buffer vertexBuffer;
+	Buffer indexBuffer;
 };
 } // namespace vkEngine
 #endif

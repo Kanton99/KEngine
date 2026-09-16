@@ -15,6 +15,7 @@ add_library(
     "src/swapchainBuilder.cpp"
     "src/pipelineBuilder.cpp"
     "src/commandBufferHandler.cpp"
+		"src/bufferHandling.cpp"
 )
 add_library(KEngine::vkEngine ALIAS ${PROJECT_NAME})
 
