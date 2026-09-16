@@ -7,7 +7,7 @@
 namespace vkEngine {
 class CommandBufferHandler {
 
-  public:
+public:
 	CommandBufferHandler() = default;
 	CommandBufferHandler(const CommandBufferHandler &) = default;
 	CommandBufferHandler(CommandBufferHandler &&) = default;
@@ -17,8 +17,9 @@ class CommandBufferHandler {
 	void createCommandPool(vk::Device &device, uint32_t queueIndex);
 	vk::CommandBuffer allocateCommandBuffer(vk::Device &device, vk::CommandBufferLevel level);
 
-  private:
+private:
 	vk::CommandPool _commandPool;
+	vk::CommandPool _oneTimeCommitPool;
 };
 } // namespace vkEngine
 //

@@ -5,6 +5,9 @@
 #include "vkEngine/utils.hpp"
 #include <iostream>
 #include <map>
+#include <vulkan/vulkan.hpp>
+#include <vulkan/vulkan_enums.hpp>
+#include <vulkan/vulkan_structs.hpp>
 #define VMA_IMPLEMENTATION
 #include <vkEngine/engine.hpp>
 
@@ -34,6 +37,7 @@ void vkEngine::init() {
 	this->_createGraphicsPipeline();
 	this->_creteCommandBuffer();
 	this->_createSyncObjects();
+	this->_createVertexBuffer();
 	std::cout << "Rendering engine initialization complete\n";
 }
 void vkEngine::draw() {
@@ -242,7 +246,7 @@ void vkEngine::_createLogicalDevice() {
 					{},																										// vk::PhysicalDeviceFeatures2 (empty for now)
 					{.synchronization2 = true, .dynamicRendering = true}, // Enable dynamic rendering from Vulkan 1.3
 					{.extendedDynamicState = true}												// Enable extended dynamic state from the extension
-			};
+	};
 	std::vector<const char *> requiredDeviceExtension = {
 			vk::KHRSwapchainExtensionName, vk::KHRShaderDrawParametersExtensionName, vk::KHRSynchronization2ExtensionName};
 
@@ -354,7 +358,7 @@ void vkEngine::_recordCommandBuffer(uint32_t imageIndex) {
 			0, vk::Viewport{0.f, 0.f, static_cast<float>(this->_swapchain.extent.width),
 											static_cast<float>(this->_swapchain.extent.height)});
 	this->framesInFlight[frameIndex].commandBuffer.setScissor(0, vk::Rect2D{vk::Offset2D{0, 0}, this->_swapchain.extent});
-	this->framesInFlight[frameIndex].commandBuffer.bindVertexBuffers(0, this->vertextBuffer, {0});
+	this->framesInFlight[frameIndex].commandBuffer.bindVertexBuffers(0, {this->vertextBuffer}, {0});
 
 	this->framesInFlight[frameIndex].commandBuffer.draw(vertices.size(), 1, 0, 0);
 	this->framesInFlight[frameIndex].commandBuffer.endRendering();
@@ -406,6 +410,17 @@ vkEngine::_createBuffer(vk::DeviceSize size, vk::BufferUsageFlags usageFlags, vk
 	return {buffer, allocation};
 }
 
+void vkEngine::_copyBuffer(vk::Buffer &srcBuffer, vk::Buffer &dstBuffer, vk::DeviceSize size) {
+	auto copyCommandBuffer =
+			this->_commandBufferHandler.allocateCommandBuffer(this->_device, vk::CommandBufferLevel::ePrimary);
+	copyCommandBuffer.begin({.flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit});
+	copyCommandBuffer.copyBuffer(srcBuffer, dstBuffer, vk::BufferCopy(0, 0, size));
+	copyCommandBuffer.end();
+
+	this->_graphicsQueue.submit(vk::SubmitInfo{.commandBufferCount = 1, .pCommandBuffers = &copyCommandBuffer});
+	this->_graphicsQueue.waitIdle();
+}
+
 void vkEngine::_createVertexBuffer() {
 	vk::DeviceSize bufferSize{sizeof(vertices[0]) * vertices.size()};
 
@@ -420,5 +435,7 @@ void vkEngine::_createVertexBuffer() {
 	std::tie(this->vertextBuffer, this->vertexAllocation) =
 			this->_createBuffer(bufferSize, vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eTransferDst,
 													vk::MemoryPropertyFlagBits::eDeviceLocal);
+
+	this->_copyBuffer(stagingBuffer, this->vertextBuffer, bufferSize);
 };
 } // namespace vkEngine

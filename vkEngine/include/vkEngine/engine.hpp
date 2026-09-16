@@ -4,6 +4,7 @@
 #include "vkEngine/commandBufferHandler.hpp"
 #include "vkEngine/swapchainBuilder.hpp"
 #include <SDL3/SDL_video.h>
+#include <cstdint>
 #include <memory>
 #include <vector>
 #define VULKAN_HPP_NO_STRUCT_CONSTRUCTORS
@@ -63,6 +64,7 @@ private:
 																											 vma::AllocationCreateFlags allocatorFlags,
 																											 vma::MemoryUsage allocatorUsage);
 	void _createVertexBuffer();
+	void _copyBuffer(vk::Buffer &srcBuffer, vk::Buffer &dstBuffer, vk::DeviceSize size);
 
 private:
 	vk::Instance _instance = nullptr;
@@ -73,6 +75,8 @@ private:
 	vk::Device _device;
 	vk::Queue _graphicsQueue;
 	uint32_t _graphicsQueueIndex;
+	vk::Queue _transferQueue;
+	uint32_t _transferQueueIndex;
 
 	vk::SurfaceKHR _surface;
 
