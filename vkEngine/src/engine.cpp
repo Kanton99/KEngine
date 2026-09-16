@@ -5,9 +5,7 @@
 #include "vkEngine/utils.hpp"
 #include <iostream>
 #include <map>
-#include <vulkan/vulkan.hpp>
 #include <vulkan/vulkan_enums.hpp>
-#include <vulkan/vulkan_structs.hpp>
 #define VMA_IMPLEMENTATION
 #include <vkEngine/engine.hpp>
 
@@ -38,6 +36,7 @@ void vkEngine::init() {
 	this->_creteCommandBuffer();
 	this->_createSyncObjects();
 	this->_createVertexBuffer();
+	this->_createIndexBuffer();
 	std::cout << "Rendering engine initialization complete\n";
 }
 void vkEngine::draw() {
@@ -359,8 +358,9 @@ void vkEngine::_recordCommandBuffer(uint32_t imageIndex) {
 											static_cast<float>(this->_swapchain.extent.height)});
 	this->framesInFlight[frameIndex].commandBuffer.setScissor(0, vk::Rect2D{vk::Offset2D{0, 0}, this->_swapchain.extent});
 	this->framesInFlight[frameIndex].commandBuffer.bindVertexBuffers(0, {this->vertextBuffer}, {0});
+	this->framesInFlight[frameIndex].commandBuffer.bindIndexBuffer(this->indexBuffer, 0, vk::IndexType::eUint16);
 
-	this->framesInFlight[frameIndex].commandBuffer.draw(vertices.size(), 1, 0, 0);
+	this->framesInFlight[frameIndex].commandBuffer.drawIndexed(this->indeces.size(), 1, 0, 0, 0);
 	this->framesInFlight[frameIndex].commandBuffer.endRendering();
 
 	transitionImageLayout(this->_swapchain.images[imageIndex], this->framesInFlight[frameIndex].commandBuffer,
@@ -442,5 +442,27 @@ void vkEngine::_createVertexBuffer() {
 
 	this->_cleanupQueue->pushFunction(
 			[&]() { this->_allocator.destroyBuffer(this->vertextBuffer, this->vertexAllocation); });
+};
+void vkEngine::_createIndexBuffer() {
+	vk::DeviceSize bufferSize{sizeof(this->indeces[0]) * this->indeces.size()};
+
+	auto [stagingBuffer, stagingAllocation] = this->_createBuffer(
+			bufferSize, vk::BufferUsageFlagBits::eTransferSrc,
+			vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent,
+			vma::AllocationCreateFlagBits::eHostAccessSequentialWrite | vma::AllocationCreateFlagBits::eMapped);
+	auto mappedStagedMemory = this->_allocator.mapMemory(stagingAllocation);
+
+	memcpy(mappedStagedMemory, this->indeces.data(), bufferSize);
+	this->_allocator.unmapMemory(stagingAllocation);
+
+	std::tie(this->indexBuffer, this->indexBufferAllocation) =
+			this->_createBuffer(bufferSize, vk::BufferUsageFlagBits::eIndexBuffer | vk::BufferUsageFlagBits::eTransferDst,
+													vk::MemoryPropertyFlagBits::eDeviceLocal);
+
+	this->_copyBuffer(stagingBuffer, this->indexBuffer, bufferSize);
+	this->_allocator.destroyBuffer(stagingBuffer, stagingAllocation);
+
+	this->_cleanupQueue->pushFunction(
+			[&]() { this->_allocator.destroyBuffer(this->indexBuffer, this->indexBufferAllocation); });
 };
 } // namespace vkEngine

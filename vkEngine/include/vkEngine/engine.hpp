@@ -29,6 +29,7 @@ constexpr int MAX_FRAMES_IN_FLIGHT = 2;
 class vkEngine {
 public:
 	std::vector<Vertex> vertices;
+	std::vector<uint16_t> indeces;
 	vkEngine(std::shared_ptr<SDL_Window> window);
 	vkEngine(vkEngine &&) = delete;
 	vkEngine(const vkEngine &) = delete;
@@ -64,6 +65,7 @@ private:
 																											 vma::AllocationCreateFlags allocatorFlags,
 																											 vma::MemoryUsage allocatorUsage);
 	void _createVertexBuffer();
+	void _createIndexBuffer();
 	void _copyBuffer(vk::Buffer &srcBuffer, vk::Buffer &dstBuffer, vk::DeviceSize size);
 
 private:
@@ -100,6 +102,8 @@ private:
 
 	vk::Buffer vertextBuffer;
 	vma::Allocation vertexAllocation;
+	vk::Buffer indexBuffer;
+	vma::Allocation indexBufferAllocation;
 };
 } // namespace vkEngine
 #endif
