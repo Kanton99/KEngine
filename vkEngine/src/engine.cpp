@@ -403,7 +403,7 @@ vkEngine::_createBuffer(vk::DeviceSize size, vk::BufferUsageFlags usageFlags, vk
 
 												vma::AllocationCreateFlags allocatorFlags = vma::AllocationCreateFlags{},
 												vma::MemoryUsage allocatorUsage = vma::MemoryUsage::eAuto) {
-	vk::BufferCreateInfo bufferInfo{.size = size, .usage = usageFlags};
+	vk::BufferCreateInfo bufferInfo{.size = size, .usage = usageFlags, .sharingMode = vk::SharingMode::eExclusive};
 	vma::AllocationCreateInfo allocInfo{.flags = allocatorFlags, .usage = allocatorUsage};
 
 	auto [allocation, buffer] = this->_allocator.createBuffer(bufferInfo, allocInfo);
@@ -425,7 +425,8 @@ void vkEngine::_createVertexBuffer() {
 	vk::DeviceSize bufferSize{sizeof(vertices[0]) * vertices.size()};
 
 	auto [stagingBuffer, stagingAllocation] = this->_createBuffer(
-			bufferSize, vk::BufferUsageFlagBits::eTransferSrc, vk::MemoryPropertyFlagBits::eHostVisible,
+			bufferSize, vk::BufferUsageFlagBits::eTransferSrc,
+			vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent,
 			vma::AllocationCreateFlagBits::eHostAccessSequentialWrite | vma::AllocationCreateFlagBits::eMapped);
 	auto mappedStagedMemory = this->_allocator.mapMemory(stagingAllocation);
 
@@ -437,5 +438,6 @@ void vkEngine::_createVertexBuffer() {
 													vk::MemoryPropertyFlagBits::eDeviceLocal);
 
 	this->_copyBuffer(stagingBuffer, this->vertextBuffer, bufferSize);
+	this->_allocator.destroyBuffer(stagingBuffer, stagingAllocation);
 };
 } // namespace vkEngine
