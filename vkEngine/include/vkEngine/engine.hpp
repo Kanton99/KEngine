@@ -63,7 +63,6 @@ private:
 	// 																										 vma::MemoryUsage allocatorUsage);
 	void _createVertexBuffer();
 	void _createIndexBuffer();
-	// void _copyBuffer(vk::Buffer &srcBuffer, vk::Buffer &dstBuffer, vk::DeviceSize size);
 
 private:
 	vk::Instance _instance = nullptr;

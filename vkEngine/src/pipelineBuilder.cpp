@@ -48,6 +48,7 @@ vk::Pipeline PipelineBuilder::build(vk::SurfaceFormatKHR &format) {
 	this->_dynamicStateInfo.setDynamicStates(dynamicStates);
 
 	vk::PipelineLayoutCreateInfo pipelineLayoutInfo{.setLayoutCount = 0, .pushConstantRangeCount = 0};
+	pipelineLayoutInfo.setSetLayouts(this->_descriptorSetLayout);
 	vk::PipelineLayout layout = this->_device.createPipelineLayout(pipelineLayoutInfo);
 
 	vk::StructureChain<vk::GraphicsPipelineCreateInfo, vk::PipelineRenderingCreateInfo> pipelineCreateInfo = {
@@ -109,4 +110,15 @@ PipelineBuilder &PipelineBuilder::setViewPortState(vk::Rect2D viewportSize, vk::
 	return *this;
 }
 
+PipelineBuilder &PipelineBuilder::createDescriptorSetLayout() {
+	vk::DescriptorSetLayoutBinding uboLayoutBinding{.binding = 0,
+																									.descriptorType = vk::DescriptorType::eUniformBuffer,
+																									.descriptorCount = 1,
+																									.stageFlags = vk::ShaderStageFlagBits::eVertex};
+
+	vk::DescriptorSetLayoutCreateInfo layoutInfo{};
+	layoutInfo.setBindings(uboLayoutBinding);
+	this->_descriptorSetLayout = this->_device.createDescriptorSetLayout(layoutInfo);
+	return *this;
+}
 } // namespace vkEngine

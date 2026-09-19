@@ -242,7 +242,7 @@ void vkEngine::_createLogicalDevice() {
 					{},																										// vk::PhysicalDeviceFeatures2 (empty for now)
 					{.synchronization2 = true, .dynamicRendering = true}, // Enable dynamic rendering from Vulkan 1.3
 					{.extendedDynamicState = true}												// Enable extended dynamic state from the extension
-	};
+			};
 	std::vector<const char *> requiredDeviceExtension = {
 			vk::KHRSwapchainExtensionName, vk::KHRShaderDrawParametersExtensionName, vk::KHRSynchronization2ExtensionName};
 
@@ -309,6 +309,7 @@ void vkEngine::_createGraphicsPipeline() {
 					.createPipelineStage(vk::ShaderStageFlagBits::eVertex, "vertMain")
 					.createPipelineStage(vk::ShaderStageFlagBits::eFragment, "fragMain")
 					.setViewPortState({.extent = this->_swapchain.extent}, {.extent = this->_swapchain.extent})
+					.createDescriptorSetLayout()
 					.build(this->_swapchain.surfaceFormat);
 	std::println("Created Graphics pipeline");
 }
