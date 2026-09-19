@@ -31,15 +31,15 @@ void BufferHandler::copyBuffer(vk::CommandBuffer commandBuffer, vk::Queue transf
 	transferQueue.submit(vk::SubmitInfo{.commandBufferCount = 1, .pCommandBuffers = &commandBuffer});
 	transferQueue.waitIdle();
 }
-void BufferHandler::uploadBufferData(vk::CommandBuffer commandBuffer, vk::Queue transferQueue, Buffer buffer,
-																		 vk::DeviceSize bufferSize, void *data) {
+void BufferHandler::uploadBufferDataStaged(vk::CommandBuffer commandBuffer, vk::Queue transferQueue, Buffer buffer,
+																					 vk::DeviceSize bufferSize, void *data) {
 
 	auto [stagingBuffer, stagingAllocation] = this->createBuffer(
 			bufferSize, vk::BufferUsageFlagBits::eTransferSrc,
 			vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent,
 			vma::AllocationCreateFlagBits::eHostAccessSequentialWrite | vma::AllocationCreateFlagBits::eMapped);
 	auto mappedStagedMemory = this->allocator.mapMemory(stagingAllocation);
-
+	// TODO try this->allocator.copyMemoryToAllocation(data, stagingAllocation, 0, bufferSize);
 	memcpy(mappedStagedMemory, data, bufferSize);
 	this->allocator.unmapMemory(stagingAllocation);
 	this->copyBuffer(commandBuffer, transferQueue, stagingBuffer, buffer.buffer, bufferSize);
@@ -47,4 +47,11 @@ void BufferHandler::uploadBufferData(vk::CommandBuffer commandBuffer, vk::Queue 
 }
 
 void BufferHandler::deleteBuffer(Buffer buffer) { this->allocator.destroyBuffer(buffer.buffer, buffer.allocation); }
+
+BARBuffer BufferHandler::createBARBuffer(vk::DeviceSize size, vk::BufferUsageFlags usageFlags,
+																				 vk::MemoryPropertyFlags properties, vma::AllocationCreateFlags allocatorFlags,
+																				 vma::MemoryUsage allocatorUsage) {
+	auto buffer = this->createBuffer(size, usageFlags, properties, allocatorFlags, allocatorUsage);
+	return {buffer.buffer, buffer.allocation, this->allocator.mapMemory(buffer.allocation)};
+}
 } // namespace vkEngine

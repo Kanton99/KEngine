@@ -404,8 +404,8 @@ void vkEngine::_createVertexBuffer() {
 			vma::MemoryUsage::eAuto); // TODO capire perché non assume i valori di default
 	auto oneTimeBuffer =
 			this->_commandBufferHandler.allocateCommandBuffer(this->_device, vk::CommandBufferLevel::ePrimary);
-	this->_bufferHandler.uploadBufferData(oneTimeBuffer, this->_graphicsQueue, this->vertexBuffer, bufferSize,
-																				vertices.data());
+	this->_bufferHandler.uploadBufferDataStaged(oneTimeBuffer, this->_graphicsQueue, this->vertexBuffer, bufferSize,
+																							vertices.data());
 	this->_cleanupQueue->pushFunction([&]() { this->_bufferHandler.deleteBuffer(vertexBuffer); });
 };
 void vkEngine::_createIndexBuffer() {
@@ -416,8 +416,8 @@ void vkEngine::_createIndexBuffer() {
 			vk::MemoryPropertyFlagBits::eDeviceLocal, vma::AllocationCreateFlags{}, vma::MemoryUsage::eAuto);
 	auto oneTimeBuffer =
 			this->_commandBufferHandler.allocateCommandBuffer(this->_device, vk::CommandBufferLevel::ePrimary);
-	this->_bufferHandler.uploadBufferData(oneTimeBuffer, this->_graphicsQueue, this->indexBuffer, bufferSize,
-																				indeces.data());
+	this->_bufferHandler.uploadBufferDataStaged(oneTimeBuffer, this->_graphicsQueue, this->indexBuffer, bufferSize,
+																							indeces.data());
 
 	this->_cleanupQueue->pushFunction([&]() { this->_bufferHandler.deleteBuffer(indexBuffer); });
 };

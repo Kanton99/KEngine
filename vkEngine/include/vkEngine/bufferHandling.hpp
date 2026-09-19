@@ -11,6 +11,9 @@ struct Buffer {
 	vk::Buffer buffer;
 	vma::Allocation allocation;
 };
+struct BARBuffer : Buffer {
+	void *mappedMemory;
+};
 
 class BufferHandler {
 private:
@@ -24,8 +27,12 @@ public:
 	BufferHandler(vk::Instance instance, vk::Device device, vk::PhysicalDevice physicalDevice);
 	Buffer createBuffer(vk::DeviceSize size, vk::BufferUsageFlags usageFlags, vk::MemoryPropertyFlags properties,
 											vma::AllocationCreateFlags allocatorFlags, vma::MemoryUsage allocatorUsage);
-	void uploadBufferData(vk::CommandBuffer commandBuffer, vk::Queue transferQueue, Buffer buffer,
-												vk::DeviceSize bufferSize, void *data);
+	void uploadBufferDataStaged(vk::CommandBuffer commandBuffer, vk::Queue transferQueue, Buffer buffer,
+															vk::DeviceSize bufferSize, void *data);
+	BARBuffer createBARBuffer(vk::DeviceSize size, vk::BufferUsageFlags usageFlags, vk::MemoryPropertyFlags properties,
+														vma::AllocationCreateFlags allocatorFlags, vma::MemoryUsage allocatorUsage);
+	void uploadBARBufferData(vk::CommandBuffer commandBuffer, vk::Queue transferQueue, BARBuffer buffer,
+													 vk::DeviceSize bufferSize, void *data);
 
 	void deleteBuffer(Buffer buffer);
 };
