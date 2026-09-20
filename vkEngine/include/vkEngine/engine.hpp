@@ -2,6 +2,7 @@
 #define VK_ENGINE
 #include "cleanupStruct.hpp"
 #include "vkEngine/commandBufferHandler.hpp"
+#include "vkEngine/pipelineBuilder.hpp"
 #include "vkEngine/swapchainBuilder.hpp"
 #include <SDL3/SDL_video.h>
 #include <cstdint>
@@ -27,6 +28,9 @@ class vkEngine {
 public:
 	std::vector<Vertex> vertices;
 	std::vector<uint16_t> indeces;
+	UniformBufferObject ubo;
+
+public:
 	vkEngine(std::shared_ptr<SDL_Window> window);
 	vkEngine(vkEngine &&) = delete;
 	vkEngine(const vkEngine &) = delete;
@@ -41,6 +45,7 @@ public:
 	void cleanup();
 
 	void invalidateSwapchain(int width, int height);
+	void updateUniformBuffer(int frameIndex);
 
 private:
 	void _createInstance();
@@ -63,6 +68,8 @@ private:
 	// 																										 vma::MemoryUsage allocatorUsage);
 	void _createVertexBuffer();
 	void _createIndexBuffer();
+	void _createUniformBuffers();
+	void _createDescriptorPool();
 
 private:
 	vk::Instance _instance = nullptr;
@@ -99,8 +106,8 @@ private:
 	// vk::Buffer vertextBuffer;
 	// vma::Allocation vertexAllocation;
 	BufferHandler _bufferHandler;
-	Buffer vertexBuffer;
-	Buffer indexBuffer;
+	Buffer _vertexBuffer;
+	Buffer _indexBuffer;
 };
 } // namespace vkEngine
 #endif
