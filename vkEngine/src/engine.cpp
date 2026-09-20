@@ -305,14 +305,13 @@ void vkEngine::_createImageViews() {
 void vkEngine::_createGraphicsPipeline() {
 	std::println("Creating graphics pipeline");
 	PipelineBuilder builder{this->_device};
-	this->_graphicsPipeline =
-			builder.loadShaderCode("./resources/shaders/slang.spv")
-					.createShaderModule()
-					.createPipelineStage(vk::ShaderStageFlagBits::eVertex, "vertMain")
-					.createPipelineStage(vk::ShaderStageFlagBits::eFragment, "fragMain")
-					.setViewPortState({.extent = this->_swapchain.extent}, {.extent = this->_swapchain.extent})
-					.createDescriptorSetLayout()
-					.build(this->_swapchain.surfaceFormat);
+	builder.loadShaderCode("./resources/shaders/slang.spv")
+			.createShaderModule()
+			.createPipelineStage(vk::ShaderStageFlagBits::eVertex, "vertMain")
+			.createPipelineStage(vk::ShaderStageFlagBits::eFragment, "fragMain")
+			.setViewPortState({.extent = this->_swapchain.extent}, {.extent = this->_swapchain.extent});
+	this->descriptorSetLayout = builder.createDescriptorSetLayout();
+	std::tie(this->_graphicsPipeline, this->_graphicsPipelineLayout) = builder.build(this->_swapchain.surfaceFormat);
 	std::println("Created Graphics pipeline");
 }
 
@@ -360,6 +359,10 @@ void vkEngine::_recordCommandBuffer(uint32_t imageIndex) {
 	this->framesInFlight[frameIndex].commandBuffer.setScissor(0, vk::Rect2D{vk::Offset2D{0, 0}, this->_swapchain.extent});
 	this->framesInFlight[frameIndex].commandBuffer.bindVertexBuffers(0, {this->_vertexBuffer.buffer}, {0});
 	this->framesInFlight[frameIndex].commandBuffer.bindIndexBuffer(this->_indexBuffer.buffer, 0, vk::IndexType::eUint16);
+
+	this->framesInFlight[frameIndex].commandBuffer.bindDescriptorSets(
+			vk::PipelineBindPoint::eGraphics, this->_graphicsPipelineLayout, 0,
+			this->framesInFlight[frameIndex].descriptorSet, nullptr);
 
 	this->framesInFlight[frameIndex].commandBuffer.drawIndexed(this->indeces.size(), 1, 0, 0, 0);
 	this->framesInFlight[frameIndex].commandBuffer.endRendering();
@@ -451,5 +454,34 @@ void vkEngine::updateUniformBuffer(int frameIndex) {
 																		0.1f, 10.f);
 
 	mempcpy(this->framesInFlight[frameIndex].uniformBuffer.mappedMemory, &ubo, sizeof(ubo));
+}
+
+void vkEngine::_createDescriptorPool() {
+	vk::DescriptorPoolSize poolSize{.type = vk::DescriptorType::eUniformBuffer, .descriptorCount = MAX_FRAMES_IN_FLIGHT};
+	vk::DescriptorPoolCreateInfo poolInfo{.flags = vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet,
+																				.maxSets = MAX_FRAMES_IN_FLIGHT,
+																				.poolSizeCount = 1,
+																				.pPoolSizes = &poolSize};
+	this->descriptorPool = this->_device.createDescriptorPool(poolInfo);
+}
+void vkEngine::_createDescriptorSets() {
+	std::vector<vk::DescriptorSetLayout> layouts(MAX_FRAMES_IN_FLIGHT, this->descriptorSetLayout);
+	vk::DescriptorSetAllocateInfo allocInfo{.descriptorPool = this->descriptorPool,
+																					.descriptorSetCount = static_cast<uint32_t>(layouts.size()),
+																					.pSetLayouts = layouts.data()};
+	auto sets = this->_device.allocateDescriptorSets(allocInfo);
+	for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+		this->framesInFlight[i].descriptorSet = sets[i];
+		vk::DescriptorBufferInfo bufferInfo{.buffer = this->framesInFlight[i].uniformBuffer.buffer,
+																				.offset = 0,
+																				.range = sizeof(UniformBufferObject)};
+		vk::WriteDescriptorSet descriptorWrite{.dstSet = this->framesInFlight[i].descriptorSet,
+																					 .dstBinding = 0,
+																					 .dstArrayElement = 0,
+																					 .descriptorCount = 1,
+																					 .descriptorType = vk::DescriptorType::eUniformBuffer,
+																					 .pBufferInfo = &bufferInfo};
+		this->_device.updateDescriptorSets(descriptorWrite, {});
+	}
 }
 } // namespace vkEngine

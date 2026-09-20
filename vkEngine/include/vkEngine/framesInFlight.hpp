@@ -6,8 +6,8 @@ struct FrameInFlight {
 	vk::Semaphore renderFinishedSemaphore;
 	vk::Fence drawFence;
 	vk::CommandBuffer commandBuffer;
-
 	BARBuffer uniformBuffer;
+	vk::DescriptorSet descriptorSet;
 
 	void cleanup(vk::Device &device) {
 		device.destroy(presentComplete);

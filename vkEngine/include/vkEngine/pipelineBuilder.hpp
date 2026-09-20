@@ -20,12 +20,12 @@ public:
 	PipelineBuilder &operator=(PipelineBuilder &&) = delete;
 	~PipelineBuilder() = default;
 
-	[[nodiscard]] vk::Pipeline build(vk::SurfaceFormatKHR &format);
+	[[nodiscard]] std::pair<vk::Pipeline, vk::PipelineLayout> build(vk::SurfaceFormatKHR &format);
 	PipelineBuilder &loadShaderCode(const std::string &fileName);
 	PipelineBuilder &createShaderModule();
 	PipelineBuilder &createPipelineStage(vk::ShaderStageFlagBits stage, std::string entryPoint);
 	PipelineBuilder &setViewPortState(vk::Rect2D viewportSize, vk::Rect2D scissorSize);
-	PipelineBuilder &createDescriptorSetLayout();
+	vk::DescriptorSetLayout createDescriptorSetLayout();
 
 private:
 	vk::Device _device;

@@ -70,6 +70,7 @@ private:
 	void _createIndexBuffer();
 	void _createUniformBuffers();
 	void _createDescriptorPool();
+	void _createDescriptorSets();
 
 private:
 	vk::Instance _instance = nullptr;
@@ -87,6 +88,7 @@ private:
 
 	SwapchainData _swapchain;
 
+	vk::PipelineLayout _graphicsPipelineLayout;
 	vk::Pipeline _graphicsPipeline;
 
 	CommandBufferHandler _commandBufferHandler;
@@ -108,6 +110,9 @@ private:
 	BufferHandler _bufferHandler;
 	Buffer _vertexBuffer;
 	Buffer _indexBuffer;
+
+	vk::DescriptorPool descriptorPool;
+	vk::DescriptorSetLayout descriptorSetLayout;
 };
 } // namespace vkEngine
 #endif

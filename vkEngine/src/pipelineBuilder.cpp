@@ -7,7 +7,7 @@
 #include <vkEngine/utils.hpp>
 
 namespace vkEngine {
-vk::Pipeline PipelineBuilder::build(vk::SurfaceFormatKHR &format) {
+std::pair<vk::Pipeline, vk::PipelineLayout> PipelineBuilder::build(vk::SurfaceFormatKHR &format) {
 	vk::PipelineInputAssemblyStateCreateInfo inputAssembly{.topology = vk::PrimitiveTopology::eTriangleList};
 	vk::PipelineRasterizationStateCreateInfo rasterizer{.depthClampEnable = vk::False,
 																											.rasterizerDiscardEnable = vk::False,
@@ -69,7 +69,7 @@ vk::Pipeline PipelineBuilder::build(vk::SurfaceFormatKHR &format) {
 	if (ret.result != vk::Result::eSuccess) {
 		throw std::runtime_error("Failed to create graphics pipeline");
 	}
-	return ret.value;
+	return {ret.value, layout};
 }
 
 PipelineBuilder &PipelineBuilder::loadShaderCode(const std::string &fileName) {
@@ -110,7 +110,7 @@ PipelineBuilder &PipelineBuilder::setViewPortState(vk::Rect2D viewportSize, vk::
 	return *this;
 }
 
-PipelineBuilder &PipelineBuilder::createDescriptorSetLayout() {
+vk::DescriptorSetLayout PipelineBuilder::createDescriptorSetLayout() {
 	vk::DescriptorSetLayoutBinding uboLayoutBinding{.binding = 0,
 																									.descriptorType = vk::DescriptorType::eUniformBuffer,
 																									.descriptorCount = 1,
@@ -119,6 +119,6 @@ PipelineBuilder &PipelineBuilder::createDescriptorSetLayout() {
 	vk::DescriptorSetLayoutCreateInfo layoutInfo{};
 	layoutInfo.setBindings(uboLayoutBinding);
 	this->_descriptorSetLayout = this->_device.createDescriptorSetLayout(layoutInfo);
-	return *this;
+	return this->_descriptorSetLayout;
 }
 } // namespace vkEngine
