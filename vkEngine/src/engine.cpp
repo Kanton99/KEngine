@@ -442,7 +442,7 @@ void vkEngine::_createUniformBuffers() {
 	}
 }
 
-void vkEngine::updateUniformBuffer(int frameIndex) {
+void vkEngine::updateUniformBuffer() {
 	static auto startTime = std::chrono::high_resolution_clock::now();
 
 	auto currTime = std::chrono::high_resolution_clock::now();

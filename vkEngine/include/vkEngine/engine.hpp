@@ -45,7 +45,7 @@ public:
 	void cleanup();
 
 	void invalidateSwapchain(int width, int height);
-	void updateUniformBuffer(int frameIndex);
+	void updateUniformBuffer();
 
 private:
 	void _createInstance();

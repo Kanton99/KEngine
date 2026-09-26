@@ -62,6 +62,7 @@ int main() {
 					engine->invalidateSwapchain(w, h);
 				}
 			}
+			engine->updateUniformBuffer();
 			engine->draw();
 			SDL_Delay(static_cast<uint32_t>(1.f / 60.f) * 1000);
 		}
