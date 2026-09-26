@@ -36,6 +36,8 @@ void vkEngine::init() {
 	this->_createVertexBuffer();
 	this->_createIndexBuffer();
 	this->_createUniformBuffers();
+	this->_createDescriptorPool();
+	this->_createDescriptorSets();
 	std::cout << "Rendering engine initialization complete\n";
 }
 void vkEngine::draw() {
