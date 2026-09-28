@@ -448,7 +448,7 @@ void vkEngine::updateUniformBuffer() {
 	auto currTime = std::chrono::high_resolution_clock::now();
 	float time = std::chrono::duration<float, std::chrono::seconds::period>(currTime - startTime).count();
 
-	this->ubo.model = glm::rotate(glm::mat4(1.f), time * glm::radians(90.f), glm::vec3(0.f, 0.f, 0.f));
+	this->ubo.model = glm::rotate(glm::mat4(1.f), time * glm::radians(90.f), glm::vec3(0.f, 1.f, 0.f));
 	this->ubo.view = glm::lookAt(glm::vec3(2.f, 2.f, 2.f), glm::vec3(0.f), glm::vec3(0.f, 0.f, 1.f));
 	this->ubo.proj = glm::perspective(glm::radians(45.f),
 																		static_cast<float>(this->_swapchain.extent.width) /
